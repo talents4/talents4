@@ -31,6 +31,9 @@
   .control:focus, .search:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.06); }
   .search::placeholder { color: #6b82a3; }
   
+  /* CORREÇÃO DO BUG DOS FILTROS (Fundo escuro nas opções) */
+  select.control option { background-color: var(--bg-2); color: var(--text); }
+  
   /* Buttons */
   button { cursor:pointer; font-weight: 600; background: rgba(89,168,255,0.1); color: #82bfff; border-color: rgba(89,168,255,0.2); }
   button:hover { background: rgba(89,168,255,0.2); color: #fff; }
@@ -57,7 +60,7 @@
   .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
   .panel-title h2 { margin: 0; font-size: 18px; color: #fff; }
   .panel-title p { margin: 4px 0 16px; color: var(--muted); font-size: 13px; }
-  .svg-wrap { width:100%; min-height: 260px; }
+  .svg-wrap { width:100%; min-height: 260px; overflow: visible; }
   
   /* Table */
   .table-wrap { overflow:auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); }
@@ -169,8 +172,12 @@
   <div id="tab-exec" class="tab-content active">
     <div class="kpis" id="kpiGrid"></div>
     <div class="section grid-2">
-      <div class="card"><div class="panel-title"><h2>Etapa Atual Calculada</h2><p>Onde o candidato realmente está com base no histórico de abas.</p></div><div class="svg-wrap" id="chartPipeline"></div></div>
+      <div class="card"><div class="panel-title"><h2>Etapa Atual Calculada</h2><p>Onde o candidato realmente está no funil de expatriação.</p></div><div class="svg-wrap" id="chartPipeline"></div></div>
       <div class="card"><div class="panel-title"><h2>Status Final & Decisões</h2><p>Taxa de aprovação, reprovação e stand-by.</p></div><div class="svg-wrap" id="chartStatus"></div></div>
+    </div>
+    <div class="section grid-2" style="margin-top: 18px;">
+      <div class="card"><div class="panel-title"><h2>Demografia: Faixa Etária</h2><p>Distribuição de idade dos candidatos ativos.</p></div><div class="svg-wrap" id="chartAge"></div></div>
+      <div class="card"><div class="panel-title"><h2>Top Cidades Origem</h2><p>Principais polos de captação de talentos.</p></div><div class="svg-wrap" id="chartCity"></div></div>
     </div>
   </div>
 
@@ -245,6 +252,7 @@
       <div class="crm-section">
         <h3>Dossiê Pessoal & Estrutura</h3>
         <div class="data-group"><div class="data-label">Status Global / Decisão</div><div class="data-val"><span id="m-status-final" class="chip">...</span></div></div>
+        <div class="data-group"><div class="data-label">Idade</div><div class="data-val" id="m-idade">...</div></div>
         <div class="data-group"><div class="data-label">Composição Familiar</div><div class="data-val" id="m-civil">...</div></div>
         <div class="data-group"><div class="data-label">Dependentes (Filhos)</div><div class="data-val" id="m-filhos">...</div></div>
         <div class="data-group"><div class="data-label">Preparação Financeira</div><div class="data-val" id="m-financas">...</div></div>
@@ -297,14 +305,13 @@ function cleanKey(val) { return normalize(val).replace(/\s+/g, ' ').trim(); }
 function isEmpty(val) { const v = normalize(val).toLowerCase(); return !v || v === '-' || v === 'pendente' || v === '#n/a' || v === 'nan'; }
 
 function getVal(obj, keysArray) { 
-    // Passo 1: Busca por Match Exato (Evita Falso Positivo com trim())
     for(let k of keysArray) { 
         let searchKey = cleanKey(k).toLowerCase();
         let exactKey = Object.keys(obj).find(ok => cleanKey(ok).toLowerCase() === searchKey);
         if(exactKey && !isEmpty(obj[exactKey])) return normalize(obj[exactKey]); 
     } 
     
-    // Passo 2: Busca por Match Parcial Agressivo (Remove \n, interrogações e espaços dúbios)
+    // Motor Agressivo de limpeza para strings com quebra de linha e pontuação na chave
     const superClean = (str) => normalize(str).toLowerCase().replace(/[\?\!\.\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
     for(let k of keysArray) { 
         let searchKey = superClean(k);
@@ -382,7 +389,7 @@ async function initCRM() {
             }
             
             let cand = candidatesMap.get(id);
-            cand._historico_abas.push(index); // Salva o rastro do candidato
+            cand._historico_abas.push(index); 
             
             Object.keys(row).forEach(k => {
                 let cleanK = cleanKey(k);
@@ -396,7 +403,6 @@ async function initCRM() {
     
     masterData = Array.from(candidatesMap.values());
     
-    // Motor Lógico da Etapa Calculada (Tratamento de Reativações)
     masterData.forEach(c => {
         let etapaAuto = "1ª Etapa (Triagem Inicial)";
         
@@ -409,15 +415,12 @@ async function initCRM() {
         
         let manualStatus = getVal(c, ['STATUS PIPELINE', 'Status Final']).toLowerCase();
 
-        // 1. Prioriza "Não Qualificado" se for reprovado
         if (c._historico_abas.includes(8) || manualStatus.includes('não qualificado') || manualStatus.includes('reprovado')) {
             etapaAuto = "Base de Dados (Não Qualificado)";
         }
-        // 2. Prioriza "Desistência"
         if (c._historico_abas.includes(7) || manualStatus.includes('desist')) {
             etapaAuto = "Desistência";
         }
-        // 3. A Regra Dourada: Reativação
         if (c._historico_abas.includes(6) || manualStatus === 'ativo' || manualStatus.includes('curso de alemão')) {
             if (etapaAuto === "Desistência" || etapaAuto === "Base de Dados (Não Qualificado)" || etapaAuto === "1ª Etapa (Triagem Inicial)") {
                 etapaAuto = "Ativos / Em Preparação";
@@ -463,13 +466,37 @@ function groupCount(data, keyChoices, isAutoCalculated = false) {
   return [...map.entries()].sort((a,b) => b[1]-a[1]);
 }
 
+// Logica do novo grafico de Idades
+function ageGroupCount(data) {
+    let groups = {"Até 25 anos":0, "26 a 30 anos":0, "31 a 35 anos":0, "36 a 40 anos":0, "41+ anos":0};
+    let hasData = false;
+    data.forEach(r => {
+        let idadeStr = getVal(r, ['Idade', 'Idade atual']);
+        if(idadeStr !== 'Não info.') {
+            let idade = parseInt(idadeStr.replace(/\D/g, ''));
+            if(!isNaN(idade)) {
+                hasData = true;
+                if(idade <= 25) groups["Até 25 anos"]++;
+                else if(idade <= 30) groups["26 a 30 anos"]++;
+                else if(idade <= 35) groups["31 a 35 anos"]++;
+                else if(idade <= 40) groups["36 a 40 anos"]++;
+                else groups["41+ anos"]++;
+            }
+        }
+    });
+    if(!hasData) return [];
+    return Object.entries(groups).filter(e => e[1] > 0);
+}
+
 function drawBar(targetId, dataArr) {
   const t = document.getElementById(targetId);
-  if(!dataArr.length) { t.innerHTML = '<div style="color:var(--muted); padding: 20px;">Sem dados para gerar gráfico.</div>'; return; }
+  if(!dataArr.length) { t.innerHTML = '<div style="color:var(--muted); padding: 20px;">Sem dados suficientes.</div>'; return; }
   const max = Math.max(...dataArr.map(d => d[1]));
-  let html = `<svg viewBox="0 0 700 ${dataArr.length * 42}" width="100%" height="100%">`;
+  // Aumento do ViewBox para evitar o bug do corte no numero da barra (w: 800)
+  let html = `<svg viewBox="0 0 800 ${dataArr.length * 42}" width="100%" height="100%" style="overflow: visible;">`;
   dataArr.forEach((d, i) => {
-      const w = (d[1]/max)*450;
+      // Redução da largura máxima do path rect para dar respiro ao texto (Max: 380)
+      const w = (d[1]/max)*380;
       html += `
         <text x="0" y="${i*42 + 16}" fill="#a8c2e8" font-size="13">${d[0].substring(0,34)}</text>
         <rect x="250" y="${i*42}" width="400" height="22" rx="4" fill="rgba(255,255,255,0.03)"></rect>
@@ -483,7 +510,7 @@ function drawBar(targetId, dataArr) {
 function renderAll() {
   const total = filteredData.length;
   
-  // KPIs Executivos
+  // KPIs
   const aprovados = filteredData.filter(c => getVal(c, ['Status Final']).toLowerCase().includes('aprovado')).length;
   document.getElementById('kpiGrid').innerHTML = `
     <div class="card kpi"><div class="label">Volume Filtrado</div><div class="value">${total}</div></div>
@@ -491,7 +518,6 @@ function renderAll() {
     <div class="card kpi"><div class="label">Taxa de Conversão</div><div class="value">${total ? Math.round((aprovados/total)*100) : 0}%</div></div>
   `;
   
-  // KPIs Docs Corrigidos
   const comPassaporte = filteredData.filter(c => getVal(c, ['Número do Passaporte']) !== 'Não info.').length;
   const docsPro = filteredData.filter(c => getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']) !== 'Não info.').length;
   document.getElementById('kpiDocs').innerHTML = `
@@ -499,16 +525,17 @@ function renderAll() {
     <div class="card kpi"><div class="label">Licenças Físicas (COREN)</div><div class="value">${docsPro}</div></div>
   `;
   
-  // Gráficos
+  // Gráficos Executivos
   drawBar('chartPipeline', groupCount(filteredData, [], true));
   drawBar('chartStatus', groupCount(filteredData, ['Status Final', 'Resultado da entrevista']));
+  drawBar('chartAge', ageGroupCount(filteredData));
+  drawBar('chartCity', groupCount(filteredData, ['Cidade atual']).filter(d => d[0] !== 'Não info.').slice(0, 6)); // Top 6 cidades
   
-  // Lógica do Gráfico de Passaporte Binária
+  // Graficos Ops & Compliance
   drawBar('chartPassport', [
       ['Documento Físico Validado', comPassaporte],
       ['Pendente / Sem Info', total - comPassaporte]
   ]);
-  
   drawBar('chartGerman', groupCount(filteredData, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã?']));
   drawBar('chartEmployer', groupCount(filteredData, ['Empresa']).filter(d => d[0] !== 'Não info.'));
   
@@ -565,7 +592,6 @@ function openModal(id) {
         alertBox.classList.remove('active');
     }
 
-    // Buscas precisas via array (agora blindadas pelo motor superClean)
     document.getElementById('m-parecer').textContent = getVal(c, ['Análise do recrutador', 'Resumo profissional']);
     document.getElementById('m-fortes').textContent = getVal(c, ['Pontos fortes']);
     document.getElementById('m-atencao').textContent = getVal(c, ['Pontos de atenção']);
@@ -574,6 +600,7 @@ function openModal(id) {
     document.getElementById('m-status-final').textContent = statusFinal;
     document.getElementById('m-status-final').className = `chip ${getChipClass(statusFinal)}`;
 
+    document.getElementById('m-idade').textContent = getVal(c, ['Idade', 'Idade atual']);
     document.getElementById('m-civil').textContent = `${getVal(c, ['Estado civil'])} - Mora com: ${getVal(c, ['Com quem você mora?'])}`;
     document.getElementById('m-filhos').textContent = `${getVal(c, ['Filho'])} (Idades: ${getVal(c, ['Idade Filho'])})`;
     document.getElementById('m-financas').textContent = getVal(c, ['Como é sua organização financeira', 'Tem reserva']);
