@@ -916,13 +916,22 @@ async function initCRM() {
     seedFallback();
 
     // Busca ao vivo nas 10 abas — enriquece e sobrepõe os dados do fallback
-    const fetchCSV = url => fetch(url, {cache:'no-store', headers:{'Cache-Control':'no-cache'}})
+    const fetchCSV = url => {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      return fetch(url, {
+        signal: ctrl.signal,
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
       .then(r => r.ok ? r.text() : '')
       .then(text => {
+        clearTimeout(timer);
         const t = (text||'').trimStart();
         return (t.startsWith('<') || t.toLowerCase().includes('<!doctype')) ? '' : text;
       })
-      .catch(() => '');
+      .catch(() => { clearTimeout(timer); return ''; });
+    };
 
     const texts = await Promise.all(SHEET_URLS.map(fetchCSV));
     show(1);
@@ -1379,30 +1388,49 @@ async function doRefresh(silent = false) {
     Object.keys(row).forEach(k => { const ck=cleanKey(k); if(!isEmpty(row[k])) c[ck]=row[k]; });
   });
 
-  // Fetch ao vivo com validação — verifica se é CSV real, não página de login
+  // Fetch ao vivo com timeout de 8s, validação e diagnóstico visível
   let liveOk = false;
-  const fetchCSV = url => {
-    // Adiciona timestamp nos headers, não na URL
-    return fetch(url, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache' }
-    })
-    .then(r => {
-      if(!r.ok) return '';
-      return r.text();
-    })
-    .then(text => {
-      // Valida que é CSV real (começa com data, número, vírgula ou texto — não com <html>)
-      const t = (text||'').trimStart();
-      if(t.startsWith('<') || t.toLowerCase().includes('<!doctype')) return '';
+  const debugLines = [];
+
+  const fetchCSV = async (url, idx) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    try {
+      const r = await fetch(url, {
+        signal: ctrl.signal,
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      clearTimeout(timer);
+      if(!r.ok) { debugLines.push(`Aba ${idx+1}: HTTP ${r.status}`); return ''; }
+      const text = await r.text();
+      const t = text.trimStart();
+      if(t.startsWith('<') || t.toLowerCase().includes('<!doctype')) {
+        debugLines.push(`Aba ${idx+1}: recebeu HTML (login/redirect) — não é CSV`);
+        return '';
+      }
+      const rows = text.split('\n').filter(l=>l.trim()).length;
+      debugLines.push(`Aba ${idx+1}: ✓ CSV ok (${rows} linhas)`);
       return text;
-    })
-    .catch(() => '');
+    } catch(e) {
+      clearTimeout(timer);
+      debugLines.push(`Aba ${idx+1}: ${e.name === 'AbortError' ? 'timeout (8s)' : 'erro: ' + e.message}`);
+      return '';
+    }
   };
 
-  const texts = await Promise.all(SHEET_URLS.map(fetchCSV)).catch(() => []);
+  const texts = await Promise.all(SHEET_URLS.map((url,i) => fetchCSV(url,i))).catch(() => []);
+
+  // Mostra diagnóstico no syncBar
   const syncBar = document.getElementById('syncBar');
   const syncMsg = document.getElementById('syncMsg');
+  if(syncBar && syncMsg && debugLines.length) {
+    syncBar.style.display = 'flex';
+    syncBar.style.flexDirection = 'column';
+    syncBar.style.alignItems = 'flex-start';
+    syncMsg.innerHTML = '<strong>Diagnóstico do fetch:</strong><br>' +
+      debugLines.join('<br>');
+  }
 
   if(Array.isArray(texts)) {
     let liveCount = 0;
@@ -1444,19 +1472,24 @@ async function doRefresh(silent = false) {
   }
 
   // SyncBar
-  if(syncBar && syncMsg) {
-    if(liveOk) {
-      syncBar.style.display = 'none';
-    } else {
+  if(syncBar) {
+    if(liveOk && !debugLines.some(l => l.includes('HTML') || l.includes('erro') || l.includes('timeout'))) {
+      // Tudo ok — esconde após 3s
       syncBar.style.display = 'flex';
-      syncMsg.textContent = 'Google Sheets inacessível — exibindo dados locais. Verifique se a planilha está publicada em: Arquivo → Publicar na web → CSV.';
+      syncMsg.innerHTML = '✅ Google Sheets conectado — ' + debugLines.filter(l=>l.includes('✓')).length + ' aba(s) ao vivo';
+      syncBar.style.background = 'rgba(34,201,122,0.08)';
+      syncBar.style.borderColor = 'rgba(34,201,122,0.2)';
+      syncBar.style.color = '#6debb0';
+      setTimeout(() => { if(syncBar) syncBar.style.display = 'none'; }, 4000);
     }
   }
 
-  if(!silent && btn) {
+  if(btn) btn.classList.remove('spinning');
+  if(!silent && lbl) {
     lbl.textContent = '✓ ' + (liveOk ? 'Atualizado' : 'Local');
-    btn.classList.remove('spinning');
     setTimeout(() => { if(lbl) lbl.textContent = 'Atualizar'; }, 2500);
+  } else if(lbl && lbl.textContent === 'Buscando...') {
+    lbl.textContent = 'Atualizar';
   }
 
   setTimeout(() => {
