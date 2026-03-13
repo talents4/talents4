@@ -3,79 +3,99 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Talents4 | Talent CRM</title>
+<title>Talents4 | Talent CRM Enterprise</title>
 <style>
   :root {
     --bg: #07111f; --bg-2: #0b172a; --panel: rgba(13, 26, 47, 0.82); --line: rgba(255,255,255,0.10);
     --text: #edf4ff; --muted: #93a8c7; --accent: #59a8ff; --accent-2: #7c5cff;
-    --good: #26c281; --warn: #ffb54a; --bad: #ff6b6b; --shadow: 0 20px 60px rgba(0,0,0,0.35); --radius: 22px;
+    --good: #26c281; --warn: #ffb54a; --bad: #ff4747; --shadow: 0 20px 60px rgba(0,0,0,0.35); --radius: 18px;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: radial-gradient(circle at top left, rgba(89,168,255,.16), transparent 28%), radial-gradient(circle at top right, rgba(124,92,255,.14), transparent 24%), linear-gradient(180deg, #07111f 0%, #081426 55%, #09111d 100%); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; min-height: 100vh;}
   .container { width: min(1600px, 94vw); margin: 0 auto; padding: 28px 0 40px; }
   
   /* Hero & Header */
-  .hero { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 30px; background: linear-gradient(135deg, rgba(12,24,43,.96), rgba(9,18,33,.90)); box-shadow: var(--shadow); padding: 34px 34px 28px; margin-bottom: 24px;}
-  .hero-brand-kicker { color: #a8c2e8; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; font-weight: 700; }
-  h1 { margin: 10px 0 12px; font-size: clamp(26px, 3vw, 42px); line-height: 1.03; }
+  .hero { position: relative; border: 1px solid var(--line); border-radius: 24px; background: linear-gradient(135deg, rgba(12,24,43,.96), rgba(9,18,33,.90)); box-shadow: var(--shadow); padding: 30px; margin-bottom: 24px; }
+  .hero-brand-kicker { color: #a8c2e8; letter-spacing: .14em; text-transform: uppercase; font-size: 12px; font-weight: 700; margin-bottom: 8px;}
+  h1 { margin: 0 0 12px; font-size: clamp(24px, 3vw, 36px); line-height: 1.1; }
   .hero p { margin: 0; color: var(--muted); font-size: 15px; }
-  .hero-grid { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap;}
   
-  /* Top Controls */
-  .top-controls { display:flex; gap: 14px; margin-top: 22px; flex-wrap: wrap; align-items: end;}
-  .field { display:grid; gap:8px; flex: 1; min-width: 200px;}
-  .field-label { color: #9eb5d6; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; padding-left: 2px; }
-  .control, .search, button { width:100%; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: var(--text); padding: 14px 16px; font-size: 14px; min-height: 52px; }
-  .search::placeholder { color: #88a0c1; }
-  button { cursor:pointer; font-weight: 600; transition: .2s ease; background: rgba(89,168,255,0.1); color: #59a8ff; border-color: rgba(89,168,255,0.2);}
-  button:hover { background: rgba(89,168,255,0.2); }
+  /* Advanced Filters Panel */
+  .filter-panel { background: rgba(0,0,0,0.2); border-radius: 16px; padding: 20px; margin-top: 24px; border: 1px solid rgba(255,255,255,0.05); }
+  .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+  .filter-header strong { font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; color: #a8c2e8; }
+  .top-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .field { display:grid; gap:6px; }
+  .field-label { color: #8ba2c2; font-size: 12px; font-weight: 600; padding-left: 2px; }
+  .control, .search, button { width:100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: var(--text); padding: 12px 14px; font-size: 14px; transition: border 0.2s; }
+  .control:focus, .search:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.06); }
+  .search::placeholder { color: #6b82a3; }
   
-  /* Tabs */
-  .tabs { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; overflow-x: auto;}
-  .tab-btn { background: transparent; border: none; color: var(--muted); font-size: 16px; padding: 10px 18px; border-radius: 999px; min-height: auto; width: auto; white-space: nowrap;}
-  .tab-btn.active { background: rgba(255,255,255,0.08); color: var(--text); font-weight: 700; border: 1px solid rgba(255,255,255,0.15);}
+  /* Buttons */
+  button { cursor:pointer; font-weight: 600; background: rgba(89,168,255,0.1); color: #82bfff; border-color: rgba(89,168,255,0.2); }
+  button:hover { background: rgba(89,168,255,0.2); color: #fff; }
+  .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text); }
+  .btn-outline:hover { background: rgba(255,255,255,0.05); }
+  .btn-export { background: rgba(38, 194, 129, 0.1); color: #26c281; border-color: rgba(38, 194, 129, 0.2); }
+  .btn-export:hover { background: rgba(38, 194, 129, 0.2); color: #fff; }
+  
+  /* Tabs & Counters */
+  .tabs { display: flex; gap: 8px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 16px; overflow-x: auto; scrollbar-width: none; }
+  .tab-btn { background: transparent; border: 1px solid transparent; color: var(--muted); font-size: 15px; padding: 10px 18px; border-radius: 999px; white-space: nowrap; }
+  .tab-btn.active { background: rgba(255,255,255,0.06); color: var(--text); font-weight: 700; border: 1px solid rgba(255,255,255,0.12); }
+  .tab-count { background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 99px; font-size: 12px; margin-left: 6px; font-weight: normal; }
   .tab-content { display: none; }
   .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
   /* Sections & Cards */
   .section { margin-top: 22px; }
-  .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+  .kpis { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 22px; }
   .card { border:1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
-  .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
-  .kpi .value { margin-top: 8px; font-size: clamp(26px, 3vw, 34px); font-weight: 800; }
+  .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+  .kpi .value { margin-top: 8px; font-size: clamp(28px, 3vw, 36px); font-weight: 800; color: #fff; }
   .grid-2 { display:grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .panel-title h2 { margin: 0; font-size: 19px; }
-  .panel-title p { margin: 6px 0 16px; color: var(--muted); font-size: 13px; }
+  .panel-title h2 { margin: 0; font-size: 18px; color: #fff; }
+  .panel-title p { margin: 4px 0 16px; color: var(--muted); font-size: 13px; }
   .svg-wrap { width:100%; min-height: 260px; }
   
   /* Table */
-  .table-wrap { overflow:auto; border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); }
+  .table-wrap { overflow:auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); }
   table { width:100%; border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
-  thead th { position: sticky; top: 0; background: #0d1a2f; text-align:left; font-size: 12px; color: #bdd0ee; text-transform: uppercase; padding: 14px; border-bottom: 1px solid var(--line); }
-  tbody td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;}
-  tbody tr:hover { background: rgba(255,255,255,0.05); }
-  .chip { display:inline-flex; padding: 6px 10px; border-radius: 999px; border:1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 700; }
-  .chip.good { background: rgba(38,194,129,0.12); color: #99f0c7; }
-  .chip.warn { background: rgba(255,181,74,0.12); color: #ffd694; }
-  .chip.bad { background: rgba(255,107,107,0.12); color: #ffb1b1; }
-  .chip.neutral { background: rgba(89,168,255,0.10); color: #bdd8ff; }
+  thead th { position: sticky; top: 0; background: #0c182c; text-align:left; font-size: 12px; color: #a8c2e8; text-transform: uppercase; padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 2; }
+  tbody td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #d0def2; }
+  tbody tr:hover { background: rgba(255,255,255,0.06); }
+  
+  /* Chips / Tags */
+  .chip { display:inline-flex; padding: 6px 10px; border-radius: 6px; border:1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .chip.good { background: rgba(38,194,129,0.15); color: #6df0b1; border-color: rgba(38,194,129,0.3); }
+  .chip.warn { background: rgba(255,181,74,0.15); color: #ffd18a; border-color: rgba(255,181,74,0.3); }
+  .chip.bad { background: rgba(255,71,71,0.15); color: #ff9999; border-color: rgba(255,71,71,0.3); }
+  .chip.neutral { background: rgba(89,168,255,0.10); color: #a1c9ff; }
 
   /* Modal CRM (Raio-X) */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;}
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;}
   .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
-  .modal-card { background: var(--bg-2); width: 100%; max-width: 1000px; max-height: 90vh; border-radius: 24px; border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.5);}
-  .modal-header { padding: 24px 30px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; background: var(--panel);}
-  .modal-header h2 { margin: 0; font-size: 24px; color: var(--accent); }
-  .close-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 20px; cursor: pointer;}
-  .close-btn:hover { background: rgba(255,107,107,0.2); color: var(--bad); }
+  .modal-card { background: var(--bg-2); width: 100%; max-width: 1100px; max-height: 90vh; border-radius: 20px; border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6);}
+  .modal-header { padding: 24px 30px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: flex-start; background: #081221;}
+  .modal-header h2 { margin: 0; font-size: 26px; color: #fff; }
+  .close-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+  .close-btn:hover { background: rgba(255,71,71,0.2); color: var(--bad); }
   .modal-body { padding: 30px; overflow-y: auto; display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
-  .crm-section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; }
-  .crm-section h3 { margin: 0 0 16px 0; font-size: 15px; color: #a8c2e8; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--line); padding-bottom: 8px;}
-  .data-group { margin-bottom: 12px; }
-  .data-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-  .data-val { font-size: 14px; color: #fff; font-weight: 500; line-height: 1.5;}
+  .crm-section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 16px; }
+  .crm-section h3 { margin: 0 0 16px 0; font-size: 14px; color: #8ba2c2; text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid var(--line); padding-bottom: 10px;}
+  .data-group { margin-bottom: 16px; }
+  .data-label { font-size: 12px; color: #6b82a3; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .data-val { font-size: 15px; color: #edf4ff; line-height: 1.6;}
   .full-width { grid-column: 1 / -1; }
+  
+  /* Alerts */
+  .alert-box { padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; display: none; font-size: 14px; font-weight: 500; }
+  .alert-box.active { display: flex; align-items: flex-start; gap: 12px; }
+  .alert-danger { background: rgba(255,71,71,0.1); border: 1px solid rgba(255,71,71,0.3); color: #ffb1b1; }
+  
+  /* Error Toast */
+  #errorToast { position: fixed; bottom: 20px; right: 20px; background: rgba(255,71,71,0.9); color: #fff; padding: 16px 24px; border-radius: 12px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; display: none; max-width: 400px; }
 
   /* Loading */
   #loadingOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;}
@@ -87,11 +107,13 @@
 </head>
 <body>
 
+<div id="errorToast"></div>
+
 <div id="loadingOverlay">
   <div class="spinner" id="spinnerEl"></div>
   <div id="loadingText" style="color: var(--text); font-weight: 600; font-size: 18px;">
-    Conectando ao banco de dados Talents4...<br>
-    <span style="font-size: 14px; color: var(--muted); font-weight: 400; margin-top: 10px; display: block;">Cruzando dados de 10 etapas (CRM Mode)</span>
+    Iniciando Motor do CRM...<br>
+    <span style="font-size: 14px; color: var(--muted); font-weight: 400; margin-top: 10px; display: block;">Consolidando arquitetura de dados (10 fontes)</span>
   </div>
 </div>
 
@@ -100,60 +122,81 @@
     <div class="hero-brand">
       <div class="hero-brand-kicker">Talents4</div>
       <h1>Inteligência de Expatriação & CRM</h1>
-      <p>Dados cruzados em tempo real de todas as etapas do processo.</p>
+      <p>Base consolidada em tempo real com motor de regras e compliance legal ativo.</p>
     </div>
-    <div class="top-controls">
-      <div class="field">
-        <label class="field-label">Busca Global</label>
-        <input id="searchInput" class="search" type="search" placeholder="Nome, Profissão ou E-mail..." />
+    
+    <div class="filter-panel">
+      <div class="filter-header">
+        <strong>Filtros Avançados</strong>
+        <div style="display: flex; gap: 10px;">
+            <button id="resetFilters" class="btn-outline" style="padding: 6px 12px; min-height: auto; border-radius: 8px;">Limpar</button>
+            <button id="btnExport" class="btn-export" style="padding: 6px 12px; min-height: auto; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Exportar CSV Filtrado
+            </button>
+        </div>
       </div>
-      <div class="field">
-        <label class="field-label">Filtro de Pipeline</label>
-        <select id="pipelineFilter" class="control"></select>
-      </div>
-      <div class="field">
-        <button id="resetFilters" style="margin-top: 24px;">Limpar Filtros</button>
+      <div class="top-controls">
+        <div class="field">
+          <label class="field-label">Busca Global</label>
+          <input id="searchInput" class="search" type="search" placeholder="Nome, ID, E-mail, Empresa..." />
+        </div>
+        <div class="field">
+          <label class="field-label">Etapa Calculada (Automática)</label>
+          <select id="pipelineFilter" class="control"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Qualificação (Alemão)</label>
+          <select id="germanFilter" class="control"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Área de Atuação</label>
+          <select id="professionFilter" class="control"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Decisão Final</label>
+          <select id="statusFilter" class="control"></select>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('tab-exec')">📊 Visão Executiva</button>
-    <button class="tab-btn" onclick="switchTab('tab-ops')">📄 Documentação & Compliance</button>
-    <button class="tab-btn" onclick="switchTab('tab-match')">🤝 Matching & Empregadores</button>
+    <button class="tab-btn" onclick="switchTab('tab-ops')">📄 Documentação & Compliance <span class="tab-count" id="countDocs" style="background: rgba(255,181,74,0.2); color: #ffd18a;">0 Alertas</span></button>
+    <button class="tab-btn" onclick="switchTab('tab-match')">🤝 Hospitais & Matching</button>
   </div>
 
   <div id="tab-exec" class="tab-content active">
     <div class="kpis" id="kpiGrid"></div>
     <div class="section grid-2">
-      <div class="card"><div class="panel-title"><h2>Distribuição do Pipeline</h2><p>Onde estão os candidatos do funil?</p></div><div class="svg-wrap" id="chartPipeline"></div></div>
-      <div class="card"><div class="panel-title"><h2>Status Final</h2><p>Proporção de aprovações globais</p></div><div class="svg-wrap" id="chartStatus"></div></div>
+      <div class="card"><div class="panel-title"><h2>Etapa Atual Calculada</h2><p>Onde o candidato realmente está com base no histórico de abas.</p></div><div class="svg-wrap" id="chartPipeline"></div></div>
+      <div class="card"><div class="panel-title"><h2>Status Final & Decisões</h2><p>Taxa de aprovação, reprovação e stand-by.</p></div><div class="svg-wrap" id="chartStatus"></div></div>
     </div>
   </div>
 
   <div id="tab-ops" class="tab-content">
     <div class="kpis" id="kpiDocs"></div>
     <div class="section grid-2">
-      <div class="card"><div class="panel-title"><h2>Status de Passaportes</h2><p>Prontidão legal para viagem</p></div><div class="svg-wrap" id="chartPassport"></div></div>
-      <div class="card"><div class="panel-title"><h2>Alemão por Profissão</h2><p>Qualificação linguística da base</p></div><div class="svg-wrap" id="chartGerman"></div></div>
+      <div class="card"><div class="panel-title"><h2>Auditoria de Passaportes</h2><p>Proporção de candidatos com documentação de viagem validada.</p></div><div class="svg-wrap" id="chartPassport"></div></div>
+      <div class="card"><div class="panel-title"><h2>Prontidão Linguística</h2><p>Distribuição de níveis no quadro europeu (CEFR).</p></div><div class="svg-wrap" id="chartGerman"></div></div>
     </div>
   </div>
 
   <div id="tab-match" class="tab-content">
     <div class="card section">
-      <div class="panel-title"><h2>Funil de Empregadores (Alemanha)</h2><p>Empresas sob análise e feedbacks recebidos</p></div>
+      <div class="panel-title"><h2>Pipeline de Empregadores (Alemanha)</h2><p>Volume de perfis alocados ou em entrevista por instituição.</p></div>
       <div class="svg-wrap" id="chartEmployer"></div>
     </div>
   </div>
 
   <section class="section card" style="margin-top: 24px;">
     <div class="panel-title">
-      <div><h2>Base Consolidada de Talentos</h2><p>Clique em qualquer linha para abrir a Ficha Completa (Raio-X).</p></div>
-      <div class="chip neutral" id="tableCount">0 registros</div>
+      <div><h2>Data Grid de Talentos</h2><p>Selecione um registro para abrir a central de informações (Modal CRM).</p></div>
+      <div class="chip neutral" id="tableCount" style="font-size: 12px; align-self: center;">0 registros</div>
     </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Nº</th><th>Nome</th><th>Profissão</th><th>Pipeline</th><th>Status Final</th><th>Alemão</th><th>Passaporte</th><th>Empresa (Match)</th></tr></thead>
+        <thead><tr><th>Nº Inscrição</th><th>Nome do Candidato</th><th>Profissão</th><th>Etapa Atual (Auto)</th><th>Alemão</th><th>Docs Críticos</th><th>Empregador Alvo</th></tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
     </div>
@@ -164,40 +207,63 @@
   <div class="modal-card">
     <div class="modal-header">
       <div>
-        <h2 id="m-nome">Nome do Candidato</h2>
-        <div style="color: var(--muted); font-size: 14px; margin-top: 4px;" id="m-subtitle">Profissão • Cidade</div>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+            <h2 id="m-nome">Carregando...</h2>
+            <span class="chip" id="m-pipe-badge">...</span>
+        </div>
+        <div style="color: #8ba2c2; font-size: 14px; display: flex; gap: 10px; align-items: center;">
+            <span id="m-subtitle">Profissão</span> • <span id="m-id" style="font-family: monospace; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">ID</span>
+        </div>
       </div>
       <button class="close-btn" onclick="closeModal()">×</button>
     </div>
     <div class="modal-body">
+      
+      <div class="alert-box alert-danger full-width" id="m-alert-box">
+          <div style="font-size: 20px;">⚠️</div>
+          <div>
+              <strong style="display: block; font-size: 15px; margin-bottom: 4px; color: #ffd4d4;">Pendências Críticas de Compliance</strong>
+              <div id="m-alert-text"></div>
+          </div>
+      </div>
+
       <div class="crm-section full-width">
-        <h3>Parecer do Recrutador</h3>
-        <div class="data-group"><div class="data-val" id="m-parecer">...</div></div>
-        <div style="display: flex; gap: 20px; margin-top: 16px;">
-            <div style="flex: 1;"><div class="data-label">💪 Pontos Fortes</div><div class="data-val" id="m-fortes">...</div></div>
-            <div style="flex: 1;"><div class="data-label">⚠️ Pontos de Atenção</div><div class="data-val" id="m-atencao">...</div></div>
+        <h3>Avaliação Qualitativa (Recrutamento)</h3>
+        <div class="data-group"><div class="data-val" id="m-parecer" style="font-style: italic; color: #c4d6f0;">...</div></div>
+        <div style="display: grid; gap: 20px; grid-template-columns: 1fr 1fr; margin-top: 20px;">
+            <div style="background: rgba(38,194,129,0.05); border-left: 3px solid var(--good); padding: 16px; border-radius: 0 8px 8px 0;">
+                <div class="data-label" style="color: var(--good);">💪 Principais Forças</div>
+                <div class="data-val" id="m-fortes">...</div>
+            </div>
+            <div style="background: rgba(255,181,74,0.05); border-left: 3px solid var(--warn); padding: 16px; border-radius: 0 8px 8px 0;">
+                <div class="data-label" style="color: var(--warn);">⚠️ Atenção / Riscos</div>
+                <div class="data-val" id="m-atencao">...</div>
+            </div>
         </div>
       </div>
+      
       <div class="crm-section">
-        <h3>Perfil & Família</h3>
-        <div class="data-group"><div class="data-label">Pipeline Atual</div><div class="data-val"><span class="chip neutral" id="m-pipe">...</span></div></div>
-        <div class="data-group"><div class="data-label">Estado Civil / Moradia</div><div class="data-val" id="m-civil">...</div></div>
-        <div class="data-group"><div class="data-label">Filhos</div><div class="data-val" id="m-filhos">...</div></div>
-        <div class="data-group"><div class="data-label">Organização Financeira</div><div class="data-val" id="m-financas">...</div></div>
+        <h3>Dossiê Pessoal & Estrutura</h3>
+        <div class="data-group"><div class="data-label">Status Global / Decisão</div><div class="data-val"><span id="m-status-final" class="chip">...</span></div></div>
+        <div class="data-group"><div class="data-label">Composição Familiar</div><div class="data-val" id="m-civil">...</div></div>
+        <div class="data-group"><div class="data-label">Dependentes (Filhos)</div><div class="data-val" id="m-filhos">...</div></div>
+        <div class="data-group"><div class="data-label">Preparação Financeira</div><div class="data-val" id="m-financas">...</div></div>
       </div>
+      
       <div class="crm-section">
-        <h3>Compliance & Documentos</h3>
-        <div class="data-group"><div class="data-label">Nível de Alemão</div><div class="data-val" id="m-alemao">...</div></div>
-        <div class="data-group"><div class="data-label">Passaporte</div><div class="data-val" id="m-passaporte">...</div></div>
-        <div class="data-group"><div class="data-label">Documento Profissional (COREN/CRM)</div><div class="data-val" id="m-coren">...</div></div>
-        <div class="data-group"><div class="data-label">Cidadania Europeia</div><div class="data-val" id="m-cidadania">...</div></div>
+        <h3>Auditoria Documental</h3>
+        <div class="data-group"><div class="data-label">Aferição Linguística (Alemão)</div><div class="data-val" id="m-alemao">...</div></div>
+        <div class="data-group"><div class="data-label">Passaporte e Validade</div><div class="data-val" id="m-passaporte">...</div></div>
+        <div class="data-group"><div class="data-label">Licença Profissional (Ex: COREN)</div><div class="data-val" id="m-coren">...</div></div>
+        <div class="data-group"><div class="data-label">Acesso Europeu (Cidadania)</div><div class="data-val" id="m-cidadania">...</div></div>
       </div>
+      
       <div class="crm-section full-width">
-        <h3>Matching Internacional</h3>
-        <div style="display: flex; gap: 20px;">
-            <div style="flex: 1;"><div class="data-label">Empresa / Hospital</div><div class="data-val" id="m-empresa">...</div></div>
-            <div style="flex: 1;"><div class="data-label">Feedback Empregador</div><div class="data-val" id="m-feedback">...</div></div>
-            <div style="flex: 1;"><div class="data-label">Data de Embarque Prevista</div><div class="data-val" id="m-embarque">...</div></div>
+        <h3>Logística de Matching (Alemanha)</h3>
+        <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div><div class="data-label">Instituição / Empregador</div><div class="data-val"><strong style="color: #fff;" id="m-empresa">...</strong></div></div>
+            <div><div class="data-label">Retorno / Feedback Cliente</div><div class="data-val" id="m-feedback">...</div></div>
+            <div><div class="data-label">Previsão de Embarque</div><div class="data-val" id="m-embarque">...</div></div>
         </div>
       </div>
     </div>
@@ -206,31 +272,58 @@
 
 <script>
 // ==========================================
-// LINKS DA BASE DE DADOS (OS 10 CSVs)
+// ARQUITETURA DE DADOS: 10 FONTES (CSVs)
 // ==========================================
 const SHEET_URLS = [
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1160770167&single=true&output=csv", // 1ª Etapa
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1669292883&single=true&output=csv", // 2ª Etapa
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1927634004&single=true&output=csv", // 3ª Etapa
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1143183112&single=true&output=csv", // 4ª Etapa
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1353731378&single=true&output=csv", // 5ª Etapa
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1763667024&single=true&output=csv", // 6ª Etapa
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1916623941&single=true&output=csv", // Ativos
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=493421803&single=true&output=csv", // Desistência
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1921426427&single=true&output=csv", // Base de Dados
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1768870782&single=true&output=csv"  // Empregador
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1160770167&single=true&output=csv", // 0. 1ª Etapa
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1669292883&single=true&output=csv", // 1. 2ª Etapa
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1927634004&single=true&output=csv", // 2. 3ª Etapa
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1143183112&single=true&output=csv", // 3. 4ª Etapa
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1353731378&single=true&output=csv", // 4. 5ª Etapa
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1763667024&single=true&output=csv", // 5. 6ª Etapa
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1916623941&single=true&output=csv", // 6. Ativos
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=493421803&single=true&output=csv", // 7. Desistência
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1921426427&single=true&output=csv", // 8. Base de Dados
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-v0J8KCdol7G8LxElRjpGjV6p5mdQ_s5S3ABCO380JwzYJBujICjHoqB8aq7Am9uRLQRqL7zyInP9/pub?gid=1768870782&single=true&output=csv"  // 9. Empregador
 ];
 
-let masterData = []; // O Banco de Dados Completo e Cruzado
+let masterData = []; 
 let filteredData = [];
-const PALETTE = ['#59a8ff','#7c5cff','#26c281','#ffb54a','#ff6b6b','#7dd3fc','#c084fc','#94a3b8','#f472b6','#34d399'];
+const PALETTE = ['#59a8ff','#7c5cff','#26c281','#ffb54a','#ff4747','#7dd3fc','#c084fc','#94a3b8','#f472b6','#34d399'];
 
-// Utilitários
+// Utilitários Blindados
 function normalize(val) { return (val ?? '').toString().trim(); }
+function cleanKey(val) { return normalize(val).replace(/\s+/g, ' ').trim(); } 
 function isEmpty(val) { const v = normalize(val).toLowerCase(); return !v || v === '-' || v === 'pendente' || v === '#n/a' || v === 'nan'; }
-function getVal(obj, keys) { for(let k of keys) { if(!isEmpty(obj[k])) return normalize(obj[k]); } return 'Aguardando / Não inf.'; }
 
-// Parser Inteligente de CSV (Identifica o cabeçalho real e ignora o alemão)
+function getVal(obj, keysArray) { 
+    // Passo 1: Busca por Match Exato (Evita Falso Positivo com trim())
+    for(let k of keysArray) { 
+        let searchKey = cleanKey(k).toLowerCase();
+        let exactKey = Object.keys(obj).find(ok => cleanKey(ok).toLowerCase() === searchKey);
+        if(exactKey && !isEmpty(obj[exactKey])) return normalize(obj[exactKey]); 
+    } 
+    
+    // Passo 2: Busca por Match Parcial Agressivo (Remove \n, interrogações e espaços dúbios)
+    const superClean = (str) => normalize(str).toLowerCase().replace(/[\?\!\.\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
+    for(let k of keysArray) { 
+        let searchKey = superClean(k);
+        let partialKey = Object.keys(obj).find(ok => {
+            return superClean(ok).includes(searchKey);
+        });
+        if(partialKey && !isEmpty(obj[partialKey])) return normalize(obj[partialKey]);
+    } 
+    return 'Não info.'; 
+}
+
+function showToast(msg) {
+    const t = document.getElementById('errorToast');
+    t.innerHTML = `⚠️ <strong>Aviso do Sistema:</strong><br>${msg}`;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 8000);
+}
+
+// Parser CSV 
 function parseSmartCSV(text) {
   text = text.replace(/^\uFEFF/, ''); 
   const rows = []; let row = [], cell = '', inQ = false;
@@ -243,14 +336,12 @@ function parseSmartCSV(text) {
   }
   if (cell || row.length) { row.push(cell); rows.push(row); }
 
-  // Encontra a linha que tem o "Nº de Inscrição"
-  let headerIdx = rows.findIndex(r => r.some(c => c.includes('Nº de Inscrição') || c.includes('Nº da Inscrição')));
+  let headerIdx = rows.findIndex(r => r.some(c => c.includes('Nº de Inscrição') || c.includes('Nº da Inscrição') || c.includes('ID')));
   if(headerIdx === -1) headerIdx = 0;
   
-  const headers = rows[headerIdx].map(h => h.trim());
-  
-  // Converte, ignorando a linha em alemão (que costuma ter 'Zulassungsnummer')
+  const headers = rows[headerIdx].map(h => cleanKey(h));
   const objects = [];
+  
   for(let i = headerIdx + 1; i < rows.length; i++) {
       if(rows[i].join('').trim() === '') continue;
       if(rows[i].some(c => c.includes('Zulassungsnummer') || c.includes('Datum des Interviews'))) continue;
@@ -262,35 +353,81 @@ function parseSmartCSV(text) {
   return objects;
 }
 
-// O CORAÇÃO DO CRM: Baixar e Cruzar Tudo
+// ENGINE DE MERGE & INTELIGÊNCIA DE ETAPA
 async function initCRM() {
   try {
-    const fetchPromises = SHEET_URLS.map(url => fetch(url).then(res => res.text()).catch(e => ""));
-    const csvTexts = await Promise.all(fetchPromises);
+    const fetchPromises = SHEET_URLS.map((url, idx) => 
+        fetch(url).then(res => {
+            if(!res.ok) throw new Error(`Status ${res.status}`);
+            return res.text();
+        }).catch(e => {
+            showToast(`Falha ao ler o Banco de Dados #${idx+1}. Algumas informações podem estar incompletas.`);
+            return ""; 
+        })
+    );
     
+    const csvTexts = await Promise.all(fetchPromises);
     const candidatesMap = new Map();
     
-    csvTexts.forEach(csvText => {
+    csvTexts.forEach((csvText, index) => {
         if(!csvText) return;
         const parsedData = parseSmartCSV(csvText);
         
         parsedData.forEach(row => {
-            let id = normalize(row['Nº de Inscrição'] || row['Nº da Inscrição']);
-            if(isEmpty(id)) return;
+            let id = getVal(row, ['Nº de Inscrição', 'Nº da Inscrição']);
+            if(id === 'Não info.') return;
             
-            if(!candidatesMap.has(id)) candidatesMap.set(id, { id_t4: id });
+            if(!candidatesMap.has(id)) {
+                candidatesMap.set(id, { id_t4: id, _historico_abas: [] });
+            }
+            
             let cand = candidatesMap.get(id);
+            cand._historico_abas.push(index); // Salva o rastro do candidato
             
-            // Mescla os dados. Se já existir, sobrescreve apenas se o novo não for vazio.
             Object.keys(row).forEach(k => {
-                if(!isEmpty(row[k])) cand[k] = row[k];
+                let cleanK = cleanKey(k);
+                let newVal = row[k];
+                if(!isEmpty(newVal)) {
+                    cand[cleanK] = newVal;
+                }
             });
         });
     });
     
     masterData = Array.from(candidatesMap.values());
-    filteredData = [...masterData];
     
+    // Motor Lógico da Etapa Calculada (Tratamento de Reativações)
+    masterData.forEach(c => {
+        let etapaAuto = "1ª Etapa (Triagem Inicial)";
+        
+        if (c._historico_abas.includes(9)) etapaAuto = "Matching / Empregador";
+        else if (c._historico_abas.includes(5)) etapaAuto = "6ª Etapa - Jurídico";
+        else if (c._historico_abas.includes(4)) etapaAuto = "5ª Etapa - Documentação";
+        else if (c._historico_abas.includes(3)) etapaAuto = "4ª Etapa - Análise";
+        else if (c._historico_abas.includes(2)) etapaAuto = "3ª Etapa - Avaliação";
+        else if (c._historico_abas.includes(1)) etapaAuto = "2ª Etapa - Entrevista";
+        
+        let manualStatus = getVal(c, ['STATUS PIPELINE', 'Status Final']).toLowerCase();
+
+        // 1. Prioriza "Não Qualificado" se for reprovado
+        if (c._historico_abas.includes(8) || manualStatus.includes('não qualificado') || manualStatus.includes('reprovado')) {
+            etapaAuto = "Base de Dados (Não Qualificado)";
+        }
+        // 2. Prioriza "Desistência"
+        if (c._historico_abas.includes(7) || manualStatus.includes('desist')) {
+            etapaAuto = "Desistência";
+        }
+        // 3. A Regra Dourada: Reativação
+        if (c._historico_abas.includes(6) || manualStatus === 'ativo' || manualStatus.includes('curso de alemão')) {
+            if (etapaAuto === "Desistência" || etapaAuto === "Base de Dados (Não Qualificado)" || etapaAuto === "1ª Etapa (Triagem Inicial)") {
+                etapaAuto = "Ativos / Em Preparação";
+            }
+        }
+
+        c.etapa_calculada = etapaAuto;
+    });
+
+    filteredData = [...masterData];
     buildFilters();
     renderAll();
     
@@ -298,17 +435,29 @@ async function initCRM() {
     document.getElementById('mainContent').style.display = 'block';
 
   } catch(e) {
-      document.getElementById('loadingText').innerHTML = "❌ Erro crítico ao conectar com o Google Sheets.";
+      document.getElementById('loadingText').innerHTML = "❌ Fatal Error: " + e.message;
       console.error(e);
   }
 }
 
-// Renderização Gráfica
-function groupCount(data, keyChoices) {
+// RENDERIZAÇÃO & UI
+function getChipClass(val) {
+    const v = val.toLowerCase();
+    if (v.includes('aprovado') || v.includes('forte') || v.includes('classificado') || v === 'b2' || v === 'c1' || v === 'c2' || v.includes('curso') || v.includes('ativo') || v.includes('matching')) return 'good';
+    if (v.includes('reprovado') || v.includes('fraco') || v.includes('desist') || v === 'a0' || v === 'a1' || v.includes('não qualificado')) return 'bad';
+    if (v.includes('aguard') || v.includes('interm') || v === 'a2' || v === 'b1' || v.includes('triagem') || v.includes('etapa')) return 'warn';
+    return 'neutral';
+}
+
+function groupCount(data, keyChoices, isAutoCalculated = false) {
   const map = new Map();
   data.forEach(r => { 
-      let k = 'Não informado';
-      for(let key of keyChoices) { if(!isEmpty(r[key])) { k = normalize(r[key]); break; } }
+      let k = 'Não info.';
+      if (isAutoCalculated) {
+          k = r.etapa_calculada;
+      } else {
+          for(let key of keyChoices) { if(!isEmpty(r[key])) { k = normalize(r[key]); break; } }
+      }
       map.set(k, (map.get(k) || 0) + 1); 
   });
   return [...map.entries()].sort((a,b) => b[1]-a[1]);
@@ -316,116 +465,202 @@ function groupCount(data, keyChoices) {
 
 function drawBar(targetId, dataArr) {
   const t = document.getElementById(targetId);
-  if(!dataArr.length) { t.innerHTML = '<div class="muted">Sem dados</div>'; return; }
+  if(!dataArr.length) { t.innerHTML = '<div style="color:var(--muted); padding: 20px;">Sem dados para gerar gráfico.</div>'; return; }
   const max = Math.max(...dataArr.map(d => d[1]));
-  let html = `<svg viewBox="0 0 700 ${dataArr.length * 40}" width="100%" height="100%">`;
+  let html = `<svg viewBox="0 0 700 ${dataArr.length * 42}" width="100%" height="100%">`;
   dataArr.forEach((d, i) => {
       const w = (d[1]/max)*450;
       html += `
-        <text x="0" y="${i*40 + 15}" fill="#b9cde9" font-size="12">${d[0].substring(0,30)}</text>
-        <rect x="200" y="${i*40}" width="450" height="20" rx="4" fill="rgba(255,255,255,0.05)"></rect>
-        <rect x="200" y="${i*40}" width="${w||2}" height="20" rx="4" fill="${PALETTE[i%PALETTE.length]}"></rect>
-        <text x="${200 + w + 10}" y="${i*40 + 15}" fill="#fff" font-size="12" font-weight="bold">${d[1]}</text>
+        <text x="0" y="${i*42 + 16}" fill="#a8c2e8" font-size="13">${d[0].substring(0,34)}</text>
+        <rect x="250" y="${i*42}" width="400" height="22" rx="4" fill="rgba(255,255,255,0.03)"></rect>
+        <rect x="250" y="${i*42}" width="${w||2}" height="22" rx="4" fill="${PALETTE[i%PALETTE.length]}"></rect>
+        <text x="${250 + w + 12}" y="${i*42 + 16}" fill="#fff" font-size="13" font-weight="bold">${d[1]}</text>
       `;
   });
   t.innerHTML = html + '</svg>';
 }
 
 function renderAll() {
-  // KPIs Gerais
   const total = filteredData.length;
-  const aprovados = filteredData.filter(c => getVal(c, ['Status Final']).toLowerCase().includes('aprovado')).length;
-  const passaportes = filteredData.filter(c => !isEmpty(c['Número do Passaporte'])).length;
   
+  // KPIs Executivos
+  const aprovados = filteredData.filter(c => getVal(c, ['Status Final']).toLowerCase().includes('aprovado')).length;
   document.getElementById('kpiGrid').innerHTML = `
-    <div class="card kpi"><div class="label">Total na Base</div><div class="value">${total}</div></div>
-    <div class="card kpi"><div class="label">Aprovados Globais</div><div class="value">${aprovados}</div></div>
-    <div class="card kpi"><div class="label">Com Passaporte Físico</div><div class="value">${passaportes}</div></div>
+    <div class="card kpi"><div class="label">Volume Filtrado</div><div class="value">${total}</div></div>
+    <div class="card kpi"><div class="label">Aprovações (Global)</div><div class="value" style="color: #6df0b1;">${aprovados}</div></div>
+    <div class="card kpi"><div class="label">Taxa de Conversão</div><div class="value">${total ? Math.round((aprovados/total)*100) : 0}%</div></div>
+  `;
+  
+  // KPIs Docs Corrigidos
+  const comPassaporte = filteredData.filter(c => getVal(c, ['Número do Passaporte']) !== 'Não info.').length;
+  const docsPro = filteredData.filter(c => getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']) !== 'Não info.').length;
+  document.getElementById('kpiDocs').innerHTML = `
+    <div class="card kpi"><div class="label">Passaportes Registrados</div><div class="value">${comPassaporte}</div></div>
+    <div class="card kpi"><div class="label">Licenças Físicas (COREN)</div><div class="value">${docsPro}</div></div>
   `;
   
   // Gráficos
-  drawBar('chartPipeline', groupCount(filteredData, ['STATUS PIPELINE']));
+  drawBar('chartPipeline', groupCount(filteredData, [], true));
   drawBar('chartStatus', groupCount(filteredData, ['Status Final', 'Resultado da entrevista']));
-  drawBar('chartPassport', groupCount(filteredData, ['Validade do passaporte', 'Número do Passaporte']));
-  drawBar('chartGerman', groupCount(filteredData, ['Língua alemã', 'Nível na língua alemã?']));
-  drawBar('chartEmployer', groupCount(filteredData, ['Empresa', 'Feedback ']).filter(d => d[0] !== 'Aguardando / Não inf.'));
+  
+  // Lógica do Gráfico de Passaporte Binária
+  drawBar('chartPassport', [
+      ['Documento Físico Validado', comPassaporte],
+      ['Pendente / Sem Info', total - comPassaporte]
+  ]);
+  
+  drawBar('chartGerman', groupCount(filteredData, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã?']));
+  drawBar('chartEmployer', groupCount(filteredData, ['Empresa']).filter(d => d[0] !== 'Não info.'));
   
   // Tabela
-  document.getElementById('tableCount').textContent = total + ' registros';
+  document.getElementById('tableCount').textContent = total + ' Registros Encontrados';
+  let docsWarningsCount = 0;
+
   document.getElementById('tableBody').innerHTML = filteredData.map(c => {
-      const nome = getVal(c, ['Nome completo', 'Nome completo do candidato']);
+      const nome = getVal(c, ['Nome completo', 'Nome completo do candidato', 'Nome']);
+      const alemao = getVal(c, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã?']);
+      const pipeAuto = c.etapa_calculada;
+      
+      let docStatus = '✅ OK';
+      if(getVal(c, ['Número do Passaporte']) === 'Não info.') { docStatus = '⚠️ Faltam Docs'; docsWarningsCount++; }
+
       return `<tr onclick="openModal('${c.id_t4}')">
-        <td>${c.id_t4}</td>
-        <td><strong>${nome}</strong></td>
+        <td style="font-family: monospace; color: #8ba2c2;">${c.id_t4}</td>
+        <td><strong style="color: #fff;">${nome}</strong></td>
         <td>${getVal(c, ['Profissão principal', 'Profissão'])}</td>
-        <td><span class="chip neutral">${getVal(c, ['STATUS PIPELINE'])}</span></td>
-        <td><span class="chip ${getVal(c,['Status Final']).includes('Aprovado')?'good':'neutral'}">${getVal(c, ['Status Final'])}</span></td>
-        <td>${getVal(c, ['Língua alemã'])}</td>
-        <td>${isEmpty(c['Número do Passaporte']) ? '❌ Não' : '✅ Sim'}</td>
+        <td><span class="chip ${getChipClass(pipeAuto)}">${pipeAuto}</span></td>
+        <td><span class="chip ${getChipClass(alemao)}">${alemao}</span></td>
+        <td style="color: ${docStatus.includes('⚠️') ? '#ff9999' : '#6df0b1'};">${docStatus}</td>
         <td>${getVal(c, ['Empresa'])}</td>
       </tr>`;
   }).join('');
+
+  document.getElementById('countDocs').textContent = `${docsWarningsCount} Alertas`;
 }
 
-// Lógica do Modal CRM
+// LOGICA DO MODAL (Raio-X)
 function openModal(id) {
     const c = masterData.find(x => x.id_t4 === id);
     if(!c) return;
     
     document.getElementById('m-nome').textContent = getVal(c, ['Nome completo', 'Nome completo do candidato']);
+    document.getElementById('m-id').textContent = c.id_t4;
     document.getElementById('m-subtitle').textContent = `${getVal(c, ['Profissão principal', 'Profissão'])} • ${getVal(c, ['Cidade atual'])}`;
     
-    document.getElementById('m-parecer').textContent = getVal(c, ['Análise do recrutador']);
+    const pipeAuto = c.etapa_calculada;
+    const pipeBadge = document.getElementById('m-pipe-badge');
+    pipeBadge.textContent = pipeAuto;
+    pipeBadge.className = `chip ${getChipClass(pipeAuto)}`;
+
+    // Regras de Alerta (Compliance)
+    const alertas = [];
+    if(getVal(c, ['Número do Passaporte']) === 'Não info.') alertas.push("Candidato não possui número de passaporte cadastrado.");
+    if(getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']) === 'Não info.') alertas.push("Registro profissional físico pendente.");
+    
+    const alertBox = document.getElementById('m-alert-box');
+    if(alertas.length > 0) {
+        document.getElementById('m-alert-text').innerHTML = `<ul>${alertas.map(a => `<li style="margin-bottom: 4px;">${a}</li>`).join('')}</ul>`;
+        alertBox.classList.add('active');
+    } else {
+        alertBox.classList.remove('active');
+    }
+
+    // Buscas precisas via array (agora blindadas pelo motor superClean)
+    document.getElementById('m-parecer').textContent = getVal(c, ['Análise do recrutador', 'Resumo profissional']);
     document.getElementById('m-fortes').textContent = getVal(c, ['Pontos fortes']);
     document.getElementById('m-atencao').textContent = getVal(c, ['Pontos de atenção']);
     
-    document.getElementById('m-pipe').textContent = getVal(c, ['STATUS PIPELINE']);
-    document.getElementById('m-civil').textContent = `${getVal(c, ['Estado civil'])} - Mora com: ${getVal(c, ['Com quem você mora? '])}`;
-    document.getElementById('m-filhos').textContent = `${getVal(c, ['Filho '])} (Idades: ${getVal(c, ['Idade Filho'])})`;
-    document.getElementById('m-financas').textContent = getVal(c, ['Como é sua organização financeira?\nTem reserva?\nComo será o preparo para Alemanha?']);
+    const statusFinal = getVal(c, ['Status Final', 'Resultado da entrevista']);
+    document.getElementById('m-status-final').textContent = statusFinal;
+    document.getElementById('m-status-final').className = `chip ${getChipClass(statusFinal)}`;
+
+    document.getElementById('m-civil').textContent = `${getVal(c, ['Estado civil'])} - Mora com: ${getVal(c, ['Com quem você mora?'])}`;
+    document.getElementById('m-filhos').textContent = `${getVal(c, ['Filho'])} (Idades: ${getVal(c, ['Idade Filho'])})`;
+    document.getElementById('m-financas').textContent = getVal(c, ['Como é sua organização financeira', 'Tem reserva']);
     
-    document.getElementById('m-alemao').textContent = getVal(c, ['Língua alemã', 'Nível na língua alemã?']);
-    document.getElementById('m-passaporte').textContent = isEmpty(c['Número do Passaporte']) ? 'Sem passaporte registrado' : `Nº ${c['Número do Passaporte']} (Validade: ${c['Validade do passaporte']})`;
-    document.getElementById('m-coren').textContent = getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']);
+    document.getElementById('m-alemao').textContent = getVal(c, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã']);
+    document.getElementById('m-passaporte').textContent = getVal(c, ['Número do Passaporte']) === 'Não info.' ? 'Pendente' : `Nº ${getVal(c, ['Número do Passaporte'])} (Válido: ${getVal(c, ['Validade do passaporte'])})`;
+    document.getElementById('m-coren').textContent = getVal(c, ['Documento Profissional', 'Documento Profissional (COREN, CRM, CREA, outro)']);
     document.getElementById('m-cidadania').textContent = getVal(c, ['Cidadania Europeia']);
     
     document.getElementById('m-empresa').textContent = getVal(c, ['Empresa']);
-    document.getElementById('m-feedback').textContent = getVal(c, ['Feedback ']);
+    document.getElementById('m-feedback').textContent = getVal(c, ['Feedback']);
     document.getElementById('m-embarque').textContent = getVal(c, ['Data prevista para ir à Alemanha', 'Data prevista mudança']);
 
     document.getElementById('crmModal').classList.add('active');
 }
 function closeModal() { document.getElementById('crmModal').classList.remove('active'); }
 
-// Filtros & Tabs
-function buildFilters() {
-    const pSel = document.getElementById('pipelineFilter');
-    pSel.innerHTML = '<option value="Todos">Todos os Pipelines</option>' + groupCount(masterData, ['STATUS PIPELINE']).map(k => `<option>${k[0]}</option>`).join('');
+// CONTROLES DE FILTRO AVANÇADO
+function popSelect(id, keyChoices, isAutoCalculated = false) {
+    const sel = document.getElementById(id);
+    const groups = groupCount(masterData, keyChoices, isAutoCalculated);
+    sel.innerHTML = '<option value="Todos">Todas as opções</option>' + groups.map(k => `<option value="${k[0]}">${k[0]}</option>`).join('');
 }
+
+function buildFilters() {
+    popSelect('pipelineFilter', [], true); 
+    popSelect('germanFilter', ['Nível de alemão', 'Língua alemã']);
+    popSelect('professionFilter', ['Profissão principal', 'Profissão']);
+    popSelect('statusFilter', ['Status Final', 'Resultado da entrevista']);
+}
+
 function applyFilters() {
     const q = document.getElementById('searchInput').value.toLowerCase();
-    const p = document.getElementById('pipelineFilter').value;
+    const pPipe = document.getElementById('pipelineFilter').value;
+    const pGer = document.getElementById('germanFilter').value;
+    const pProf = document.getElementById('professionFilter').value;
+    const pStat = document.getElementById('statusFilter').value;
     
     filteredData = masterData.filter(c => {
         const textStr = Object.values(c).join(' ').toLowerCase();
         const mQ = !q || textStr.includes(q);
-        const mP = p === 'Todos' || getVal(c, ['STATUS PIPELINE']) === p;
-        return mQ && mP;
+        const mPipe = pPipe === 'Todos' || c.etapa_calculada === pPipe;
+        const mGer = pGer === 'Todos' || getVal(c, ['Nível de alemão', 'Língua alemã']) === pGer;
+        const mProf = pProf === 'Todos' || getVal(c, ['Profissão principal', 'Profissão']) === pProf;
+        const mStat = pStat === 'Todos' || getVal(c, ['Status Final', 'Resultado da entrevista']) === pStat;
+        return mQ && mPipe && mGer && mProf && mStat;
     });
     renderAll();
 }
-document.getElementById('searchInput').addEventListener('input', applyFilters);
-document.getElementById('pipelineFilter').addEventListener('change', applyFilters);
-document.getElementById('resetFilters').addEventListener('click', () => { document.getElementById('searchInput').value=''; document.getElementById('pipelineFilter').value='Todos'; applyFilters();});
 
+document.querySelectorAll('.control, .search').forEach(el => el.addEventListener('input', applyFilters));
+document.getElementById('resetFilters').addEventListener('click', () => { 
+    document.querySelectorAll('.control, .search').forEach(el => el.value = el.id === 'searchInput' ? '' : 'Todos');
+    applyFilters();
+});
+
+// EXPORTAÇÃO CSV
+document.getElementById('btnExport').addEventListener('click', () => {
+    if(!filteredData.length) { showToast("Não há dados filtrados para exportar."); return; }
+    
+    const exportKeys = ['Nº de Inscrição', 'Nome completo', 'Profissão principal', 'Etapa Atual Calculada', 'Nível de alemão', 'Status Final', 'Empresa', 'Número do Passaporte'];
+    
+    let csv = exportKeys.join(',') + '\n';
+    filteredData.forEach(c => {
+        let row = exportKeys.map(k => {
+            let v = k === 'Etapa Atual Calculada' ? c.etapa_calculada : getVal(c, [k]);
+            v = v.replace(/"/g, '""');
+            return `"${v}"`;
+        });
+        csv += row.join(',') + '\n';
+    });
+    
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = `Talents4_Export_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+});
+
+// NAVEGAÇÃO DE TABS
 function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    event.target.classList.add('active');
+    event.currentTarget.classList.add('active');
     document.getElementById(tabId).classList.add('active');
 }
 
-// Start
+// INICIA O MOTOR DO CRM
 initCRM();
 </script>
 </body>
