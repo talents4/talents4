@@ -150,6 +150,10 @@ select.control option { background: var(--bg2); color: var(--text); }
 .btn-ghost { background: transparent; border-color: var(--line2); color: var(--muted); }
 .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--text); }
 .btn-export { background: rgba(34,201,122,0.08); color: var(--good); border-color: rgba(34,201,122,0.25); }
+.btn-refresh { background: rgba(79,163,247,0.08); color: var(--accent); border-color: rgba(79,163,247,0.25); }
+.btn-refresh:hover { background: rgba(79,163,247,0.16); color: #fff; }
+.btn-refresh.spinning svg { animation: spin 0.8s linear infinite; }
+.btn-refresh.cooldown { opacity: 0.5; cursor: not-allowed; }
 .btn-export:hover { background: rgba(34,201,122,0.16); color: #fff; }
 
 /* ── Tabs ── */
@@ -218,21 +222,23 @@ select.control option { background: var(--bg2); color: var(--text); }
 .sem-dot.warn  { background: #f59e0b; box-shadow: 0 0 5px rgba(245,158,11,0.6); }
 .sem-dot.bad   { background: #f04747; box-shadow: 0 0 5px rgba(240,71,71,0.7); animation: blink-bad 1.4s ease-in-out infinite; }
 @keyframes blink-bad { 0%,100%{opacity:1} 50%{opacity:0.45} }
-.sem-dot[title]:hover::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
+.sem-dot { position: relative; }
+.sem-dot[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: fixed;
   background: rgba(6,14,26,0.97);
-  border: 1px solid var(--line2);
+  border: 1px solid rgba(79,163,247,0.3);
   color: #e8f2ff;
   font-size: 11px;
   white-space: nowrap;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 7px;
   pointer-events: none;
-  z-index: 100;
+  z-index: 9999;
+  top: var(--tip-y, 0);
+  left: var(--tip-x, 0);
+  transform: translate(-50%, -130%);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
 }
 
 /* ── ALERTA PASSAPORTE (NOVO) ── */
@@ -452,6 +458,10 @@ tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: now
         <strong>Motor de Busca Avançado</strong>
         <div class="filter-actions">
           <button class="btn btn-ghost" id="resetFilters">↺ Limpar</button>
+          <button class="btn btn-refresh" id="btnRefresh">
+            <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span id="refreshLabel">Atualizar</span>
+          </button>
           <button class="btn btn-export" id="btnExport">
             <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg> Exportar Base
           </button>
@@ -804,7 +814,8 @@ function buildSemaforo(c) {
 
 function semaforoHTML(dots) {
   return `<div class="compliance-semaforo">${dots.map(d =>
-    `<div class="sem-dot ${d.cls}" title="${d.title}"></div>`
+    `<div class="sem-dot ${d.cls}" data-tip="${d.title}"
+      onmousemove="this.style.setProperty('--tip-x',event.clientX+'px');this.style.setProperty('--tip-y',event.clientY+'px')"></div>`
   ).join('')}</div>`;
 }
 
@@ -1190,7 +1201,8 @@ function openModal(id) {
   // Semáforo no modal
   const dots = buildSemaforo(c);
   document.getElementById('m-semaforo-modal').innerHTML = dots.map(d =>
-    `<div class="sem-dot ${d.cls}" title="${d.title}" style="width:11px;height:11px"></div>`
+    `<div class="sem-dot ${d.cls}" data-tip="${d.title}" style="width:11px;height:11px"
+      onmousemove="this.style.setProperty('--tip-x',event.clientX+'px');this.style.setProperty('--tip-y',event.clientY+'px')"></div>`
   ).join('');
 
   // Alertas de compliance
@@ -1341,6 +1353,116 @@ document.getElementById('resetFilters').onclick=()=>{
 // ══════════════════════════════════════════
 //  EXPORT
 // ══════════════════════════════════════════
+// ── REFRESH BUTTON ──────────────────────────────
+let refreshCooldown = false;
+document.getElementById('btnRefresh').onclick = async () => {
+  if(refreshCooldown) return;
+  const btn = document.getElementById('btnRefresh');
+  const lbl = document.getElementById('refreshLabel');
+  btn.classList.add('spinning');
+  lbl.textContent = 'Buscando...';
+  refreshCooldown = true;
+
+  try {
+    const texts = await Promise.all(
+      SHEET_URLS.map((url, idx) =>
+        fetch(url, {cache:'no-store'}).then(r => { if(!r.ok) throw new Error(); return r.text(); })
+          .catch(() => '')
+      )
+    );
+
+    // Re-seed fallback first
+    masterData = [];
+    filteredData = [];
+    const map = new Map();
+    parseCSV(FALLBACK_CSV).forEach(row => {
+      const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+      if(!id||!id.trim()||id.toLowerCase()==='não info.') return;
+      if(!map.has(id)) map.set(id, { _id:id, _abas:[] });
+      const c = map.get(id);
+      Object.keys(row).forEach(k => { const ck=cleanKey(k); if(!isEmpty(row[k])) c[ck]=row[k]; });
+    });
+
+    // Overlay with live data
+    texts.forEach((text, sheetIdx) => {
+      if(!text||!text.trim()) return;
+      parseCSV(text).forEach(row => {
+        const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+        if(!id||id.toLowerCase()==='não info.') return;
+        if(!map.has(id)) map.set(id, { _id:id, _abas:[] });
+        const c = map.get(id);
+        c._abas.push(sheetIdx);
+        Object.keys(row).forEach(k => { const ck=cleanKey(k); if(!isEmpty(row[k])) c[ck]=row[k]; });
+      });
+    });
+
+    masterData = [...map.values()].map(c => {
+      c._etapa = getVal(c, ['STATUS PIPELINE']) || 'Não Lançado';
+      c._score = candidateScore(c);
+      return c;
+    });
+    filteredData = [...masterData];
+    buildFilters();
+    renderAll();
+    lbl.textContent = '✓ Atualizado';
+    btn.classList.remove('spinning');
+
+    // Cooldown 30s (Google cache)
+    let secs = 30;
+    const timer = setInterval(() => {
+      secs--;
+      lbl.textContent = secs > 0 ? `Aguarde ${secs}s` : 'Atualizar';
+      if(secs <= 0) { clearInterval(timer); refreshCooldown = false; btn.classList.remove('cooldown'); }
+    }, 1000);
+    btn.classList.add('cooldown');
+
+  } catch(e) {
+    lbl.textContent = 'Erro — tente novamente';
+    btn.classList.remove('spinning');
+    setTimeout(() => { lbl.textContent = 'Atualizar'; refreshCooldown = false; }, 3000);
+  }
+};
+
+// ── AUTO-REFRESH a cada 90s ──────────────────────
+const AUTO_INTERVAL = 90; // segundos
+let autoSecsLeft = AUTO_INTERVAL;
+const autoIndicator = document.createElement('div');
+autoIndicator.id = 'autoRefreshIndicator';
+autoIndicator.style.cssText = 'font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;padding-left:4px;user-select:none;';
+autoIndicator.innerHTML = `<div id="autoRing" style="width:14px;height:14px;flex-shrink:0;position:relative">
+  <svg viewBox="0 0 14 14" width="14" height="14" style="transform:rotate(-90deg)">
+    <circle cx="7" cy="7" r="5.5" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+    <circle id="autoArc" cx="7" cy="7" r="5.5" fill="none" stroke="#4fa3f7" stroke-width="2"
+      stroke-dasharray="34.6" stroke-dashoffset="0" stroke-linecap="round"
+      style="transition:stroke-dashoffset 1s linear"/>
+  </svg>
+</div><span id="autoLabel">auto em ${AUTO_INTERVAL}s</span>`;
+
+// Insert after refresh button
+document.addEventListener('DOMContentLoaded', () => {});
+const filterActions = document.querySelector('.filter-actions');
+if(filterActions) filterActions.prepend(autoIndicator);
+
+const arc = document.getElementById('autoArc');
+const autoLabel = document.getElementById('autoLabel');
+const circumference = 34.6;
+
+function updateAutoRing() {
+  const pct = autoSecsLeft / AUTO_INTERVAL;
+  if(arc) arc.style.strokeDashoffset = circumference * (1 - pct);
+  if(autoLabel) autoLabel.textContent = autoSecsLeft <= 0 ? 'atualizando...' : `auto em ${autoSecsLeft}s`;
+}
+
+setInterval(() => {
+  autoSecsLeft--;
+  updateAutoRing();
+  if(autoSecsLeft <= 0) {
+    autoSecsLeft = AUTO_INTERVAL;
+    if(!refreshCooldown) document.getElementById('btnRefresh').click();
+  }
+}, 1000);
+updateAutoRing();
+
 document.getElementById('btnExport').onclick=()=>{
   if(!filteredData.length){showToast('Nenhum dado para exportar.');return;}
   const cols=['_id','Nome completo','Profissão principal','_etapa','Nível de alemão','Status Final','Empresa','Número do Passaporte','Validade do passaporte','E-mail','Telefone','_score'];
