@@ -30,8 +30,6 @@
   .control, .search, button { width:100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); color: var(--text); padding: 12px 14px; font-size: 14px; transition: border 0.2s; }
   .control:focus, .search:focus { outline: none; border-color: var(--accent); background: rgba(255,255,255,0.06); }
   .search::placeholder { color: #6b82a3; }
-  
-  /* CORREÇÃO DO BUG DOS FILTROS (Fundo escuro nas opções) */
   select.control option { background-color: var(--bg-2); color: var(--text); }
   
   /* Buttons */
@@ -66,8 +64,8 @@
   .table-wrap { overflow:auto; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); }
   table { width:100%; border-collapse: collapse; min-width: 1200px; table-layout: fixed; }
   thead th { position: sticky; top: 0; background: #0c182c; text-align:left; font-size: 12px; color: #a8c2e8; text-transform: uppercase; padding: 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 2; }
-  tbody td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #d0def2; }
-  tbody tr:hover { background: rgba(255,255,255,0.06); }
+  tbody td { padding: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #d0def2; transition: 0.2s;}
+  tbody tr:hover td { background: rgba(89,168,255,0.08); color: #fff; }
   
   /* Chips / Tags */
   .chip { display:inline-flex; padding: 6px 10px; border-radius: 6px; border:1px solid rgba(255,255,255,0.08); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
@@ -76,36 +74,47 @@
   .chip.bad { background: rgba(255,71,71,0.15); color: #ff9999; border-color: rgba(255,71,71,0.3); }
   .chip.neutral { background: rgba(89,168,255,0.10); color: #a1c9ff; }
 
-  /* Modal CRM (Raio-X) */
+  /* Modal CRM Dinâmico (Raio-X) */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;}
   .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
-  .modal-card { background: var(--bg-2); width: 100%; max-width: 1100px; max-height: 90vh; border-radius: 20px; border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6);}
-  .modal-header { padding: 24px 30px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: flex-start; background: #081221;}
-  .modal-header h2 { margin: 0; font-size: 26px; color: #fff; }
-  .close-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+  .modal-card { background: var(--bg-2); width: 100%; max-width: 1200px; max-height: 92vh; border-radius: 20px; border: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6);}
+  .modal-header { padding: 24px 30px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: flex-start; background: #081221; flex-shrink: 0;}
+  .modal-header h2 { margin: 0 0 6px 0; font-size: 28px; color: #fff; }
+  .close-btn { background: rgba(255,255,255,0.05); border: none; color: #fff; width: 44px; height: 44px; border-radius: 50%; font-size: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
   .close-btn:hover { background: rgba(255,71,71,0.2); color: var(--bad); }
-  .modal-body { padding: 30px; overflow-y: auto; display: grid; gap: 24px; grid-template-columns: 1fr 1fr; }
-  .crm-section { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 16px; }
-  .crm-section h3 { margin: 0 0 16px 0; font-size: 14px; color: #8ba2c2; text-transform: uppercase; letter-spacing: .08em; border-bottom: 1px solid var(--line); padding-bottom: 10px;}
-  .data-group { margin-bottom: 16px; }
-  .data-label { font-size: 12px; color: #6b82a3; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .data-val { font-size: 15px; color: #edf4ff; line-height: 1.6;}
-  .full-width { grid-column: 1 / -1; }
   
-  /* Alerts */
-  .alert-box { padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; display: none; font-size: 14px; font-weight: 500; }
+  /* Área de Rolagem do Modal */
+  .modal-scroll { padding: 30px; overflow-y: auto; display: flex; flex-direction: column; gap: 32px; }
+  
+  /* Alertas */
+  .alert-box { padding: 16px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: none;}
   .alert-box.active { display: flex; align-items: flex-start; gap: 12px; }
   .alert-danger { background: rgba(255,71,71,0.1); border: 1px solid rgba(255,71,71,0.3); color: #ffb1b1; }
   
-  /* Error Toast */
-  #errorToast { position: fixed; bottom: 20px; right: 20px; background: rgba(255,71,71,0.9); color: #fff; padding: 16px 24px; border-radius: 12px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; display: none; max-width: 400px; }
+  /* Grid Dinâmico Inteligente por Categoria */
+  .category-section { display: flex; flex-direction: column; gap: 16px; animation: fadeIn 0.5s ease; }
+  .category-title { font-size: 16px; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--line); padding-bottom: 8px; display: flex; align-items: center; gap: 8px;}
+  
+  .dynamic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .dynamic-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 18px; border-radius: 12px; transition: 0.2s;}
+  .dynamic-card:hover { background: rgba(255,255,255,0.04); border-color: rgba(89,168,255,0.3); }
+  
+  /* O Truque do Auto-Resize para textos longos */
+  .dynamic-card.full-width { grid-column: 1 / -1; }
+  
+  .d-label { font-size: 12px; color: #8ba2c2; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;}
+  .d-val { font-size: 14px; color: #edf4ff; line-height: 1.6; word-wrap: break-word; white-space: pre-wrap;} /* pre-wrap respeita parágrafos \n */
+  
+  /* Link em formato de botão */
+  .link-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(89,168,255,0.15); color: #82bfff; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; border: 1px solid rgba(89,168,255,0.2); transition: 0.2s;}
+  .link-btn:hover { background: rgba(89,168,255,0.3); color: #fff;}
 
-  /* Loading */
+  /* Error Toast & Loading */
+  #errorToast { position: fixed; bottom: 20px; right: 20px; background: rgba(255,71,71,0.9); color: #fff; padding: 16px 24px; border-radius: 12px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; display: none; max-width: 400px; }
   #loadingOverlay { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;}
   .spinner { border: 4px solid rgba(255,255,255,0.1); border-left-color: var(--accent); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
   @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } .modal-body { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -125,7 +134,7 @@
     <div class="hero-brand">
       <div class="hero-brand-kicker">Talents4</div>
       <h1>Inteligência de Expatriação & CRM</h1>
-      <p>Base consolidada em tempo real com motor de regras e compliance legal ativo.</p>
+      <p>Clique em qualquer candidato na tabela abaixo para abrir seu dossiê completo (Categorizado automaticamente).</p>
     </div>
     
     <div class="filter-panel">
@@ -198,7 +207,7 @@
 
   <section class="section card" style="margin-top: 24px;">
     <div class="panel-title">
-      <div><h2>Data Grid de Talentos</h2><p>Selecione um registro para abrir a central de informações (Modal CRM).</p></div>
+      <div><h2>Data Grid de Talentos</h2><p>Clique em uma linha para abrir o Dossiê Inteligente com categorização automática.</p></div>
       <div class="chip neutral" id="tableCount" style="font-size: 12px; align-self: center;">0 registros</div>
     </div>
     <div class="table-wrap">
@@ -219,61 +228,23 @@
             <span class="chip" id="m-pipe-badge">...</span>
         </div>
         <div style="color: #8ba2c2; font-size: 14px; display: flex; gap: 10px; align-items: center;">
-            <span id="m-subtitle">Profissão</span> • <span id="m-id" style="font-family: monospace; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">ID</span>
+            <span id="m-subtitle">Profissão e Cidade</span> • <span id="m-id" style="font-family: monospace; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px;">ID</span>
         </div>
       </div>
       <button class="close-btn" onclick="closeModal()">×</button>
     </div>
-    <div class="modal-body">
-      
+    
+    <div class="modal-scroll">
       <div class="alert-box alert-danger full-width" id="m-alert-box">
           <div style="font-size: 20px;">⚠️</div>
           <div>
-              <strong style="display: block; font-size: 15px; margin-bottom: 4px; color: #ffd4d4;">Pendências Críticas de Compliance</strong>
+              <strong style="display: block; font-size: 15px; margin-bottom: 4px; color: #ffd4d4;">Atenção: Pendências de Compliance</strong>
               <div id="m-alert-text"></div>
           </div>
       </div>
-
-      <div class="crm-section full-width">
-        <h3>Avaliação Qualitativa (Recrutamento)</h3>
-        <div class="data-group"><div class="data-val" id="m-parecer" style="font-style: italic; color: #c4d6f0;">...</div></div>
-        <div style="display: grid; gap: 20px; grid-template-columns: 1fr 1fr; margin-top: 20px;">
-            <div style="background: rgba(38,194,129,0.05); border-left: 3px solid var(--good); padding: 16px; border-radius: 0 8px 8px 0;">
-                <div class="data-label" style="color: var(--good);">💪 Principais Forças</div>
-                <div class="data-val" id="m-fortes">...</div>
-            </div>
-            <div style="background: rgba(255,181,74,0.05); border-left: 3px solid var(--warn); padding: 16px; border-radius: 0 8px 8px 0;">
-                <div class="data-label" style="color: var(--warn);">⚠️ Atenção / Riscos</div>
-                <div class="data-val" id="m-atencao">...</div>
-            </div>
-        </div>
-      </div>
       
-      <div class="crm-section">
-        <h3>Dossiê Pessoal & Estrutura</h3>
-        <div class="data-group"><div class="data-label">Status Global / Decisão</div><div class="data-val"><span id="m-status-final" class="chip">...</span></div></div>
-        <div class="data-group"><div class="data-label">Idade</div><div class="data-val" id="m-idade">...</div></div>
-        <div class="data-group"><div class="data-label">Composição Familiar</div><div class="data-val" id="m-civil">...</div></div>
-        <div class="data-group"><div class="data-label">Dependentes (Filhos)</div><div class="data-val" id="m-filhos">...</div></div>
-        <div class="data-group"><div class="data-label">Preparação Financeira</div><div class="data-val" id="m-financas">...</div></div>
-      </div>
-      
-      <div class="crm-section">
-        <h3>Auditoria Documental</h3>
-        <div class="data-group"><div class="data-label">Aferição Linguística (Alemão)</div><div class="data-val" id="m-alemao">...</div></div>
-        <div class="data-group"><div class="data-label">Passaporte e Validade</div><div class="data-val" id="m-passaporte">...</div></div>
-        <div class="data-group"><div class="data-label">Licença Profissional (Ex: COREN)</div><div class="data-val" id="m-coren">...</div></div>
-        <div class="data-group"><div class="data-label">Acesso Europeu (Cidadania)</div><div class="data-val" id="m-cidadania">...</div></div>
-      </div>
-      
-      <div class="crm-section full-width">
-        <h3>Logística de Matching (Alemanha)</h3>
-        <div style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-            <div><div class="data-label">Instituição / Empregador</div><div class="data-val"><strong style="color: #fff;" id="m-empresa">...</strong></div></div>
-            <div><div class="data-label">Retorno / Feedback Cliente</div><div class="data-val" id="m-feedback">...</div></div>
-            <div><div class="data-label">Previsão de Embarque</div><div class="data-val" id="m-embarque">...</div></div>
-        </div>
-      </div>
+      <div id="m-dynamic-container" style="display: flex; flex-direction: column; gap: 32px;">
+          </div>
     </div>
   </div>
 </div>
@@ -310,14 +281,10 @@ function getVal(obj, keysArray) {
         let exactKey = Object.keys(obj).find(ok => cleanKey(ok).toLowerCase() === searchKey);
         if(exactKey && !isEmpty(obj[exactKey])) return normalize(obj[exactKey]); 
     } 
-    
-    // Motor Agressivo de limpeza para strings com quebra de linha e pontuação na chave
     const superClean = (str) => normalize(str).toLowerCase().replace(/[\?\!\.\n\r]/g, ' ').replace(/\s+/g, ' ').trim();
     for(let k of keysArray) { 
         let searchKey = superClean(k);
-        let partialKey = Object.keys(obj).find(ok => {
-            return superClean(ok).includes(searchKey);
-        });
+        let partialKey = Object.keys(obj).find(ok => superClean(ok).includes(searchKey));
         if(partialKey && !isEmpty(obj[partialKey])) return normalize(obj[partialKey]);
     } 
     return 'Não info.'; 
@@ -360,7 +327,7 @@ function parseSmartCSV(text) {
   return objects;
 }
 
-// ENGINE DE MERGE & INTELIGÊNCIA DE ETAPA
+// ENGINE DE MERGE
 async function initCRM() {
   try {
     const fetchPromises = SHEET_URLS.map((url, idx) => 
@@ -405,7 +372,6 @@ async function initCRM() {
     
     masterData.forEach(c => {
         let etapaAuto = "1ª Etapa (Triagem Inicial)";
-        
         if (c._historico_abas.includes(9)) etapaAuto = "Matching / Empregador";
         else if (c._historico_abas.includes(5)) etapaAuto = "6ª Etapa - Jurídico";
         else if (c._historico_abas.includes(4)) etapaAuto = "5ª Etapa - Documentação";
@@ -426,7 +392,6 @@ async function initCRM() {
                 etapaAuto = "Ativos / Em Preparação";
             }
         }
-
         c.etapa_calculada = etapaAuto;
     });
 
@@ -456,17 +421,13 @@ function groupCount(data, keyChoices, isAutoCalculated = false) {
   const map = new Map();
   data.forEach(r => { 
       let k = 'Não info.';
-      if (isAutoCalculated) {
-          k = r.etapa_calculada;
-      } else {
-          for(let key of keyChoices) { if(!isEmpty(r[key])) { k = normalize(r[key]); break; } }
-      }
+      if (isAutoCalculated) { k = r.etapa_calculada; } 
+      else { for(let key of keyChoices) { if(!isEmpty(r[key])) { k = normalize(r[key]); break; } } }
       map.set(k, (map.get(k) || 0) + 1); 
   });
   return [...map.entries()].sort((a,b) => b[1]-a[1]);
 }
 
-// Logica do novo grafico de Idades
 function ageGroupCount(data) {
     let groups = {"Até 25 anos":0, "26 a 30 anos":0, "31 a 35 anos":0, "36 a 40 anos":0, "41+ anos":0};
     let hasData = false;
@@ -492,10 +453,8 @@ function drawBar(targetId, dataArr) {
   const t = document.getElementById(targetId);
   if(!dataArr.length) { t.innerHTML = '<div style="color:var(--muted); padding: 20px;">Sem dados suficientes.</div>'; return; }
   const max = Math.max(...dataArr.map(d => d[1]));
-  // Aumento do ViewBox para evitar o bug do corte no numero da barra (w: 800)
   let html = `<svg viewBox="0 0 800 ${dataArr.length * 42}" width="100%" height="100%" style="overflow: visible;">`;
   dataArr.forEach((d, i) => {
-      // Redução da largura máxima do path rect para dar respiro ao texto (Max: 380)
       const w = (d[1]/max)*380;
       html += `
         <text x="0" y="${i*42 + 16}" fill="#a8c2e8" font-size="13">${d[0].substring(0,34)}</text>
@@ -510,7 +469,6 @@ function drawBar(targetId, dataArr) {
 function renderAll() {
   const total = filteredData.length;
   
-  // KPIs
   const aprovados = filteredData.filter(c => getVal(c, ['Status Final']).toLowerCase().includes('aprovado')).length;
   document.getElementById('kpiGrid').innerHTML = `
     <div class="card kpi"><div class="label">Volume Filtrado</div><div class="value">${total}</div></div>
@@ -519,33 +477,30 @@ function renderAll() {
   `;
   
   const comPassaporte = filteredData.filter(c => getVal(c, ['Número do Passaporte']) !== 'Não info.').length;
-  const docsPro = filteredData.filter(c => getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']) !== 'Não info.').length;
+  const docsPro = filteredData.filter(c => getVal(c, ['Documento Profissional', 'COREN', 'CRM']) !== 'Não info.').length;
   document.getElementById('kpiDocs').innerHTML = `
     <div class="card kpi"><div class="label">Passaportes Registrados</div><div class="value">${comPassaporte}</div></div>
-    <div class="card kpi"><div class="label">Licenças Físicas (COREN)</div><div class="value">${docsPro}</div></div>
+    <div class="card kpi"><div class="label">Licenças Profissionais Físicas</div><div class="value">${docsPro}</div></div>
   `;
   
-  // Gráficos Executivos
   drawBar('chartPipeline', groupCount(filteredData, [], true));
   drawBar('chartStatus', groupCount(filteredData, ['Status Final', 'Resultado da entrevista']));
   drawBar('chartAge', ageGroupCount(filteredData));
-  drawBar('chartCity', groupCount(filteredData, ['Cidade atual']).filter(d => d[0] !== 'Não info.').slice(0, 6)); // Top 6 cidades
+  drawBar('chartCity', groupCount(filteredData, ['Cidade atual']).filter(d => d[0] !== 'Não info.').slice(0, 6)); 
   
-  // Graficos Ops & Compliance
   drawBar('chartPassport', [
       ['Documento Físico Validado', comPassaporte],
       ['Pendente / Sem Info', total - comPassaporte]
   ]);
-  drawBar('chartGerman', groupCount(filteredData, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã?']));
+  drawBar('chartGerman', groupCount(filteredData, ['Nível de alemão', 'Língua alemã']));
   drawBar('chartEmployer', groupCount(filteredData, ['Empresa']).filter(d => d[0] !== 'Não info.'));
   
-  // Tabela
   document.getElementById('tableCount').textContent = total + ' Registros Encontrados';
   let docsWarningsCount = 0;
 
   document.getElementById('tableBody').innerHTML = filteredData.map(c => {
-      const nome = getVal(c, ['Nome completo', 'Nome completo do candidato', 'Nome']);
-      const alemao = getVal(c, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã?']);
+      const nome = getVal(c, ['Nome completo', 'Nome']);
+      const alemao = getVal(c, ['Nível de alemão', 'Língua alemã']);
       const pipeAuto = c.etapa_calculada;
       
       let docStatus = '✅ OK';
@@ -565,24 +520,40 @@ function renderAll() {
   document.getElementById('countDocs').textContent = `${docsWarningsCount} Alertas`;
 }
 
-// LOGICA DO MODAL (Raio-X)
+// ==========================================
+// MOTOR DE RENDERIZAÇÃO DO MODAL CATEGORIZADO
+// ==========================================
+
+// Função que identifica a qual categoria uma coluna pertence baseada em palavras-chave
+function getCategory(key) {
+    const k = key.toLowerCase();
+    if (['análise', 'forte', 'atenç', 'resultado', 'perfil', 'resumo', 'observaç', 'nota', 'liderança', 'criatividade', 'flexibilidade', 'autoconfiança', 'meta', 'avaliaç', 'diferenciais', 'gravação'].some(w => k.includes(w))) return 'evaluation';
+    if (['passaporte', 'cpf', 'coren', 'crea', 'crm', 'diploma', 'anabin', 'vacina', 'comprovante', 'cidadania', 'histórico', 'universidade', 'certificaç', 'graduaç', 'curso', 'alemã', 'idioma', 'inglês', 'estrangeira'].some(w => k.includes(w))) return 'docs';
+    if (['mora', 'civil', 'filho', 'cônjuge', 'idade', 'financeira', 'reserva', 'preparo', 'nascimento', 'telefone', 'email', 'e-mail'].some(w => k.includes(w))) return 'family';
+    if (['empresa', 'embarque', 'contrato', 'retorno', 'envio', 'feedback', 'cv', 'entrevista', 'instituição'].some(w => k.includes(w))) return 'matching';
+    return 'general';
+}
+
 function openModal(id) {
     const c = masterData.find(x => x.id_t4 === id);
     if(!c) return;
     
-    document.getElementById('m-nome').textContent = getVal(c, ['Nome completo', 'Nome completo do candidato']);
+    // Configura o Cabeçalho (Restaurando a Profissão e Cidade)
+    document.getElementById('m-nome').textContent = getVal(c, ['Nome completo', 'Nome']);
     document.getElementById('m-id').textContent = c.id_t4;
-    document.getElementById('m-subtitle').textContent = `${getVal(c, ['Profissão principal', 'Profissão'])} • ${getVal(c, ['Cidade atual'])}`;
+    
+    let profissao = getVal(c, ['Profissão principal', 'Profissão']);
+    let cidade = getVal(c, ['Cidade atual']);
+    document.getElementById('m-subtitle').textContent = `${profissao} • ${cidade}`;
     
     const pipeAuto = c.etapa_calculada;
     const pipeBadge = document.getElementById('m-pipe-badge');
     pipeBadge.textContent = pipeAuto;
     pipeBadge.className = `chip ${getChipClass(pipeAuto)}`;
 
-    // Regras de Alerta (Compliance)
+    // Regras de Alerta Crítico
     const alertas = [];
-    if(getVal(c, ['Número do Passaporte']) === 'Não info.') alertas.push("Candidato não possui número de passaporte cadastrado.");
-    if(getVal(c, ['Documento Profissional (COREN, CRM, CREA, outro)']) === 'Não info.') alertas.push("Registro profissional físico pendente.");
+    if(getVal(c, ['Número do Passaporte']) === 'Não info.') alertas.push("Candidato sem número de passaporte cadastrado.");
     
     const alertBox = document.getElementById('m-alert-box');
     if(alertas.length > 0) {
@@ -592,33 +563,70 @@ function openModal(id) {
         alertBox.classList.remove('active');
     }
 
-    document.getElementById('m-parecer').textContent = getVal(c, ['Análise do recrutador', 'Resumo profissional']);
-    document.getElementById('m-fortes').textContent = getVal(c, ['Pontos fortes']);
-    document.getElementById('m-atencao').textContent = getVal(c, ['Pontos de atenção']);
+    // Preparar as Categorias
+    const groupedData = {
+        evaluation: { title: "🎯 Avaliação & Performance", cards: [] },
+        family: { title: "👨‍👩‍👧 Perfil & Estrutura Familiar", cards: [] },
+        docs: { title: "🗂️ Documentação & Compliance", cards: [] },
+        matching: { title: "✈️ Empregador & Logística", cards: [] },
+        general: { title: "📋 Informações Complementares", cards: [] }
+    };
     
-    const statusFinal = getVal(c, ['Status Final', 'Resultado da entrevista']);
-    document.getElementById('m-status-final').textContent = statusFinal;
-    document.getElementById('m-status-final').className = `chip ${getChipClass(statusFinal)}`;
+    const excludeKeys = ['id_t4', '_historico_abas', 'etapa_calculada', 'Nome completo', 'Nº de Inscrição'];
+    const allKeys = Object.keys(c).sort();
+    
+    // Distribuir os campos pelas categorias
+    allKeys.forEach(key => {
+        if(excludeKeys.includes(key)) return; 
+        
+        let value = c[key];
+        if(value && value.trim() !== '' && !isEmpty(value)) {
+            
+            // Tratamento de Links de Drive
+            let displayValue = value;
+            if(value.trim().startsWith('http')) {
+                displayValue = `<a href="${value.trim()}" target="_blank" class="link-btn">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Acessar Arquivo
+                </a>`;
+            }
 
-    document.getElementById('m-idade').textContent = getVal(c, ['Idade', 'Idade atual']);
-    document.getElementById('m-civil').textContent = `${getVal(c, ['Estado civil'])} - Mora com: ${getVal(c, ['Com quem você mora?'])}`;
-    document.getElementById('m-filhos').textContent = `${getVal(c, ['Filho'])} (Idades: ${getVal(c, ['Idade Filho'])})`;
-    document.getElementById('m-financas').textContent = getVal(c, ['Como é sua organização financeira', 'Tem reserva']);
-    
-    document.getElementById('m-alemao').textContent = getVal(c, ['Nível de alemão', 'Língua alemã', 'Nível na língua alemã']);
-    document.getElementById('m-passaporte').textContent = getVal(c, ['Número do Passaporte']) === 'Não info.' ? 'Pendente' : `Nº ${getVal(c, ['Número do Passaporte'])} (Válido: ${getVal(c, ['Validade do passaporte'])})`;
-    document.getElementById('m-coren').textContent = getVal(c, ['Documento Profissional', 'Documento Profissional (COREN, CRM, CREA, outro)']);
-    document.getElementById('m-cidadania').textContent = getVal(c, ['Cidadania Europeia']);
-    
-    document.getElementById('m-empresa').textContent = getVal(c, ['Empresa']);
-    document.getElementById('m-feedback').textContent = getVal(c, ['Feedback']);
-    document.getElementById('m-embarque').textContent = getVal(c, ['Data prevista para ir à Alemanha', 'Data prevista mudança']);
+            // O TRUQUE DE AUTO-RESIZE: Se o texto for longo (> 120 caracteres), ocupa a largura total
+            let isLongText = value.length > 120 && !value.trim().startsWith('http');
+            let cardClass = isLongText ? 'dynamic-card full-width' : 'dynamic-card';
 
+            let cardHTML = `
+            <div class="${cardClass}">
+                <div class="d-label">${key}</div>
+                <div class="d-val">${displayValue}</div>
+            </div>`;
+            
+            let categoryKey = getCategory(key);
+            groupedData[categoryKey].cards.push(cardHTML);
+        }
+    });
+    
+    // Montar o HTML final do Grid Dinâmico
+    let dynamicHTML = '';
+    const categoryOrder = ['evaluation', 'matching', 'docs', 'family', 'general'];
+    
+    categoryOrder.forEach(cat => {
+        if(groupedData[cat].cards.length > 0) {
+            dynamicHTML += `
+            <div class="category-section">
+                <div class="category-title">${groupedData[cat].title}</div>
+                <div class="dynamic-grid">
+                    ${groupedData[cat].cards.join('')}
+                </div>
+            </div>`;
+        }
+    });
+    
+    document.getElementById('m-dynamic-container').innerHTML = dynamicHTML;
     document.getElementById('crmModal').classList.add('active');
 }
 function closeModal() { document.getElementById('crmModal').classList.remove('active'); }
 
-// CONTROLES DE FILTRO AVANÇADO
+// CONTROLES DE FILTRO
 function popSelect(id, keyChoices, isAutoCalculated = false) {
     const sel = document.getElementById(id);
     const groups = groupCount(masterData, keyChoices, isAutoCalculated);
@@ -687,7 +695,7 @@ function switchTab(tabId) {
     document.getElementById(tabId).classList.add('active');
 }
 
-// INICIA O MOTOR DO CRM
+// INICIA
 initCRM();
 </script>
 </body>
