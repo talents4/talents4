@@ -47,6 +47,167 @@ body::before {
 
 .container { position: relative; z-index: 1; width: min(1640px, 96vw); margin: 0 auto; padding: 28px 0 60px; }
 
+
+
+/* ── Assinatura Alemanha ── */
+.de-signature {
+  position: absolute;
+  right: 28px;
+  top: 110px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.de-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(17,17,17,0.88), rgba(12,24,42,0.92));
+  color: var(--text);
+  font: 600 12px/1 var(--font);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+}
+.de-toggle:hover { transform: translateY(-1px); border-color: rgba(255,204,0,0.4); box-shadow: 0 16px 34px rgba(0,0,0,0.34); }
+.de-toggle .dotpack { display:flex; gap:5px; }
+.de-toggle .dotpack i { width:8px; height:8px; border-radius:50%; display:block; }
+.de-toggle .dotpack i:nth-child(1){ background: var(--ger-black); border:1px solid rgba(255,255,255,0.16); }
+.de-toggle .dotpack i:nth-child(2){ background: var(--ger-red); }
+.de-toggle .dotpack i:nth-child(3){ background: var(--ger-gold); }
+.de-panel {
+  width: 320px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
+    linear-gradient(135deg, rgba(10,22,40,0.98), rgba(8,16,30,0.98));
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: none;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+.de-panel.open { display:block; animation: dePanelIn .22s ease; }
+@keyframes dePanelIn { from { opacity:0; transform: translateY(-4px) scale(.98);} to { opacity:1; transform: translateY(0) scale(1);} }
+.de-panel::before {
+  content:'';
+  position:absolute;
+  inset:0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ger-black) 0%, var(--ger-red) 52%, var(--ger-gold) 100%);
+}
+.de-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; position:relative; }
+.de-title { font-size: 14px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; }
+.de-sub { color: var(--muted); font-size: 12px; margin-top:4px; }
+.de-time { text-align:right; }
+.de-time strong { display:block; font-size:18px; font-weight:800; color:#ffd76a; }
+.de-time span { font-size:11px; color: var(--muted); }
+.de-route {
+  position: relative;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(4,10,20,0.42);
+  padding: 14px 14px 30px;
+  margin-bottom: 14px;
+}
+.de-route-line {
+  position: relative;
+  margin: 20px 10px 10px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(79,163,247,0.35), rgba(221,0,0,0.55), rgba(255,204,0,0.7));
+}
+.de-route-line::before, .de-route-line::after {
+  content:'';
+  position:absolute;
+  top:50%;
+  width: 10px; height: 10px; border-radius:50%;
+  transform: translateY(-50%);
+}
+.de-route-line::before { left: -4px; background:#4fa3f7; box-shadow:0 0 0 4px rgba(79,163,247,0.12); }
+.de-route-line::after { right: -4px; background:#ffcc00; box-shadow:0 0 0 4px rgba(255,204,0,0.12); }
+.de-plane {
+  position:absolute;
+  top: 50%;
+  left: 0%;
+  transform: translate(-50%, -52%);
+  font-size: 14px;
+  filter: drop-shadow(0 0 6px rgba(255,204,0,0.25));
+  transition: left .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
+}
+.de-route-labels { display:flex; justify-content:space-between; margin-top: 16px; font-size:11px; color: var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+.de-phrase {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, rgba(221,0,0,0.08), rgba(255,204,0,0.08));
+  border: 1px solid rgba(255,204,0,0.16);
+  margin-bottom: 14px;
+}
+.de-phrase strong { display:block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #ffd76a; margin-bottom: 6px; }
+.de-phrase span { font-size: 14px; line-height: 1.45; display:block; }
+.de-controls { display:flex; gap: 10px; }
+.de-btn {
+  flex:1;
+  border-radius: 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  font: 600 12px/1 var(--font);
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.de-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+.de-btn.primary { background: linear-gradient(135deg, rgba(221,0,0,0.20), rgba(255,204,0,0.20)); border-color: rgba(255,204,0,0.28); }
+.de-stamp {
+  margin-top: 14px;
+  min-height: 76px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.02);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  overflow:hidden;
+}
+.de-stamp-mark {
+  position: absolute;
+  inset: 12px;
+  border: 2px solid rgba(255,204,0,0.65);
+  color: rgba(255,233,166,0.92);
+  border-radius: 14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding: 8px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: scale(1.16) rotate(-8deg);
+}
+.de-stamp-mark.show { animation: stampDrop .55s cubic-bezier(.2,.8,.25,1) forwards; }
+@keyframes stampDrop {
+  0% { opacity: 0; transform: scale(1.18) rotate(-8deg); }
+  58% { opacity: 1; transform: scale(.92) rotate(-6deg); }
+  100% { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+.de-stamp-empty { color: var(--muted); font-size: 12px; text-align:center; padding: 0 12px; }
+@media (max-width: 980px) {
+  .de-signature { position: static; align-items:flex-start; margin-top: 18px; }
+  .de-panel { width: min(100%, 420px); }
+  .fru-scene { opacity: .28; }
+}
+
 /* ── Hero ── */
 .hero {
   border: 1px solid var(--line2);
@@ -452,6 +613,43 @@ tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: now
     </div>
     <h1 style="position:relative;z-index:1;font-size:clamp(22px,2.6vw,34px);font-weight:700;line-height:1.1;letter-spacing:-0.02em;margin-bottom:6px">Plataforma de Inteligência e Decisão <span style="font-size:14px;font-weight:400;color:var(--muted);letter-spacing:0;margin-left:8px">v2.0</span></h1>
     <p style="position:relative;z-index:1;color:var(--muted);font-size:14px;line-height:1.5">Semáforo de compliance em tempo real · Alerta de validade de passaporte · Score ponderado por idioma</p>
+
+    <div class="de-signature">
+      <button class="de-toggle" id="deToggle" type="button">
+        <span class="dotpack"><i></i><i></i><i></i></span>
+        assinatura alemanha
+      </button>
+      <div class="de-panel" id="dePanel">
+        <div class="de-head">
+          <div>
+            <div class="de-title">Modo Alemanha</div>
+            <div class="de-sub">Brinque sem encostar nos dados do CRM.</div>
+          </div>
+          <div class="de-time">
+            <strong id="deBerlinTime">--:--</strong>
+            <span>Horário de Berlim</span>
+          </div>
+        </div>
+        <div class="de-route">
+          <div class="de-route-line">
+            <div class="de-plane" id="dePlane">✈️</div>
+          </div>
+          <div class="de-route-labels"><span>Brasil</span><span>Deutschland</span></div>
+        </div>
+        <div class="de-phrase">
+          <strong>frase do momento</strong>
+          <span id="dePhrase">Willkommen. Hoje a operação pousa em território alemão.</span>
+        </div>
+        <div class="de-controls">
+          <button class="de-btn primary" id="deStampBtn" type="button">Carimbar chegada</button>
+          <button class="de-btn" id="dePhraseBtn" type="button">Trocar frase</button>
+        </div>
+        <div class="de-stamp" id="deStampBox">
+          <div class="de-stamp-empty" id="deStampEmpty">Clique em carimbar chegada para gerar um carimbo simbólico de entrada.</div>
+          <div class="de-stamp-mark" id="deStampMark"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="filter-panel">
       <div class="filter-header">
@@ -1612,6 +1810,81 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
   if(el&&i===0) el.classList.add('visible');
 });
 
+
+
+const deWords = [
+  'Willkommen. Hoje a operação pousa em território alemão.',
+  'Ordnung + clareza + execução. Agora com sotaque alemão.',
+  'Alles klar. Dados sérios, assinatura divertida.',
+  'Guten Tag. O CRM continua profissional, só ganhou personalidade.',
+  'Pronto para embarque. Brasil de origem, Deutschland no destino.'
+];
+const deCities = ['BERLIN', 'HAMBURG', 'MÜNCHEN', 'KÖLN', 'FRANKFURT'];
+let dePhraseIndex = 0;
+let dePlaneStep = 0;
+
+function initDeutschlandSignature(){
+  const toggle = document.getElementById('deToggle');
+  const panel = document.getElementById('dePanel');
+  const phraseEl = document.getElementById('dePhrase');
+  const phraseBtn = document.getElementById('dePhraseBtn');
+  const stampBtn = document.getElementById('deStampBtn');
+  const stampMark = document.getElementById('deStampMark');
+  const stampEmpty = document.getElementById('deStampEmpty');
+  const plane = document.getElementById('dePlane');
+  const timeEl = document.getElementById('deBerlinTime');
+  if(!toggle || !panel || !phraseEl || !phraseBtn || !stampBtn || !stampMark || !stampEmpty || !plane || !timeEl) return;
+
+  const updateBerlinTime = ()=>{
+    try {
+      const now = new Date();
+      const txt = now.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+      timeEl.textContent = txt;
+    } catch (_) {}
+  };
+  updateBerlinTime();
+  setInterval(updateBerlinTime, 30000);
+
+  const setPhrase = (idx)=>{
+    dePhraseIndex = (idx + deWords.length) % deWords.length;
+    phraseEl.textContent = deWords[dePhraseIndex];
+  };
+
+  const movePlane = ()=>{
+    dePlaneStep = (dePlaneStep + 1) % 5;
+    const positions = ['4%', '26%', '49%', '72%', '96%'];
+    plane.style.left = positions[dePlaneStep];
+    plane.style.transform = `translate(-50%, -52%) rotate(${dePlaneStep < 2 ? -8 : dePlaneStep === 2 ? 0 : 8}deg)`;
+  };
+
+  toggle.addEventListener('click', ()=> panel.classList.toggle('open'));
+  document.addEventListener('click', (ev)=>{
+    const wrap = document.querySelector('.de-signature');
+    if(panel.classList.contains('open') && wrap && !wrap.contains(ev.target)) panel.classList.remove('open');
+  });
+
+  phraseBtn.addEventListener('click', ()=>{
+    setPhrase(dePhraseIndex + 1);
+    movePlane();
+  });
+
+  stampBtn.addEventListener('click', ()=>{
+    stampEmpty.style.display = 'none';
+    const berlinNow = new Date().toLocaleString('pt-BR', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const city = deCities[Math.floor(Math.random() * deCities.length)];
+    stampMark.innerHTML = `entrada liberada<br>${city} · ${berlinNow}`;
+    stampMark.classList.remove('show');
+    void stampMark.offsetWidth;
+    stampMark.classList.add('show');
+    movePlane();
+    setPhrase(dePhraseIndex + 1);
+  });
+
+  setPhrase(0);
+  plane.style.left = '4%';
+}
+
+initDeutschlandSignature();
 initCRM();
 </script>
 </body>
