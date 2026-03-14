@@ -49,54 +49,67 @@ body::before {
 
 
 
-/* ── Assinatura Alemanha ── */
+/* ── Berlin Lab ── */
 .de-signature {
   position: absolute;
   right: 28px;
-  top: 110px;
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 10px;
+  top: 108px;
+  z-index: 8;
 }
 .de-toggle {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 11px 16px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.12);
-  background: linear-gradient(135deg, rgba(17,17,17,0.88), rgba(12,24,42,0.92));
+  background: linear-gradient(135deg, rgba(17,17,17,0.88), rgba(12,24,42,0.96));
   color: var(--text);
-  font: 600 12px/1 var(--font);
+  font: 700 12px/1 var(--font);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   box-shadow: 0 12px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04);
   transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
 }
-.de-toggle:hover { transform: translateY(-1px); border-color: rgba(255,204,0,0.4); box-shadow: 0 16px 34px rgba(0,0,0,0.34); }
+.de-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255,204,0,0.4);
+  box-shadow: 0 16px 34px rgba(0,0,0,0.34);
+}
 .de-toggle .dotpack { display:flex; gap:5px; }
 .de-toggle .dotpack i { width:8px; height:8px; border-radius:50%; display:block; }
 .de-toggle .dotpack i:nth-child(1){ background: var(--ger-black); border:1px solid rgba(255,255,255,0.16); }
 .de-toggle .dotpack i:nth-child(2){ background: var(--ger-red); }
 .de-toggle .dotpack i:nth-child(3){ background: var(--ger-gold); }
+
+.de-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3,8,18,0.68);
+  backdrop-filter: blur(10px);
+  z-index: 60;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+}
+.de-overlay.open { display: flex; animation: deFade .22s ease; }
+@keyframes deFade { from { opacity:0; } to { opacity:1; } }
+
 .de-panel {
-  width: 320px;
-  border-radius: 20px;
+  position: relative;
+  width: min(760px, 92vw);
+  max-height: min(82vh, 860px);
+  overflow: auto;
+  border-radius: 24px;
   border: 1px solid rgba(255,255,255,0.08);
   background:
     linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01)),
-    linear-gradient(135deg, rgba(10,22,40,0.98), rgba(8,16,30,0.98));
-  box-shadow: var(--shadow);
-  padding: 16px;
-  display: none;
-  overflow: hidden;
-  backdrop-filter: blur(10px);
+    linear-gradient(135deg, rgba(10,22,40,0.985), rgba(8,16,30,0.985));
+  box-shadow: 0 40px 120px rgba(0,0,0,0.58);
+  padding: 22px;
 }
-.de-panel.open { display:block; animation: dePanelIn .22s ease; }
-@keyframes dePanelIn { from { opacity:0; transform: translateY(-4px) scale(.98);} to { opacity:1; transform: translateY(0) scale(1);} }
 .de-panel::before {
   content:'';
   position:absolute;
@@ -104,31 +117,116 @@ body::before {
   height: 3px;
   background: linear-gradient(90deg, var(--ger-black) 0%, var(--ger-red) 52%, var(--ger-gold) 100%);
 }
-.de-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:14px; position:relative; }
-.de-title { font-size: 14px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; }
-.de-sub { color: var(--muted); font-size: 12px; margin-top:4px; }
-.de-time { text-align:right; }
-.de-time strong { display:block; font-size:18px; font-weight:800; color:#ffd76a; }
-.de-time span { font-size:11px; color: var(--muted); }
+.de-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom: 18px;
+}
+.de-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.de-sub {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 6px;
+  max-width: 440px;
+  line-height: 1.45;
+}
+.de-close {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 20px;
+}
+.de-grid {
+  display:grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 16px;
+}
+.de-block {
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(4,10,20,0.42);
+  padding: 16px;
+}
+.de-block h3 {
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #ffd76a;
+  margin-bottom: 10px;
+}
+.de-metrics {
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.de-mini {
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(135deg, rgba(255,255,255,0.025), rgba(255,255,255,0.012));
+  padding: 14px;
+  min-height: 90px;
+}
+.de-mini span {
+  display:block;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 10px;
+}
+.de-mini strong {
+  display:block;
+  font-size: 30px;
+  line-height: 1;
+}
+.de-mini em {
+  display:block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 12px;
+}
+.de-word {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.de-word-meaning {
+  color: var(--muted);
+  margin-bottom: 14px;
+}
 .de-route {
   position: relative;
   border-radius: 16px;
   border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(4,10,20,0.42);
-  padding: 14px 14px 30px;
-  margin-bottom: 14px;
+  background: rgba(255,255,255,0.02);
+  padding: 18px 16px 32px;
 }
 .de-route-line {
   position: relative;
-  margin: 20px 10px 10px;
-  height: 2px;
-  background: linear-gradient(90deg, rgba(79,163,247,0.35), rgba(221,0,0,0.55), rgba(255,204,0,0.7));
+  margin: 24px 12px 8px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79,163,247,0.42), rgba(221,0,0,0.6), rgba(255,204,0,0.74));
 }
 .de-route-line::before, .de-route-line::after {
   content:'';
   position:absolute;
   top:50%;
-  width: 10px; height: 10px; border-radius:50%;
+  width: 12px;
+  height: 12px;
+  border-radius:50%;
   transform: translateY(-50%);
 }
 .de-route-line::before { left: -4px; background:#4fa3f7; box-shadow:0 0 0 4px rgba(79,163,247,0.12); }
@@ -136,39 +234,96 @@ body::before {
 .de-plane {
   position:absolute;
   top: 50%;
-  left: 0%;
-  transform: translate(-50%, -52%);
-  font-size: 14px;
+  left: 4%;
+  transform: translate(-50%, -56%);
+  font-size: 18px;
   filter: drop-shadow(0 0 6px rgba(255,204,0,0.25));
   transition: left .9s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1);
 }
-.de-route-labels { display:flex; justify-content:space-between; margin-top: 16px; font-size:11px; color: var(--muted); text-transform:uppercase; letter-spacing:.08em; }
-.de-phrase {
-  border-radius: 14px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, rgba(221,0,0,0.08), rgba(255,204,0,0.08));
-  border: 1px solid rgba(255,204,0,0.16);
-  margin-bottom: 14px;
+.de-route-labels {
+  display:flex;
+  justify-content:space-between;
+  margin-top: 16px;
+  font-size:11px;
+  color: var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.08em;
 }
-.de-phrase strong { display:block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #ffd76a; margin-bottom: 6px; }
-.de-phrase span { font-size: 14px; line-height: 1.45; display:block; }
-.de-controls { display:flex; gap: 10px; }
-.de-btn {
-  flex:1;
-  border-radius: 12px;
-  padding: 11px 12px;
+.de-pass {
+  border-radius: 18px;
+  padding: 16px;
+  min-height: 220px;
+  background:
+    radial-gradient(circle at top right, rgba(255,204,0,0.12), transparent 28%),
+    linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
   border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  color: var(--text);
-  font: 600 12px/1 var(--font);
-  cursor: pointer;
-  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  position: relative;
+  overflow: hidden;
 }
-.de-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
-.de-btn.primary { background: linear-gradient(135deg, rgba(221,0,0,0.20), rgba(255,204,0,0.20)); border-color: rgba(255,204,0,0.28); }
+.de-pass::after {
+  content:'DE';
+  position:absolute;
+  right: 14px;
+  top: 12px;
+  font-size: 44px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.04);
+}
+.de-pass-top {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom: 18px;
+}
+.de-pass-label {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.de-pass-flag {
+  display:flex;
+  gap:4px;
+}
+.de-pass-flag i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display:block;
+}
+.de-pass-flag i:nth-child(1){ background: var(--ger-black); }
+.de-pass-flag i:nth-child(2){ background: var(--ger-red); }
+.de-pass-flag i:nth-child(3){ background: var(--ger-gold); }
+.de-pass-route {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+.de-pass-meta {
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 16px;
+}
+.de-pass-meta div {
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 10px;
+}
+.de-pass-meta span {
+  display:block;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 6px;
+}
+.de-pass-meta strong {
+  font-size: 14px;
+}
 .de-stamp {
-  margin-top: 14px;
-  min-height: 76px;
+  margin-top: 16px;
+  min-height: 82px;
   border-radius: 16px;
   border: 1px dashed rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.02);
@@ -178,11 +333,17 @@ body::before {
   position:relative;
   overflow:hidden;
 }
+.de-stamp-empty {
+  color: var(--muted);
+  font-size: 12px;
+  text-align:center;
+  padding: 0 12px;
+}
 .de-stamp-mark {
   position: absolute;
   inset: 12px;
   border: 2px solid rgba(255,204,0,0.65);
-  color: rgba(255,233,166,0.92);
+  color: rgba(255,233,166,0.94);
   border-radius: 14px;
   display:flex;
   align-items:center;
@@ -201,13 +362,48 @@ body::before {
   58% { opacity: 1; transform: scale(.92) rotate(-6deg); }
   100% { opacity: 1; transform: scale(1) rotate(-6deg); }
 }
-.de-stamp-empty { color: var(--muted); font-size: 12px; text-align:center; padding: 0 12px; }
+.de-phrase {
+  border-radius: 16px;
+  padding: 14px;
+  background: linear-gradient(135deg, rgba(221,0,0,0.08), rgba(255,204,0,0.08));
+  border: 1px solid rgba(255,204,0,0.16);
+  line-height: 1.5;
+}
+.de-phrase strong {
+  display:block;
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #ffd76a;
+  margin-bottom: 8px;
+}
+.de-controls {
+  display:flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+.de-btn {
+  flex:1 1 160px;
+  border-radius: 12px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  font: 700 12px/1 var(--font);
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+}
+.de-btn:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
+.de-btn.primary { background: linear-gradient(135deg, rgba(221,0,0,0.20), rgba(255,204,0,0.20)); border-color: rgba(255,204,0,0.28); }
+
 @media (max-width: 980px) {
-  .de-signature { position: static; align-items:flex-start; margin-top: 18px; }
-  .de-panel { width: min(100%, 420px); }
+  .de-signature { position: static; margin-top: 18px; }
+  .de-grid { grid-template-columns: 1fr; }
+  .de-metrics { grid-template-columns: 1fr; }
+  .de-panel { width: min(96vw, 680px); padding: 18px; }
   .fru-scene { opacity: .28; }
 }
-
 /* ── Hero ── */
 .hero {
   border: 1px solid var(--line2);
@@ -617,39 +813,88 @@ tbody td { padding: 13px 16px; font-size: 13px; color: #b8cde8; white-space: now
     <div class="de-signature">
       <button class="de-toggle" id="deToggle" type="button">
         <span class="dotpack"><i></i><i></i><i></i></span>
-        assinatura alemanha
+        Berlin Lab
       </button>
+    </div>
+
+    <div class="de-overlay" id="deOverlay">
       <div class="de-panel" id="dePanel">
         <div class="de-head">
           <div>
-            <div class="de-title">Modo Alemanha</div>
-            <div class="de-sub">Brinque sem encostar nos dados do CRM.</div>
+            <div class="de-title">Berlin Lab</div>
+            <div class="de-sub">Camada visual isolada do CRM. Não toca nos dados, mas deixa o projeto com uma identidade mais memorável e mais alemã.</div>
           </div>
-          <div class="de-time">
-            <strong id="deBerlinTime">--:--</strong>
+          <button class="de-close" id="deClose" type="button" aria-label="Fechar">×</button>
+        </div>
+
+        <div class="de-metrics">
+          <div class="de-mini">
             <span>Horário de Berlim</span>
+            <strong id="deBerlinTime">--:--</strong>
+            <em id="deBerlinDate">--</em>
+          </div>
+          <div class="de-mini">
+            <span>Palavra do dia</span>
+            <strong id="deWord">Ordnung</strong>
+            <em id="deWordMeaning">ordem, estrutura, clareza</em>
+          </div>
+          <div class="de-mini">
+            <span>Cidade do momento</span>
+            <strong id="deCity">Berlin</strong>
+            <em>camada lúdica do projeto</em>
           </div>
         </div>
-        <div class="de-route">
-          <div class="de-route-line">
-            <div class="de-plane" id="dePlane">✈️</div>
+
+        <div class="de-grid">
+          <div class="de-block">
+            <h3>Rota simbólica</h3>
+            <div class="de-route">
+              <div class="de-route-line">
+                <div class="de-plane" id="dePlane">✈️</div>
+              </div>
+              <div class="de-route-labels"><span>Brasil</span><span>Deutschland</span></div>
+            </div>
+            <div class="de-controls">
+              <button class="de-btn primary" id="deMoveBtn" type="button">Avançar rota</button>
+              <button class="de-btn" id="dePhraseBtn" type="button">Nova frase</button>
+            </div>
+            <div class="de-phrase" style="margin-top:14px">
+              <strong>Frase do momento</strong>
+              <span id="dePhrase">Willkommen. Hoje a operação pousa em território alemão.</span>
+            </div>
           </div>
-          <div class="de-route-labels"><span>Brasil</span><span>Deutschland</span></div>
-        </div>
-        <div class="de-phrase">
-          <strong>frase do momento</strong>
-          <span id="dePhrase">Willkommen. Hoje a operação pousa em território alemão.</span>
-        </div>
-        <div class="de-controls">
-          <button class="de-btn primary" id="deStampBtn" type="button">Carimbar chegada</button>
-          <button class="de-btn" id="dePhraseBtn" type="button">Trocar frase</button>
-        </div>
-        <div class="de-stamp" id="deStampBox">
-          <div class="de-stamp-empty" id="deStampEmpty">Clique em carimbar chegada para gerar um carimbo simbólico de entrada.</div>
-          <div class="de-stamp-mark" id="deStampMark"></div>
+
+          <div class="de-block">
+            <h3>Boarding pass simbólico</h3>
+            <div class="de-pass">
+              <div class="de-pass-top">
+                <div>
+                  <div class="de-pass-label">Talents4 Project</div>
+                  <div class="de-pass-route" id="dePassRoute">GRU → BER</div>
+                </div>
+                <div class="de-pass-flag"><i></i><i></i><i></i></div>
+              </div>
+              <div class="de-pass-label">Marca visual do projeto</div>
+              <div style="margin-top:8px;color:var(--text);line-height:1.55">Uma peça estética para dar personalidade ao dashboard sem comprometer a operação.</div>
+              <div class="de-pass-meta">
+                <div><span>Embarque</span><strong id="deBoardTime">--:--</strong></div>
+                <div><span>Destino</span><strong id="deDest">Berlin</strong></div>
+                <div><span>Status</span><strong id="dePassStatus">Pronto para embarque</strong></div>
+                <div><span>Fuso</span><strong>Europe/Berlin</strong></div>
+              </div>
+            </div>
+            <div class="de-controls">
+              <button class="de-btn primary" id="deStampBtn" type="button">Gerar carimbo</button>
+              <button class="de-btn" id="dePassBtn" type="button">Trocar destino</button>
+            </div>
+            <div class="de-stamp" id="deStampBox">
+              <div class="de-stamp-empty" id="deStampEmpty">Gere um carimbo simbólico com cidade e horário de Berlim.</div>
+              <div class="de-stamp-mark" id="deStampMark"></div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </div></div>
 
     <div class="filter-panel">
       <div class="filter-header">
@@ -1814,77 +2059,142 @@ document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
 
 const deWords = [
   'Willkommen. Hoje a operação pousa em território alemão.',
-  'Ordnung + clareza + execução. Agora com sotaque alemão.',
-  'Alles klar. Dados sérios, assinatura divertida.',
-  'Guten Tag. O CRM continua profissional, só ganhou personalidade.',
-  'Pronto para embarque. Brasil de origem, Deutschland no destino.'
+  'Ordnung e execução. O CRM continua sério, mas agora tem presença.',
+  'Clareza operacional, acabamento forte e um toque de Berlim.',
+  'Dados sérios na base. Personalidade só na superfície.',
+  'Brasil na origem, Deutschland no destino e decisão no centro.'
 ];
-const deCities = ['BERLIN', 'HAMBURG', 'MÜNCHEN', 'KÖLN', 'FRANKFURT'];
+const deCities = ['BERLIN', 'HAMBURG', 'MÜNCHEN', 'KÖLN', 'FRANKFURT', 'STUTTGART', 'DÜSSELDORF'];
+const deWordsPool = [
+  ['Ordnung', 'ordem, estrutura, clareza'],
+  ['Ankunft', 'chegada'],
+  ['Aufbruch', 'partida, começo'],
+  ['Präzision', 'precisão'],
+  ['Verbindung', 'conexão'],
+  ['Fortschritt', 'progresso']
+];
 let dePhraseIndex = 0;
 let dePlaneStep = 0;
+let deCityIndex = 0;
+let deWordIndex = 0;
 
 function initDeutschlandSignature(){
   const toggle = document.getElementById('deToggle');
+  const overlay = document.getElementById('deOverlay');
   const panel = document.getElementById('dePanel');
+  const closeBtn = document.getElementById('deClose');
   const phraseEl = document.getElementById('dePhrase');
   const phraseBtn = document.getElementById('dePhraseBtn');
   const stampBtn = document.getElementById('deStampBtn');
+  const passBtn = document.getElementById('dePassBtn');
+  const moveBtn = document.getElementById('deMoveBtn');
   const stampMark = document.getElementById('deStampMark');
   const stampEmpty = document.getElementById('deStampEmpty');
   const plane = document.getElementById('dePlane');
   const timeEl = document.getElementById('deBerlinTime');
-  if(!toggle || !panel || !phraseEl || !phraseBtn || !stampBtn || !stampMark || !stampEmpty || !plane || !timeEl) return;
+  const dateEl = document.getElementById('deBerlinDate');
+  const cityEl = document.getElementById('deCity');
+  const wordEl = document.getElementById('deWord');
+  const wordMeaningEl = document.getElementById('deWordMeaning');
+  const passRouteEl = document.getElementById('dePassRoute');
+  const boardTimeEl = document.getElementById('deBoardTime');
+  const destEl = document.getElementById('deDest');
+  const passStatusEl = document.getElementById('dePassStatus');
+
+  if(!toggle || !overlay || !panel || !closeBtn || !phraseEl || !phraseBtn || !stampBtn || !passBtn || !moveBtn || !stampMark || !stampEmpty || !plane || !timeEl || !dateEl || !cityEl || !wordEl || !wordMeaningEl || !passRouteEl || !boardTimeEl || !destEl || !passStatusEl) return;
+
+  const berlinNowParts = ()=>{
+    const now = new Date();
+    const time = now.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
+    const date = now.toLocaleDateString('pt-BR', { timeZone: 'Europe/Berlin', weekday: 'long', day: '2-digit', month: '2-digit' });
+    return { time, date };
+  };
 
   const updateBerlinTime = ()=>{
     try {
-      const now = new Date();
-      const txt = now.toLocaleTimeString('de-DE', { timeZone: 'Europe/Berlin', hour: '2-digit', minute: '2-digit' });
-      timeEl.textContent = txt;
+      const { time, date } = berlinNowParts();
+      timeEl.textContent = time;
+      dateEl.textContent = date;
+      boardTimeEl.textContent = time;
     } catch (_) {}
   };
-  updateBerlinTime();
-  setInterval(updateBerlinTime, 30000);
 
   const setPhrase = (idx)=>{
     dePhraseIndex = (idx + deWords.length) % deWords.length;
     phraseEl.textContent = deWords[dePhraseIndex];
   };
 
+  const setWord = (idx)=>{
+    deWordIndex = (idx + deWordsPool.length) % deWordsPool.length;
+    wordEl.textContent = deWordsPool[deWordIndex][0];
+    wordMeaningEl.textContent = deWordsPool[deWordIndex][1];
+  };
+
+  const setCity = (idx)=>{
+    deCityIndex = (idx + deCities.length) % deCities.length;
+    const city = deCities[deCityIndex];
+    cityEl.textContent = city[0] + city.slice(1).toLowerCase();
+    destEl.textContent = city[0] + city.slice(1).toLowerCase();
+    passRouteEl.textContent = `GRU → ${city.slice(0,3)}`;
+  };
+
   const movePlane = ()=>{
     dePlaneStep = (dePlaneStep + 1) % 5;
     const positions = ['4%', '26%', '49%', '72%', '96%'];
     plane.style.left = positions[dePlaneStep];
-    plane.style.transform = `translate(-50%, -52%) rotate(${dePlaneStep < 2 ? -8 : dePlaneStep === 2 ? 0 : 8}deg)`;
+    plane.style.transform = `translate(-50%, -56%) rotate(${dePlaneStep < 2 ? -8 : dePlaneStep === 2 ? 0 : 8}deg)`;
+    passStatusEl.textContent = dePlaneStep === 4 ? 'Destino alcançado' : dePlaneStep >= 2 ? 'Em rota' : 'Pronto para embarque';
   };
 
-  toggle.addEventListener('click', ()=> panel.classList.toggle('open'));
-  document.addEventListener('click', (ev)=>{
-    const wrap = document.querySelector('.de-signature');
-    if(panel.classList.contains('open') && wrap && !wrap.contains(ev.target)) panel.classList.remove('open');
+  const openPanel = ()=> overlay.classList.add('open');
+  const closePanel = ()=> overlay.classList.remove('open');
+
+  toggle.addEventListener('click', openPanel);
+  closeBtn.addEventListener('click', closePanel);
+  overlay.addEventListener('click', (ev)=>{
+    if(ev.target === overlay) closePanel();
+  });
+  document.addEventListener('keydown', (ev)=>{
+    if(ev.key === 'Escape') closePanel();
   });
 
   phraseBtn.addEventListener('click', ()=>{
     setPhrase(dePhraseIndex + 1);
+    setWord(deWordIndex + 1);
+  });
+
+  moveBtn.addEventListener('click', ()=>{
+    movePlane();
+    setPhrase(dePhraseIndex + 1);
+  });
+
+  passBtn.addEventListener('click', ()=>{
+    setCity(deCityIndex + 1);
     movePlane();
   });
 
   stampBtn.addEventListener('click', ()=>{
     stampEmpty.style.display = 'none';
-    const berlinNow = new Date().toLocaleString('pt-BR', { timeZone: 'Europe/Berlin', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-    const city = deCities[Math.floor(Math.random() * deCities.length)];
-    stampMark.innerHTML = `entrada liberada<br>${city} · ${berlinNow}`;
+    const { time, date } = berlinNowParts();
+    const city = deCities[deCityIndex];
+    stampMark.innerHTML = `entrada liberada<br>${city} · ${date} · ${time}`;
     stampMark.classList.remove('show');
     void stampMark.offsetWidth;
     stampMark.classList.add('show');
-    movePlane();
     setPhrase(dePhraseIndex + 1);
+    setWord(deWordIndex + 1);
   });
 
+  updateBerlinTime();
+  setInterval(updateBerlinTime, 30000);
   setPhrase(0);
+  setWord(0);
+  setCity(0);
   plane.style.left = '4%';
 }
 
 initDeutschlandSignature();
+
 initCRM();
 </script>
 </body>
