@@ -906,10 +906,7 @@ async function initCRM() {
   const show  = i => steps[i] && steps[i].classList.add('visible');
   try {
     show(0);
-    // Fonte de verdade: somente Google Sheets publicado
-    const map = new Map();
 
-    // Busca ao vivo nas 10 abas
     const fetchCSV = url => {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 8000);
@@ -929,27 +926,62 @@ async function initCRM() {
 
     const texts = await Promise.all(SHEET_URLS.map(fetchCSV));
     show(1);
-    // Popula exclusivamente com dados ao vivo
-    texts.forEach((text, sheetIdx) => {
-      if(!text||!text.trim()) return;
-      parseCSV(text).forEach(row => {
-        const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
-        if(!id||id.toLowerCase()==='não info.') return;
-        if(!map.has(id)) map.set(id, { _id:id, _abas:[] });
-        const c = map.get(id);
-        c._abas.push(sheetIdx);
-        Object.keys(row).forEach(k => { const ck=cleanKey(k); if(!isEmpty(row[k])) c[ck]=row[k]; });
+
+    const parsedSheets = texts.map(t => parseCSV(t));
+    const baseRows = parsedSheets[0] || [];
+    const map = new Map();
+
+    // REGRA DE NEGÓCIO:
+    // A aba 1 é a base mestre do funil. Todo candidato cadastrado inicialmente
+    // nela deve aparecer no CRM mesmo que ainda não exista nas demais etapas.
+    baseRows.forEach(row => {
+      const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+      if(!id || id.toLowerCase()==='não info.') return;
+      const cleanId = normalize(id);
+      if(!map.has(cleanId)) map.set(cleanId, { _id: cleanId, _abas:[0] });
+      const c = map.get(cleanId);
+      Object.keys(row).forEach(k => {
+        const ck = cleanKey(k);
+        if(!isEmpty(row[k])) c[ck] = row[k];
       });
     });
-    show(2);
-    masterData = [...map.values()].map(c => {
-      c._etapa = getVal(c, ['STATUS PIPELINE']) || 'Não Lançado';
-      c._score = candidateScore(c);
-      return c;
+
+    // Demais abas apenas enriquecem os registros já existentes.
+    // Se aparecer ID fora da aba 1, ele é mantido como órfão técnico para não perder dado.
+    parsedSheets.forEach((rows, sheetIdx) => {
+      if(sheetIdx === 0) return;
+      rows.forEach(row => {
+        const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+        if(!id || id.toLowerCase()==='não info.') return;
+        const cleanId = normalize(id);
+        if(!map.has(cleanId)) map.set(cleanId, { _id: cleanId, _abas:[sheetIdx], _orphan:true });
+        const c = map.get(cleanId);
+        if(!Array.isArray(c._abas)) c._abas = [];
+        if(!c._abas.includes(sheetIdx)) c._abas.push(sheetIdx);
+        Object.keys(row).forEach(k => {
+          const ck = cleanKey(k);
+          if(!isEmpty(row[k])) c[ck] = row[k];
+        });
+      });
     });
+
+    show(2);
+
+    masterData = [...map.values()]
+      .map(c => {
+        c._etapa = getVal(c, ['STATUS PIPELINE']) || 'Não Lançado';
+        c._score = candidateScore(c);
+        return c;
+      })
+      .sort((a,b) => (normalize(a._id)||'').localeCompare(normalize(b._id)||'', undefined, { numeric:true, sensitivity:'base' }));
+
     filteredData = [...masterData];
     buildFilters();
     renderAll();
+
+    // Diagnóstico silencioso para validação rápida
+    console.log('[CRM] Base aba 1:', baseRows.length, '| Consolidado:', masterData.length, '| Órfãos:', masterData.filter(c=>c._orphan).length);
+
     show(3);
     await new Promise(r => setTimeout(r,400));
     document.getElementById('loadingOverlay').style.display = 'none';
@@ -1372,10 +1404,6 @@ async function doRefresh(silent = false) {
   const lbl = document.getElementById('refreshLabel');
   if(!silent && btn) { btn.classList.add('spinning'); lbl.textContent = 'Buscando...'; }
 
-  // Rebuild apenas com Google Sheets publicado
-  const map = new Map();
-
-  // Fetch ao vivo com timeout de 8s, validação e diagnóstico visível
   let liveOk = false;
   const debugLines = [];
 
@@ -1408,82 +1436,80 @@ async function doRefresh(silent = false) {
 
   const texts = await Promise.all(SHEET_URLS.map((url,i) => fetchCSV(url,i))).catch(() => []);
 
-  // Mostra diagnóstico no syncBar
   const syncBar = document.getElementById('syncBar');
   const syncMsg = document.getElementById('syncMsg');
   if(syncBar && syncMsg && debugLines.length) {
     syncBar.style.display = 'flex';
     syncBar.style.flexDirection = 'column';
     syncBar.style.alignItems = 'flex-start';
-    syncMsg.innerHTML = '<strong>Diagnóstico do fetch:</strong><br>' +
-      debugLines.join('<br>');
+    syncMsg.innerHTML = '<strong>Diagnóstico do fetch:</strong><br>' + debugLines.join('<br>');
   }
 
   if(Array.isArray(texts)) {
-    let liveCount = 0;
-    texts.forEach((text, sheetIdx) => {
-      if(!text||!text.trim()) return;
-      liveOk = true;
-      liveCount++;
-      parseCSV(text).forEach(row => {
-        const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
-        if(!id||id.toLowerCase()==='não info.') return;
-        if(!map.has(id)) map.set(id, { _id:id, _abas:[] });
-        const c = map.get(id);
-        c._abas.push(sheetIdx);
-        Object.keys(row).forEach(k => { const ck=cleanKey(k); if(!isEmpty(row[k])) c[ck]=row[k]; });
+    const parsedSheets = texts.map(t => parseCSV(t));
+    const baseRows = parsedSheets[0] || [];
+    const map = new Map();
+
+    baseRows.forEach(row => {
+      const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+      if(!id || id.toLowerCase()==='não info.') return;
+      const cleanId = normalize(id);
+      if(!map.has(cleanId)) map.set(cleanId, { _id: cleanId, _abas:[0] });
+      const c = map.get(cleanId);
+      Object.keys(row).forEach(k => {
+        const ck = cleanKey(k);
+        if(!isEmpty(row[k])) c[ck] = row[k];
       });
     });
-  }
 
-  masterData = [...map.values()].map(c => {
-    c._etapa = getVal(c, ['STATUS PIPELINE']) || 'Não Lançado';
-    c._score = candidateScore(c);
-    return c;
-  });
-  filteredData = [...masterData];
-  buildFilters();
-  renderAll();
+    parsedSheets.forEach((rows, sheetIdx) => {
+      if(sheetIdx === 0) return;
+      rows.forEach(row => {
+        const id = getVal(row, ['Nº de Inscrição','Nº da Inscrição']);
+        if(!id || id.toLowerCase()==='não info.') return;
+        const cleanId = normalize(id);
+        if(!map.has(cleanId)) map.set(cleanId, { _id: cleanId, _abas:[sheetIdx], _orphan:true });
+        const c = map.get(cleanId);
+        if(!Array.isArray(c._abas)) c._abas = [];
+        if(!c._abas.includes(sheetIdx)) c._abas.push(sheetIdx);
+        Object.keys(row).forEach(k => {
+          const ck = cleanKey(k);
+          if(!isEmpty(row[k])) c[ck] = row[k];
+        });
+      });
+    });
 
-  // Atualiza indicador de status de conexão
-  const connDot = document.getElementById('connDot');
-  const connLabel = document.getElementById('connLabel');
-  if(connDot && connLabel) {
-    if(liveOk) {
-      connDot.style.background = '#22c97a';
-      connLabel.textContent = 'ao vivo';
-    } else {
-      connDot.style.background = '#f59e0b';
-      connLabel.textContent = 'offline (local)';
+    masterData = [...map.values()]
+      .map(c => {
+        c._etapa = getVal(c, ['STATUS PIPELINE']) || 'Não Lançado';
+        c._score = candidateScore(c);
+        return c;
+      })
+      .sort((a,b) => (normalize(a._id)||'').localeCompare(normalize(b._id)||'', undefined, { numeric:true, sensitivity:'base' }));
+
+    filteredData = [...masterData];
+    buildFilters();
+    renderAll();
+
+    const orphanCount = masterData.filter(c => c._orphan).length;
+    debugLines.push(`Base mestre (Aba 1): ${baseRows.length} registro(s)`);
+    debugLines.push(`Consolidado final: ${masterData.length} registro(s)`);
+    debugLines.push(`Órfãos fora da aba 1: ${orphanCount}`);
+
+    if(syncBar && syncMsg) {
+      syncMsg.innerHTML = '<strong>Diagnóstico do fetch:</strong><br>' + debugLines.join('<br>');
     }
+
+    liveOk = masterData.length > 0;
   }
 
-  // SyncBar
-  if(syncBar) {
-    if(liveOk && !debugLines.some(l => l.includes('HTML') || l.includes('erro') || l.includes('timeout'))) {
-      // Tudo ok — esconde após 3s
-      syncBar.style.display = 'flex';
-      syncMsg.style.display = 'none';
-      syncBar.style.background = 'rgba(34,201,122,0.08)';
-      syncBar.style.borderColor = 'rgba(34,201,122,0.2)';
-      syncBar.style.color = '#6debb0';
-      setTimeout(() => { if(syncBar) syncBar.style.display = 'none'; }, 4000);
-    }
-  }
-
-  if(btn) btn.classList.remove('spinning');
-  if(!silent && lbl) {
-    lbl.textContent = '✓ ' + (liveOk ? 'Atualizado' : 'Local');
-    setTimeout(() => { if(lbl) lbl.textContent = 'Atualizar'; }, 2500);
-  } else if(lbl && lbl.textContent === 'Buscando...') {
+  if(!silent && btn) {
+    btn.classList.remove('spinning');
     lbl.textContent = 'Atualizar';
   }
+  refreshCooldown = false;
 
-  setTimeout(() => {
-    refreshCooldown = false;
-    if(btn) btn.classList.remove('cooldown');
-  }, 30000);
-  if(!silent && btn) btn.classList.add('cooldown');
+  if(!liveOk && !silent) showToast('Não foi possível atualizar os dados publicados agora.');
 }
 
 document.getElementById('btnRefresh').onclick = () => doRefresh(false);
