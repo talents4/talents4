@@ -871,7 +871,7 @@ async function apiGet(params) {
     const { data, error } = await supa.from('usuarios').select('*').order('nome');
     if (error) throw new Error(error.message);
     const users = (data||[]).map(u => ({
-      user: u.username, nome: u.nome, role: u.role, color: u.color, ativo: u.ativo
+      user: u.username, pass: u.senha || '', nome: u.nome, role: u.role, color: u.color, ativo: u.ativo
     }));
     return { ok:true, users };
   }
