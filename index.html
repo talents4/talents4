@@ -395,19 +395,57 @@ a{color:inherit;text-decoration:none}
 .alert-ico { font-size: 11px; flex-shrink: 0; }
 .alert-msg { flex: 1; }
 
-/* ── Resumo Operacional (sprint 1) ── */
+/* ── Resumo Operacional (sprint 1 + 12.1) ── */
 .ops-summary {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr); /* 5ª célula = Prontidão */
   gap: 0;
   margin: 10px 22px 0;
   border: 1px solid var(--border);
   border-radius: var(--r2);
   background: var(--bg3);
   overflow: hidden;
-  flex-shrink: 0; /* nunca comprime — fica fixo acima do scroll */
   flex-shrink: 0;
 }
+/* Prontidão — célula de destaque */
+.ops-cell-prontidao { background: rgba(29,233,155,.04); }
+.ops-pront-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+.ops-pront-val { font-size: 11.5px; font-weight: 600; }
+.pront-ok       { color: var(--green); }
+.pront-warn     { color: var(--gold); }
+.pront-risk     { color: var(--red); }
+.pront-dim      { color: var(--txt3); }
+
+/* ── Filtros Operacionais rápidos (sprint 12.1) ── */
+.op-filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.op-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--txt2);
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.op-chip:hover  { border-color: var(--accent); color: var(--txt); }
+.op-chip.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent2); }
 .ops-cell {
   padding: 8px 12px;
   border-right: 1px solid var(--border);
@@ -3059,7 +3097,29 @@ function renderTable(el, filterStatus) {
   const prioridadeOpts = ['','Alta','Média','Baixa'].concat(
     [...new Set((S.enums['Prioridade comercial']||[]).filter(p=>!['Alta','Média','Baixa'].includes(p)))]);
 
-  const filterBar = `<div class="filters-bar">
+  // ── Atalhos de filtro operacional (sprint 12.1) ──────────
+  const opChips = [
+    { label: 'Sem responsável',        fn: c => !fv(c,'Responsável interno','responsavel_interno') },
+    { label: 'Pendência crítica',      fn: c => !!(fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim() },
+    { label: 'Doc. incompleta',        fn: c => !isYes(fv(c,'Documentação completa','documentacao_completa')) },
+    { label: 'Idioma insuficiente',    fn: c => (_nivelRank(c) < 3) },
+    { label: 'Parado +30d',            fn: c => { const d = daysSince(fv(c,'Data entrada etapa atual','data_entrada_etapa_atual')); return d !== null && d > 30; } },
+    { label: 'Pronto para employer',   fn: c => isElegibleCalc(c) },
+    { label: 'Curso sem previsão',     fn: c => fv(c,'STATUS PIPELINE')==='Curso de alemão' && isYes(fv(c,'Em curso de alemão','em_curso_de_alemao')) && !fv(c,'Previsão de término','previsao_termino_alemao') },
+  ];
+  // Detecta se algum chip está ativo para marcar visualmente
+  const activeChipFn = S.filter._customFn ? S.filter._customFn.toString() : '';
+  const opChipHtml = `<div class="op-filters-bar">
+    ${opChips.map(ch => {
+      const active = S.filter._customFn && S.filter._customFn.toString() === ch.fn.toString();
+      return `<button class="op-chip${active?' active':''}" onclick="applyOpFilter(${opChips.indexOf(ch)})">${esc(ch.label)}</button>`;
+    }).join('')}
+    ${S.filter._customFn ? `<button class="op-chip" onclick="clearFilters();renderView()" style="color:var(--txt3)">✕ Limpar</button>` : ''}
+  </div>`;
+  // Armazena chips para uso no onclick
+  window._opChips = opChips;
+
+  const filterBar = `${opChipHtml}<div class="filters-bar">
     <div style="font-size:12px;color:var(--txt3)">${total} candidatos</div>
     ${S.filter._customFn ? `
     <div style="display:flex;align-items:center;gap:5px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:var(--r);padding:3px 9px;font-size:11.5px;color:var(--accent2)">
@@ -3442,28 +3502,119 @@ function validateConsistency(c) {
   return alerts;
 }
 
-function getOperationalSummary(c) {
-  const status   = fv(c, 'STATUS PIPELINE') || '';
-  const alemao   = fv(c, 'Nível de alemão', 'nivel_alemao', 'Nível alemão') || '';
-  const alvo     = fv(c, 'Nível alvo', 'nivel_alvo') || '';
-  const pend     = fv(c, 'Pendência documental crítica', 'pendencia_documental_critica') || '';
-  const docOk    = isYes(fv(c, 'Documentação completa', 'documentacao_completa'));
-  const resp     = fv(c, 'Responsável interno', 'responsavel_interno') || '';
+// ══════════════════════════════════════════════════════════════
+// SPRINT 12.1 — Prontidão Operacional
+// getOperationalSummary: próxima ação mais precisa
+// getReadiness: noção de prontidão (pronto para quê / travado por quê)
+// ══════════════════════════════════════════════════════════════
 
-  // ── Próxima Ação: regra centralizada ─────────────────────
+// Nível de alemão como rank numérico
+const NIVEL_RANK = {'Nenhum':0,'A0':0,'A1':1,'A2':2,'B1':3,'B2':4,'B2+':5,'C1':6,'C2':7};
+
+function _nivelRank(c) {
+  return NIVEL_RANK[fv(c,'Nível de alemão','nivel_alemao','Nível alemão')] || 0;
+}
+
+// ── Prontidão derivada — lógica centralizada ─────────────────
+// Retorna { label, cls } — sem novo campo persistido.
+function getReadiness(c) {
+  const status  = fv(c,'STATUS PIPELINE') || '';
+  const stIdx   = PIPELINE_STAGES.indexOf(status);
+  const pend    = fv(c,'Pendência documental crítica','pendencia_documental_critica') || '';
+  const docOk   = isYes(fv(c,'Documentação completa','documentacao_completa'));
+  const resp    = fv(c,'Responsável interno','responsavel_interno') || '';
+  const perfil  = fv(c,'Perfil') || '';
+  const analise = fv(c,'Análise do recrutador','Análise recrutador') || '';
+  const rank    = _nivelRank(c);
+  const profissao = fv(c,'Profissão principal','profissao_principal') || '';
+  const elegivel  = isYes(fv(c,'Elegível para employer','elegivel_para_employer')) || isElegibleCalc(c);
+  const dtEntrada = fv(c,'Data entrada etapa atual','data_entrada_etapa_atual') || '';
+  const diasParado = daysSince(dtEntrada);
+
+  // ── Bloqueios prioritários ────────────────────────────────
+  if (!resp)    return { label: '⚠ Sem responsável', cls: 'pront-risk' };
+  if (pend)     return { label: '🔴 Travado: pendência crítica', cls: 'pront-risk' };
+  if (diasParado !== null && diasParado > 30 && stIdx > 0)
+                return { label: `⏱ Parado há ${diasParado}d`, cls: 'pront-risk' };
+
+  // ── Prontidão por etapa ───────────────────────────────────
+  if (status === 'Novo candidato' || status === 'Triagem') {
+    if (!profissao) return { label: '⚠ Travado: sem profissão', cls: 'pront-warn' };
+    return { label: '→ Pronto para entrevista', cls: 'pront-warn' };
+  }
+  if (status === 'Entrevista pessoal' || status === 'Entrevista avaliação') {
+    if (!analise) return { label: '→ Aguardando análise RH', cls: 'pront-warn' };
+    return { label: '✓ Entrevista concluída', cls: 'pront-ok' };
+  }
+  if (status === 'Análise RH') {
+    if (rank < 3) return { label: '⚠ Travado: idioma insuficiente', cls: 'pront-warn' };
+    if (!['Candidato forte','Candidato bom'].includes(perfil))
+                  return { label: '⚠ Perfil não classificado', cls: 'pront-warn' };
+    return { label: '→ Pronto para idioma/docs', cls: 'pront-ok' };
+  }
+  if (status === 'Curso de alemão') {
+    if (rank < 3) return { label: '⏳ Em curso de alemão', cls: 'pront-warn' };
+    return { label: '→ Pronto para documentação', cls: 'pront-ok' };
+  }
+  if (status === 'Documentação' || status === 'Jurídico') {
+    if (!docOk) return { label: '⚠ Travado: doc. incompleta', cls: 'pront-warn' };
+    return { label: '→ Pronto para employer', cls: 'pront-ok' };
+  }
+  if (status === 'Employer / Matching' || status === 'Matching Instituição') {
+    return { label: '⏳ Aguardando employer', cls: 'pront-dim' };
+  }
+  if (status === 'Aprovado / Pronto') {
+    return { label: '✅ Pronto para contratação', cls: 'pront-ok' };
+  }
+  if (status === 'Contratado') {
+    return { label: '🏆 Contratado', cls: 'pront-ok' };
+  }
+
+  // Caso base: elegível mas sem marcação
+  if (elegivel) return { label: '→ Elegível para employer', cls: 'pront-ok' };
+  return { label: 'Acompanhar', cls: 'pront-dim' };
+}
+
+function getOperationalSummary(c) {
+  const status  = fv(c,'STATUS PIPELINE') || '';
+  const alemao  = fv(c,'Nível de alemão','nivel_alemao','Nível alemão') || '';
+  const alvo    = fv(c,'Nível alvo','nivel_alvo') || '';
+  const pend    = fv(c,'Pendência documental crítica','pendencia_documental_critica') || '';
+  const docOk   = isYes(fv(c,'Documentação completa','documentacao_completa'));
+  const resp    = fv(c,'Responsável interno','responsavel_interno') || '';
+  const analise = fv(c,'Análise do recrutador','Análise recrutador') || '';
+  const rank    = _nivelRank(c);
+  const stIdx   = PIPELINE_STAGES.indexOf(status);
+  const diasParado = daysSince(fv(c,'Data entrada etapa atual','data_entrada_etapa_atual'));
+
+  // ── Próxima Ação: lógica expandida ───────────────────────
   let acao = '', acaoCls = 'warn';
-  if (pend) {
+
+  if (!resp) {
+    acao = 'Atribuir responsável';
+    acaoCls = 'risk';
+  } else if (pend) {
     acao = 'Resolver pendência documental';
     acaoCls = 'risk';
+  } else if (diasParado !== null && diasParado > 30 && stIdx > 0) {
+    acao = `Retomar — parado há ${diasParado} dias`;
+    acaoCls = 'risk';
   } else if (status === 'Triagem' || status === 'Novo candidato') {
-    acao = 'Avaliar perfil';
+    acao = analise ? 'Revisar análise e avançar' : 'Avaliar perfil e entrevistar';
     acaoCls = 'warn';
-  } else if (status === 'Curso de alemão' && !alvo) {
-    acao = 'Definir meta de idioma';
+  } else if (status === 'Entrevista pessoal' || status === 'Entrevista avaliação') {
+    acao = analise ? 'Análise concluída — avançar' : 'Registrar análise RH';
+    acaoCls = analise ? 'ok' : 'warn';
+  } else if (status === 'Análise RH') {
+    acao = rank < 3 ? 'Encaminhar para curso de alemão' : 'Encaminhar para documentação';
     acaoCls = 'warn';
-  } else if (status === 'Documentação' && !docOk) {
-    acao = 'Completar documentação';
-    acaoCls = 'warn';
+  } else if (status === 'Curso de alemão') {
+    if (!alvo) { acao = 'Definir meta de idioma'; acaoCls = 'warn'; }
+    else if (rank < 3) { acao = `Aguardar B1 (atual: ${alemao||'—'})`; acaoCls = 'warn'; }
+    else { acao = 'Idioma OK — iniciar documentação'; acaoCls = 'ok'; }
+  } else if (status === 'Documentação' || status === 'Jurídico') {
+    acao = docOk ? 'Docs completa — avançar para employer' : 'Completar documentação';
+    acaoCls = docOk ? 'ok' : 'warn';
   } else if (status === 'Employer / Matching' || status === 'Matching Instituição') {
     acao = 'Aguardar retorno employer';
     acaoCls = 'dim';
@@ -3475,22 +3626,24 @@ function getOperationalSummary(c) {
     acaoCls = 'dim';
   }
 
-  // ── Idioma: nível atual → alvo ───────────────────────────
+  // ── Idioma ────────────────────────────────────────────────
   const idiomaVal = alemao ? (alvo ? `${alemao} → ${alvo}` : alemao) : '—';
-  const idiomaCls = ['B1','B2','B2+','C1','C2'].includes(alemao) ? 'ok'
-                  : ['A1','A2'].includes(alemao) ? 'warn' : 'dim';
+  const idiomaCls = rank >= 3 ? 'ok' : rank >= 1 ? 'warn' : 'dim';
 
   // ── Documentação ─────────────────────────────────────────
   const docVal = pend ? pend : (docOk ? 'Completa' : 'Pendente');
   const docCls = pend ? 'risk' : (docOk ? 'ok' : 'warn');
 
-  // ── Status badge HTML ─────────────────────────────────────
+  // ── Status badge ─────────────────────────────────────────
   const sc = STATUS_BADGE[status] || 'b-inativo';
   const statusHtml = status
     ? `<span class="badge ${sc}" style="font-size:10.5px">${esc(status)}</span>`
     : '<span class="ops-cell-val dim">—</span>';
 
-  return { statusHtml, acao, acaoCls, idiomaVal, idiomaCls, docVal, docCls };
+  // ── Prontidão ─────────────────────────────────────────────
+  const prontidao = getReadiness(c);
+
+  return { statusHtml, acao, acaoCls, idiomaVal, idiomaCls, docVal, docCls, prontidao };
 }
 
 function buildCandModal(c) {
@@ -3557,6 +3710,10 @@ function buildCandModal(c) {
       <div class="ops-cell">
         <div class="ops-cell-lbl">Documentação</div>
         <div class="ops-cell-val ${ops.docCls}" title="${esc(ops.docVal)}">${esc(ops.docVal)}</div>
+      </div>
+      <div class="ops-cell ops-cell-prontidao">
+        <div class="ops-cell-lbl ops-pront-lbl">Prontidão</div>
+        <div class="ops-pront-val ${ops.prontidao.cls}" title="${esc(ops.prontidao.label)}">${esc(ops.prontidao.label)}</div>
       </div>`;
   }
 
@@ -4509,6 +4666,16 @@ function setFilter(key, val) {
   // customizado do dashboard — o usuário assumiu o controle.
   S.filter._customFn = null;
   S.page = 1;
+  renderView();
+}
+
+// Aplica um filtro operacional rápido por índice do array _opChips
+function applyOpFilter(idx) {
+  const chip = window._opChips && window._opChips[idx];
+  if (!chip) return;
+  clearFilters();
+  S.filter._customFn = chip.fn;
+  _navSetupUI('candidates');
   renderView();
 }
 function setPage(p) {
