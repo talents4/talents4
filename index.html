@@ -4556,9 +4556,16 @@ async function handleCurriculumFile(input) {
     });
 
     // Chama a Edge Function
-    const supa = await getSupa();  // Fix 3: getSupa() é async — await obrigatório
+    const supa = await getSupa();
     const { data: { session } } = await supa.auth.getSession();
+
+    // Debug temporário — verificar sessão no console do navegador
+    console.log('[T4 Parser] session existe:', !!session);
+    console.log('[T4 Parser] access_token existe:', !!session?.access_token);
+    console.log('[T4 Parser] access_token tamanho:', session?.access_token?.length ?? 0);
+
     if (!session?.access_token) throw new Error('Sessão expirada. Faça login novamente.');
+
     const res = await fetch(PARSE_CURRICULUM_URL, {
       method: 'POST',
       headers: {
@@ -4569,11 +4576,14 @@ async function handleCurriculumFile(input) {
       body: JSON.stringify({ pdf_base64: base64, mime_type: 'application/pdf' }),
     });
 
+    console.log('[T4 Parser] Edge Function status:', res.status);
+
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Erro na extração.');
 
     // Preenche o formulário com os dados extraídos
-    _fillNewFormFromAI(data.fields, file.name);
+    // Edge Function retorna { ok, data } — não { ok, fields }
+    _fillNewFormFromAI(data.data, file.name);
 
   } catch (e) {
     statusEl.innerHTML = `<div class="ai-parse-bar" style="color:var(--red);background:var(--red-bg);border-color:rgba(255,61,90,.25)">
