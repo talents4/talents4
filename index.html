@@ -1317,11 +1317,11 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="modal-body" style="padding:16px 22px 20px;overflow-y:auto;max-height:60vh">
       <div class="field-grid">
-        <div class="field-group fg-full"><label class="field-lbl">Nome completo *</label><input class="field-input" id="n-nome" placeholder="Nome completo"></div>
-        <div class="field-group"><label class="field-lbl">E-mail</label><input class="field-input" id="n-email" type="email" placeholder="email@exemplo.com"></div>
-        <div class="field-group"><label class="field-lbl">Telefone</label><input class="field-input" id="n-tel" placeholder="+55 11 99999-9999"></div>
-        <div class="field-group"><label class="field-lbl">País de origem</label><input class="field-input" id="n-pais" placeholder="Brasil" value="BRASIL"></div>
-        <div class="field-group"><label class="field-lbl">Cidade atual</label><input class="field-input" id="n-cidade" placeholder="São Paulo - SP"></div>
+        <div class="field-group fg-full"><label class="field-lbl">Nome completo *</label><input class="field-input" id="n-nome" placeholder="Nome completo" autocomplete="off"></div>
+        <div class="field-group"><label class="field-lbl">E-mail</label><input class="field-input" id="n-email" type="email" placeholder="email@exemplo.com" autocomplete="off"></div>
+        <div class="field-group"><label class="field-lbl">Telefone</label><input class="field-input" id="n-tel" placeholder="+55 11 99999-9999" autocomplete="off"></div>
+        <div class="field-group"><label class="field-lbl">País de origem</label><input class="field-input" id="n-pais" placeholder="Brasil" value="BRASIL" autocomplete="off"></div>
+        <div class="field-group"><label class="field-lbl">Cidade atual</label><input class="field-input" id="n-cidade" placeholder="São Paulo - SP" autocomplete="off"></div>
         <div class="field-group"><label class="field-lbl">Profissão</label><div class="field-select-wrap"><select class="field-select" id="n-prof"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Profissão principal',this,'n-prof')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Área profissional</label><div class="field-select-wrap"><select class="field-select" id="n-area"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Área profissional',this,'n-area')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Nível de alemão</label><div class="field-select-wrap"><select class="field-select" id="n-alemao"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Nível de alemão',this,'n-alemao')">+</button></div></div>
@@ -1820,6 +1820,10 @@ async function apiPost(body) {
 
   if (action === 'createCandidate') {
     const fields = body.fields || {};
+    // ── nome_completo: lê de fields['Nome completo'] (correto) ou body.nome (legado)
+    if (!fields['Nome completo'] && body.nome) fields['Nome completo'] = body.nome;
+    if (!fields['Nome completo']) throw new Error('Nome completo é obrigatório.');
+
     const id = fields.ID || `T4-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
     const snakeFields = toSnake(fields);
     snakeFields.id = id;
@@ -3665,10 +3669,13 @@ async function submitNew() {
   const sess = getSession();
   try {
     const r = await apiPost({
-      action:'createCandidate', nome,
-      status: document.getElementById('n-status').value || 'Triagem',
+      action: 'createCandidate',
       actor: sess?.nome || 'web',
       fields: {
+        // ── CRÍTICO: 'Nome completo' DEVE estar em fields para o toSnake() mapear
+        // para nome_completo. Antes estava em body.nome (top-level) e era ignorado.
+        'Nome completo':        nome,
+        'STATUS PIPELINE':      document.getElementById('n-status').value || 'Novo candidato',
         'E-mail':               document.getElementById('n-email').value.trim(),
         'Telefone':             document.getElementById('n-tel').value.trim(),
         'País de origem':       document.getElementById('n-pais').value.trim(),
@@ -3685,7 +3692,7 @@ async function submitNew() {
     closeNew();
     btn.textContent = '✓ Criar Candidato'; btn.disabled = false;
     ['n-nome','n-email','n-tel','n-cidade','n-prof','n-area','n-origem','n-resp','n-obs'].forEach(id=>{
-      const el=document.getElementById(id); if(el)el.value='';
+      const el = document.getElementById(id); if (el) el.value = '';
     });
     await loadAll(); renderView();
   } catch(e) {
