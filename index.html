@@ -310,6 +310,56 @@ a{color:inherit;text-decoration:none}
 .modal-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--bg2);flex-shrink:0}
 .detail-tabs{display:flex;gap:1px;background:var(--bg3);padding:4px;border-radius:var(--r);margin:16px 22px 0;flex-shrink:0}
 
+/* ── Histórico Operacional (sprint 11.2) ── */
+.hist-block {
+  margin: 6px 22px 0;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  background: var(--bg3);
+  overflow: hidden;
+}
+.hist-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.hist-hdr-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--txt3);
+}
+.hist-hdr-toggle { font-size: 10px; color: var(--txt3); }
+.hist-body { display: none; max-height: 160px; overflow-y: auto; }
+.hist-body.open { display: block; }
+.hist-entry {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+}
+.hist-entry:last-child { border-bottom: none; }
+.hist-ts {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--txt3);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.hist-por { color: var(--txt2); font-weight: 600; flex-shrink: 0; }
+.hist-msg { color: var(--txt2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist-msg em { color: var(--txt3); font-style: normal; }
+.hist-msg strong { color: var(--teal); font-weight: 600; }
+.hist-empty { padding: 8px 12px; font-size: 11px; color: var(--txt3); }
+
 /* ── Alertas de Inconsistência (sprint 2) ── */
 .alerts-strip {
   display: flex;
@@ -1374,11 +1424,13 @@ a{color:inherit;text-decoration:none}
     <div id="cm-tabs" class="detail-tabs"></div>
     <div id="cm-summary" class="ops-summary" style="display:none"></div>
     <div id="cm-alerts" class="alerts-strip" style="display:none"></div>
+    <div id="cm-hist" class="hist-block" style="display:none"></div>
     <div class="modal-body" id="cm-body" style="padding:0"></div>
     <div class="modal-footer">
       <button class="btn btn-primary" id="cm-save" onclick="saveCandidate()">💾 Salvar</button>
       <button class="btn btn-ghost" onclick="closeCand()">Fechar</button>
       <div style="flex:1"></div>
+      <span id="cm-last-updated" style="font-size:10.5px;color:var(--txt3);font-family:var(--mono);align-self:center"></span>
       <button class="btn btn-sm" id="cm-active-btn" onclick="toggleActive()"></button>
     </div>
   </div>
@@ -1742,6 +1794,7 @@ const FIELD_MAP = {
   'Diploma arquivo':'diploma_arquivo',
   'Histórico status':'historico_status',
   'Histórico arquivo':'historico_arquivo',
+  'historico_operacional':'historico_operacional',
   'Registro status':'registro_status',
   'Registro número':'registro_numero',
   'Registro validade':'registro_validade',
@@ -3478,6 +3531,11 @@ function buildCandModal(c) {
   btn.className = 'btn btn-sm btn-ghost';
   document.getElementById('cm-save').textContent = '💾 Salvar';
 
+  // ── Última atualização ──────────────────────────────────
+  _refreshLastUpdated(c);
+  // ── Histórico operacional (sprint 11.2) ─────────────────
+  _renderHistBlock(c);
+
   // ── Resumo Operacional ──────────────────────────────────
   const ops = getOperationalSummary(c);
   const sumEl = document.getElementById('cm-summary');
@@ -3901,9 +3959,90 @@ function onEdit(el) {
   }
 }
 
+// ══════════════════════════════════════════════════════════════
+// SPRINT 11.2 — Rastreabilidade Mínima
+// Histórico armazenado como JSON em historico_operacional (TEXT).
+// Campos rastreados: STATUS PIPELINE, idioma, documentação, employer.
+// Sem nova tabela. Auto-contido no registro do candidato.
+// ══════════════════════════════════════════════════════════════
+
+// Campos críticos que devem ser rastreados
+const HIST_TRACKED = new Set([
+  'STATUS PIPELINE',
+  'Nível alemão', 'Nível de alemão',
+  'Documentação completa',
+  'Hospital alvo',
+  'Status employer',
+  'Elegível para employer',
+]);
+
+// Lê o histórico do candidato (array de entradas, mais recente primeiro)
+function histRead(c) {
+  const raw = c['historico_operacional'] || c['historico_operacional'] || '';
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
+}
+
+// Gera as entradas de histórico para os campos que mudaram
+function histBuildEntries(fieldsToSave, currentCand, actor) {
+  const entries = [];
+  const now = new Date().toISOString();
+  for (const [campo, novoVal] of Object.entries(fieldsToSave)) {
+    if (!HIST_TRACKED.has(campo)) continue;
+    const valAnterior = fv(currentCand, campo) || '';
+    const valNovo = String(novoVal || '').trim();
+    if (valNovo === String(valAnterior).trim()) continue; // sem mudança
+    entries.push({ ts: now, por: actor, campo, de: valAnterior || '—', para: valNovo || '—' });
+  }
+  return entries;
+}
+
+// Prepara o valor serializado para salvar no banco (máx 50 entradas)
+function histSerialize(existing, newEntries) {
+  const merged = [...newEntries, ...existing].slice(0, 50);
+  return JSON.stringify(merged);
+}
+
+// Formata uma entrada do histórico para exibição
+function histFmtEntry(e) {
+  const dt = new Date(e.ts);
+  const ts = dt.toLocaleDateString('pt-BR') + ' ' +
+             dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const campo = e.campo === 'STATUS PIPELINE' ? 'Status'
+    : e.campo.includes('alemão') || e.campo.includes('alemao') ? 'Alemão'
+    : e.campo.includes('Document') ? 'Doc.'
+    : e.campo.includes('Hospital') ? 'Employer'
+    : e.campo.includes('employer') ? 'Employer'
+    : e.campo;
+  return `<div class="hist-entry">
+    <span class="hist-ts">${esc(ts)}</span>
+    <span class="hist-por">${esc(e.por)}</span>
+    <span class="hist-msg">${esc(campo)}: <em>${esc(e.de)}</em> → <strong>${esc(e.para)}</strong></span>
+  </div>`;
+}
+
+// Renderiza o bloco de histórico no modal
+function _renderHistBlock(c) {
+  const el = document.getElementById('cm-hist');
+  if (!el) return;
+  const entries = histRead(c);
+  if (!entries.length) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="hist-hdr" onclick="this.nextElementSibling.classList.toggle('open');this.querySelector('.hist-hdr-toggle').textContent=this.nextElementSibling.classList.contains('open')?'▲':'▼'">
+      <span class="hist-hdr-lbl">Histórico de alterações <span style="font-weight:400;color:var(--txt3)">(${entries.length})</span></span>
+      <span class="hist-hdr-toggle">▼</span>
+    </div>
+    <div class="hist-body">
+      ${entries.length
+        ? entries.map(histFmtEntry).join('')
+        : '<div class="hist-empty">Nenhuma alteração registrada.</div>'
+      }
+    </div>`;
+}
+
 async function saveCandidate() {
   if (!S.currentCand) return;
-  // ── Permission check: viewer cannot save ──
   const sess = getSession();
   if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar candidatos.', 'warn'); return; }
   if (!Object.keys(S.pendingEdits).length) { toast('Nenhuma alteração detectada.', 'warn'); return; }
@@ -3919,30 +4058,84 @@ async function saveCandidate() {
       'Pendência documental crítica': S.pendingEdits['Pendência documental crítica'] ?? calcPendenciaDocumentalCritica(merged)
     };
     const fieldsToSave = { ...S.pendingEdits, ...autoFields };
+    const nFields = Object.keys(S.pendingEdits).length;
 
-    await apiPost({ action:'updateCandidate', id:S.currentCand.ID, fields:fieldsToSave, actor:sess?.nome||'web' });
+    // ── Rastreabilidade: detecta mudanças em campos críticos ─
+    const histEntries = histBuildEntries(fieldsToSave, S.currentCand, sess?.nome || 'web');
+    if (histEntries.length) {
+      const existing = histRead(S.currentCand);
+      fieldsToSave['historico_operacional'] = histSerialize(existing, histEntries);
+    }
+
+    const result = await apiPost({
+      action: 'updateCandidate',
+      id: S.currentCand.ID,
+      fields: fieldsToSave,
+      actor: sess?.nome || 'web'
+    });
+
+    // ── Aplica localmente ────────────────────────────────
     Object.assign(S.currentCand, fieldsToSave);
+    // Atualiza timestamp local imediatamente após salvar
+    S.currentCand['Última atualização'] = new Date().toISOString();
+    S.currentCand['Atualizado Por']     = sess?.nome || 'web';
     const idx = S.candidates.findIndex(c => c.ID === S.currentCand.ID);
-    if (idx >= 0) Object.assign(S.candidates[idx], fieldsToSave);
+    if (idx >= 0) Object.assign(S.candidates[idx], S.currentCand);
 
-    // ── Detecta mudança para "Contratado" → celebração Wunderbar ──
+    // ── Feedback de salvamento ───────────────────────────
+    const skipped = result?.skipped || [];
     const newStatus = fieldsToSave['STATUS PIPELINE'];
-    if (newStatus === 'Contratado' && prevStatus !== 'Contratado') {
+
+    if (skipped.length) {
+      // Salvo parcialmente — honesto, não mascara como sucesso total
+      const names = skipped.slice(0, 2).join(', ') + (skipped.length > 2 ? ` +${skipped.length - 2}` : '');
+      toast(
+        `⚠ Salvo parcialmente — ${nFields - skipped.length} de ${nFields} campo(s) salvos. Campo(s) ignorado(s): ${names}`,
+        'warn', 7000
+      );
+    } else if (newStatus === 'Contratado' && prevStatus !== 'Contratado') {
       fireWunderbar();
     } else {
+      const quant = nFields === 1 ? '1 campo salvo' : `${nFields} campos salvos`;
       btn.classList.add('btn-save-pulse');
       setTimeout(() => btn.classList.remove('btn-save-pulse'), 600);
-      toast('✅ Candidato atualizado!', 'ok');
+      toast(`✅ ${quant} com sucesso.`, 'ok');
     }
 
     S.pendingEdits = {};
     btn.textContent = '💾 Salvar'; btn.disabled = false;
+    btn.classList.remove('has-changes');
+
+    // ── Atualiza indicador de última atualização no modal ─
+    _refreshLastUpdated(S.currentCand);
+    // ── Atualiza bloco de histórico no modal ──────────────
+    _renderHistBlock(S.currentCand);
+
     updateBadges();
     if (['candidates','kanban','triagem','entrevistas','analise','documentacao','employer'].includes(S.view)) renderView();
+
   } catch(e) {
-    toast('❌ ' + e.message, 'err');
+    // Mensagem de erro útil — distingue erro de rede de erro do banco
+    const isNetwork = e.message?.toLowerCase().includes('failed to fetch') || e.message?.toLowerCase().includes('network');
+    const msg = isNetwork
+      ? 'Falha de conexão. Verifique sua internet e tente novamente.'
+      : `Erro ao salvar: ${e.message}`;
+    toast(`❌ ${msg}`, 'err', 6000);
     btn.textContent = '💾 Salvar'; btn.disabled = false;
   }
+}
+
+// ── Atualiza o indicador de última atualização no modal ────────
+// Chamada após salvar sem precisar reabrir o modal inteiro.
+function _refreshLastUpdated(c) {
+  const el = document.getElementById('cm-last-updated');
+  if (!el) return;
+  const raw = c['Última atualização'] || c['ultima_atualizacao'] || '';
+  const por = c['Atualizado Por'] || c['atualizado_por'] || '';
+  if (!raw) { el.textContent = ''; return; }
+  const dt = new Date(raw);
+  const fmt = dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  el.textContent = `Atualizado em ${fmt}${por ? ` por ${por}` : ''}`;
 }
 
 async function toggleActive() {
