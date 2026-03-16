@@ -308,7 +308,82 @@ a{color:inherit;text-decoration:none}
 .modal-close:hover{background:var(--red-bg);color:var(--red)}
 .modal-body{flex:1;overflow-y:auto}
 .modal-footer{padding:12px 22px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--bg2);flex-shrink:0}
-.detail-tabs{display:flex;gap:1px;background:var(--bg3);padding:4px;border-radius:var(--r);margin:16px 22px 0}
+.detail-tabs{display:flex;gap:1px;background:var(--bg3);padding:4px;border-radius:var(--r);margin:16px 22px 0;flex-shrink:0}
+
+/* ── Alertas de Inconsistência (sprint 2) ── */
+.alerts-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px 22px 0;
+  flex-shrink: 0;
+}
+.alert-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: var(--r);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.alert-row.a-critico {
+  background: rgba(255,61,90,.10);
+  border: 1px solid rgba(255,61,90,.25);
+  color: var(--red);
+}
+.alert-row.a-atencao {
+  background: rgba(245,192,0,.08);
+  border: 1px solid rgba(245,192,0,.2);
+  color: var(--gold);
+}
+.alert-row.a-aviso {
+  background: rgba(122,128,160,.08);
+  border: 1px solid var(--border);
+  color: var(--txt3);
+}
+.alert-ico { font-size: 11px; flex-shrink: 0; }
+.alert-msg { flex: 1; }
+
+/* ── Resumo Operacional (sprint 1) ── */
+.ops-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  margin: 10px 22px 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  background: var(--bg3);
+  overflow: hidden;
+  flex-shrink: 0; /* nunca comprime — fica fixo acima do scroll */
+  flex-shrink: 0;
+}
+.ops-cell {
+  padding: 8px 12px;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+.ops-cell:last-child { border-right: none; }
+.ops-cell-lbl {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--txt3);
+  margin-bottom: 4px;
+}
+.ops-cell-val {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--txt2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ops-cell-val.ok    { color: var(--green); }
+.ops-cell-val.warn  { color: var(--gold); }
+.ops-cell-val.risk  { color: var(--red); }
+.ops-cell-val.dim   { color: var(--txt3); }
 .detail-tab{flex:1;padding:6px 10px;border-radius:calc(var(--r) - 2px);font-size:12px;font-weight:600;color:var(--txt3);transition:all .12s;text-align:center;cursor:pointer}
 .detail-tab:hover{color:var(--txt2)}
 .detail-tab.active{background:var(--bg2);color:var(--txt);box-shadow:var(--sh2)}
@@ -1297,6 +1372,8 @@ a{color:inherit;text-decoration:none}
       <button class="modal-close" onclick="closeCand()">✕</button>
     </div>
     <div id="cm-tabs" class="detail-tabs"></div>
+    <div id="cm-summary" class="ops-summary" style="display:none"></div>
+    <div id="cm-alerts" class="alerts-strip" style="display:none"></div>
     <div class="modal-body" id="cm-body" style="padding:0"></div>
     <div class="modal-footer">
       <button class="btn btn-primary" id="cm-save" onclick="saveCandidate()">💾 Salvar</button>
@@ -1585,7 +1662,7 @@ const S = {
   currentCand: null,
   pendingEdits: {},
   page: 1, pageSize: 80,
-  filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'' },
+  filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null },
   syncTimer: null,
   lastSync: null,
 };
@@ -2156,7 +2233,9 @@ function setSyncStatus(state) {
 // ══════════════════════════════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════════════════════════════
-function nav(view) {
+// ── Extrai os side-effects de UI de nav() sem tocar em filtros ─
+// Usado por filterByMetric para navegar sem disparar clearFilters.
+function _navSetupUI(view) {
   S.view = view; S.page = 1;
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.v === view));
   const titles = {
@@ -2168,7 +2247,11 @@ function nav(view) {
   document.getElementById('tb-title').textContent = titles[view] || view;
   const showSearch = ['candidates','kanban','triagem','entrevistas','analise','alemao','documentacao','employer','inativos'].includes(view);
   document.getElementById('search-wrap').style.display = showSearch ? 'flex' : 'none';
-  clearFilters();
+}
+
+function nav(view) {
+  _navSetupUI(view);
+  clearFilters();   // comportamento padrão: limpa filtros ao navegar normalmente
   renderView();
 }
 
@@ -2189,6 +2272,67 @@ function renderView() {
     case 'inativos':     renderInativo(el);                  break;
     case 'settings':     renderSettings(el);                 break;
   }
+}
+
+// ── filterByMetric: deep-link real do dashboard ───────────────
+// Navega para a tabela de candidatos com o filtro correto PRESERVADO.
+// Nunca chama clearFilters() — usa _navSetupUI + aplica filtros + renderView.
+function filterByMetric(label) {
+  // 1. Reseta filtros sem chamar nav() (que limparia tudo)
+  clearFilters();
+
+  // 2. Mapeia o label do KPI para o estado de filtro correto
+  const B1PLUS = ['B1','B2','B2+','C1','C2'];
+
+  switch (label) {
+    case 'Total':
+      // Mostra todos os candidatos (ativos), sem filtro adicional
+      break;
+
+    case 'Ativos':
+      // filterCands(list, false) já exclui inativos — nenhum filtro extra necessário
+      break;
+
+    case 'Contratados':
+      S.filter.status = 'Contratado';
+      break;
+
+    case 'B1+':
+      S.filter._customFn = c => B1PLUS.includes(fv(c,'Nível de alemão','nivel_alemao','Nível alemão'));
+      break;
+
+    // Pipeline stages (funil vertical) — filtro exato de status
+    default:
+      if (PIPELINE_STAGES.includes(label)) {
+        S.filter.status = label;
+      } else {
+        // Health issue labels → custom predicates
+        const healthMap = {
+          'Sem idioma alemão':      c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a||['Nenhum','A0',''].includes(a); },
+          'Sem perfil avaliado':    c => !fv(c,'Perfil'),
+          'Prontos não marcados':   c => !isYes(fv(c,'Elegível para employer','elegivel_para_employer')) && isElegibleCalc(c),
+          '"Em curso" não marcado': c => fv(c,'STATUS PIPELINE')==='Curso de alemão' && !isYes(fv(c,'Em curso de alemão','em_curso_de_alemao')),
+          'Sem responsável':        c => !fv(c,'Responsável interno','responsavel_interno'),
+          'Pendência crítica':      c => !!(fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim(),
+          'Inconsistência ativo':   c => {
+            const at=isYes(fv(c,'Ativo','ativo')), st=fv(c,'STATUS PIPELINE','status_pipeline');
+            return (at&&INACTIVE_STATUSES.includes(st))||(!at&&!INACTIVE_STATUSES.includes(st)&&!!st);
+          },
+          'Doc. incompleta':        c => !isYes(fv(c,'Documentação completa','documentacao_completa')),
+        };
+        if (healthMap[label]) {
+          S.filter._customFn = healthMap[label];
+        }
+        // Se label desconhecido: abre candidatos sem filtro (comportamento seguro)
+      }
+      break;
+  }
+
+  // 3. Atualiza a UI de navegação sem disparar clearFilters()
+  _navSetupUI('candidates');
+
+  // 4. Renderiza a tabela já com o filtro aplicado
+  renderView();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2864,6 +3008,11 @@ function renderTable(el, filterStatus) {
 
   const filterBar = `<div class="filters-bar">
     <div style="font-size:12px;color:var(--txt3)">${total} candidatos</div>
+    ${S.filter._customFn ? `
+    <div style="display:flex;align-items:center;gap:5px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:var(--r);padding:3px 9px;font-size:11.5px;color:var(--accent2)">
+      <span>Filtro ativo</span>
+      <button onclick="clearFilters();setFilter('status','')" style="font-size:13px;color:var(--accent2);line-height:1;background:none;border:none;cursor:pointer" title="Limpar filtro">✕</button>
+    </div>` : ''}
     <div style="flex:1"></div>
     <select class="filter-select" onchange="setFilter('status',this.value)">
       ${statusOpts.map(s=>`<option value="${s}" ${S.filter.status===s?'selected':''}>${s||'Todos os status'}</option>`).join('')}
@@ -3161,6 +3310,136 @@ async function openCand(id) {
   document.getElementById('cand-overlay').classList.add('open');
 }
 
+// ══════════════════════════════════════════════════════════════
+// SPRINT 2 — Validação de Consistência (somente leitura)
+// Função pura. Não bloqueia save. Não toca em persistência.
+// Retorna array de { nivel:'critico'|'atencao'|'aviso', msg }
+// ══════════════════════════════════════════════════════════════
+function validateConsistency(c) {
+  const alerts = [];
+  const push = (nivel, msg) => alerts.push({ nivel, msg });
+
+  const status    = fv(c, 'STATUS PIPELINE') || '';
+  const stageIdx  = PIPELINE_STAGES.indexOf(status);
+  const isAvancado = stageIdx >= PIPELINE_STAGES.indexOf('Análise RH'); // índice 4+
+
+  // ── Nível de alemão para comparações ─────────────────────
+  const NIVEL_ORDER = ['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
+  const alemao      = fv(c, 'Nível de alemão', 'nivel_alemao', 'Nível alemão') || '';
+  const alvo        = fv(c, 'Nível alvo', 'nivel_alvo') || '';
+  const resultado   = fv(c, 'Resultado da prova', 'resultado_da_prova') || '';
+  const emCurso     = isYes(fv(c, 'Em curso de alemão', 'em_curso_de_alemao'));
+  const previsao    = fv(c, 'Previsão de término', 'previsao_termino_alemao') || '';
+
+  // ── Documentação ─────────────────────────────────────────
+  const docCompleta = isYes(fv(c, 'Documentação completa', 'documentacao_completa'));
+  const pend        = fv(c, 'Pendência documental crítica', 'pendencia_documental_critica') || '';
+  const passaporte  = fv(c, 'Número do Passaporte', 'numero_do_passaporte') || '';
+  const diploma     = fv(c, 'Diploma') || '';
+
+  // ── Dados pessoais/profissionais ──────────────────────────
+  const telefone   = fv(c, 'Telefone') || '';
+  const profissao  = fv(c, 'Profissão principal', 'profissao_principal') || '';
+
+  // ── CRÍTICO ───────────────────────────────────────────────
+  // Documentação marcada como completa mas há pendência crítica registrada
+  if (docCompleta && pend) {
+    push('critico', 'Documentação marcada como completa mas há pendência crítica registrada.');
+  }
+  // Documentação marcada como completa mas passaporte ou diploma ausentes
+  // Guarda de etapa: só relevante a partir da etapa de Documentação
+  const docStageIdx = PIPELINE_STAGES.indexOf('Documentação');
+  if (docCompleta && (!passaporte || !diploma) && stageIdx >= docStageIdx) {
+    const faltando = [!passaporte && 'Passaporte', !diploma && 'Diploma'].filter(Boolean).join(' e ');
+    push('critico', `Documentação marcada como completa, mas ${faltando} não preenchido.`);
+  }
+
+  // ── ATENÇÃO ───────────────────────────────────────────────
+  // Nível alvo menor ou igual ao nível atual
+  if (alemao && alvo) {
+    const idxAtual = NIVEL_ORDER.indexOf(alemao);
+    const idxAlvo  = NIVEL_ORDER.indexOf(alvo);
+    if (idxAlvo > 0 && idxAtual > 0 && idxAlvo <= idxAtual) {
+      push('atencao', `Nível alvo (${alvo}) é igual ou inferior ao nível atual (${alemao}).`);
+    }
+  }
+  // Resultado de prova = Reprovado mas curso marcado como em andamento sem ação
+  if (resultado === 'Reprovado' && emCurso) {
+    push('atencao', 'Resultado de prova Reprovado com curso ainda ativo. Verificar próximo passo.');
+  }
+  // Em etapa de Documentação ou posterior mas sem passaporte
+  if (stageIdx >= PIPELINE_STAGES.indexOf('Documentação') && !passaporte) {
+    push('atencao', 'Candidato em Documentação sem número de passaporte registrado.');
+  }
+
+  // ── AVISO ─────────────────────────────────────────────────
+  // Etapa avançada sem profissão preenchida
+  if (isAvancado && !profissao) {
+    push('aviso', 'Candidato em etapa avançada sem profissão preenchida.');
+  }
+  // Etapa avançada sem telefone
+  if (isAvancado && !telefone) {
+    push('aviso', 'Candidato em etapa avançada sem telefone de contato.');
+  }
+  // Em curso de alemão sem previsão de término
+  if (status === 'Curso de alemão' && emCurso && !previsao) {
+    push('aviso', 'Curso de alemão ativo sem previsão de término definida.');
+  }
+
+  return alerts;
+}
+
+function getOperationalSummary(c) {
+  const status   = fv(c, 'STATUS PIPELINE') || '';
+  const alemao   = fv(c, 'Nível de alemão', 'nivel_alemao', 'Nível alemão') || '';
+  const alvo     = fv(c, 'Nível alvo', 'nivel_alvo') || '';
+  const pend     = fv(c, 'Pendência documental crítica', 'pendencia_documental_critica') || '';
+  const docOk    = isYes(fv(c, 'Documentação completa', 'documentacao_completa'));
+  const resp     = fv(c, 'Responsável interno', 'responsavel_interno') || '';
+
+  // ── Próxima Ação: regra centralizada ─────────────────────
+  let acao = '', acaoCls = 'warn';
+  if (pend) {
+    acao = 'Resolver pendência documental';
+    acaoCls = 'risk';
+  } else if (status === 'Triagem' || status === 'Novo candidato') {
+    acao = 'Avaliar perfil';
+    acaoCls = 'warn';
+  } else if (status === 'Curso de alemão' && !alvo) {
+    acao = 'Definir meta de idioma';
+    acaoCls = 'warn';
+  } else if (status === 'Documentação' && !docOk) {
+    acao = 'Completar documentação';
+    acaoCls = 'warn';
+  } else if (status === 'Employer / Matching' || status === 'Matching Instituição') {
+    acao = 'Aguardar retorno employer';
+    acaoCls = 'dim';
+  } else if (status === 'Aprovado / Pronto') {
+    acao = 'Confirmar contratação';
+    acaoCls = 'ok';
+  } else {
+    acao = resp ? `Acompanhar — ${resp}` : 'Acompanhar evolução';
+    acaoCls = 'dim';
+  }
+
+  // ── Idioma: nível atual → alvo ───────────────────────────
+  const idiomaVal = alemao ? (alvo ? `${alemao} → ${alvo}` : alemao) : '—';
+  const idiomaCls = ['B1','B2','B2+','C1','C2'].includes(alemao) ? 'ok'
+                  : ['A1','A2'].includes(alemao) ? 'warn' : 'dim';
+
+  // ── Documentação ─────────────────────────────────────────
+  const docVal = pend ? pend : (docOk ? 'Completa' : 'Pendente');
+  const docCls = pend ? 'risk' : (docOk ? 'ok' : 'warn');
+
+  // ── Status badge HTML ─────────────────────────────────────
+  const sc = STATUS_BADGE[status] || 'b-inativo';
+  const statusHtml = status
+    ? `<span class="badge ${sc}" style="font-size:10.5px">${esc(status)}</span>`
+    : '<span class="ops-cell-val dim">—</span>';
+
+  return { statusHtml, acao, acaoCls, idiomaVal, idiomaCls, docVal, docCls };
+}
+
 function buildCandModal(c) {
   const initials = (c['Nome completo']||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
   document.getElementById('cm-av').textContent = initials;
@@ -3198,6 +3477,49 @@ function buildCandModal(c) {
   btn.style.color  = isActive ? 'var(--red)' : 'var(--green)';
   btn.className = 'btn btn-sm btn-ghost';
   document.getElementById('cm-save').textContent = '💾 Salvar';
+
+  // ── Resumo Operacional ──────────────────────────────────
+  const ops = getOperationalSummary(c);
+  const sumEl = document.getElementById('cm-summary');
+  if (sumEl) {
+    sumEl.style.display = 'grid';
+    sumEl.innerHTML = `
+      <div class="ops-cell">
+        <div class="ops-cell-lbl">Status Atual</div>
+        <div class="ops-cell-val">${ops.statusHtml}</div>
+      </div>
+      <div class="ops-cell">
+        <div class="ops-cell-lbl">Próxima Ação</div>
+        <div class="ops-cell-val ${ops.acaoCls}" title="${esc(ops.acao)}">${esc(ops.acao)}</div>
+      </div>
+      <div class="ops-cell">
+        <div class="ops-cell-lbl">Idioma</div>
+        <div class="ops-cell-val ${ops.idiomaCls}">${esc(ops.idiomaVal)}</div>
+      </div>
+      <div class="ops-cell">
+        <div class="ops-cell-lbl">Documentação</div>
+        <div class="ops-cell-val ${ops.docCls}" title="${esc(ops.docVal)}">${esc(ops.docVal)}</div>
+      </div>`;
+  }
+
+  // ── Alertas de Inconsistência (sprint 2) ────────────────
+  const alertsEl = document.getElementById('cm-alerts');
+  if (alertsEl) {
+    const issues = validateConsistency(c);
+    if (issues.length) {
+      const ICON = { critico: '🔴', atencao: '🟡', aviso: '⚪' };
+      alertsEl.style.display = 'flex';
+      alertsEl.innerHTML = issues.map(a =>
+        `<div class="alert-row a-${a.nivel}">
+          <span class="alert-ico">${ICON[a.nivel]}</span>
+          <span class="alert-msg">${esc(a.msg)}</span>
+        </div>`
+      ).join('');
+    } else {
+      alertsEl.style.display = 'none';
+      alertsEl.innerHTML = '';
+    }
+  }
 }
 
 function buildPanel(tabId, c) {
@@ -3973,6 +4295,8 @@ function filterCands(list, includeInactive=false) {
   if (S.filter.alemao)   r = r.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
   if (S.filter.substatus)  r = r.filter(c => fv(c,'Substatus','substatus') === S.filter.substatus);
   if (S.filter.prioridade) r = r.filter(c => fv(c,'Prioridade comercial','prioridade_comercial') === S.filter.prioridade);
+  // _customFn: predicado opcional para filtros de múltiplos valores (ex: B1+)
+  if (typeof S.filter._customFn === 'function') r = r.filter(S.filter._customFn);
   if (S.filter.q) {
     const q = S.filter.q.toLowerCase();
     r = r.filter(c =>
@@ -3986,14 +4310,21 @@ function filterCands(list, includeInactive=false) {
   return r;
 }
 
-function setFilter(key, val) { S.filter[key]=val; S.page=1; renderView(); }
+function setFilter(key, val) {
+  S.filter[key] = val;
+  // Ao interagir manualmente com qualquer filtro, descarta predicado
+  // customizado do dashboard — o usuário assumiu o controle.
+  S.filter._customFn = null;
+  S.page = 1;
+  renderView();
+}
 function setPage(p) {
   const total = filterCands(S.candidates, false).length;
   S.page = Math.max(1, Math.min(p, Math.ceil(total/S.pageSize)));
   renderView();
 }
 function onSearch(q) { S.filter.q=q; S.page=1; renderView(); }
-function filterByMetric(label) { nav('candidates'); }
+function filterByMetric_REMOVED_SEE_ABOVE() {} // substituído na sprint 3
 
 function groupCount(items, fn) {
   const m = {};
@@ -4096,7 +4427,7 @@ function calcPendenciaDocumentalCritica(c) {
 }
 
 function clearFilters() {
-  S.filter = { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'' };
+  S.filter = { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null };
   const gs = document.getElementById('global-search');
   if (gs) gs.value = '';
 }
