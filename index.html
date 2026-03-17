@@ -1459,6 +1459,15 @@ a{color:inherit;text-decoration:none}
         <span style="color:var(--txt3);font-size:13px">⌕</span>
         <input type="text" placeholder="Buscar candidatos..." id="global-search" oninput="onSearch(this.value)">
       </div>
+      <!-- M8: Busca inteligente por linguagem natural (client-side, sem IA) -->
+      <div class="search-wrap" id="nlp-search-wrap" style="display:none;width:260px;border-color:var(--border2)"
+           title="Busca inteligente — ex: enfermeiros com B2, administrativos de Curitiba">
+        <span style="color:var(--gold);font-size:12px">✦</span>
+        <input type="text" placeholder="ex: enfermeiros com B2..." id="nlp-search-input"
+               oninput="applyNlpSearch(this.value)" autocomplete="off">
+        <button style="font-size:10px;color:var(--txt3);padding:0 2px" title="Limpar busca inteligente"
+                onclick="document.getElementById('nlp-search-input').value='';applyNlpSearch('')">✕</button>
+      </div>
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt3)" id="sync-status">
         <div class="sync-dot" id="sync-dot"></div>
         <span id="sync-lbl">sincronizado</span>
@@ -1497,7 +1506,7 @@ a{color:inherit;text-decoration:none}
 
 <!-- ════════ NEW CANDIDATE MODAL ════════ -->
 <div class="overlay" id="new-overlay" onclick="closeNewOverlay(event)">
-  <div class="modal" style="width:min(560px,96vw)">
+  <div class="modal" style="width:min(560px,96vw);max-height:92vh">
     <div class="modal-hdr">
       <div class="modal-av" style="background:var(--green-bg);color:var(--green)">+</div>
       <div style="flex:1"><div class="modal-title">Novo Candidato</div><div style="font-size:12px;color:var(--txt3)">Somente o nome é necessário</div></div>
@@ -1507,8 +1516,8 @@ a{color:inherit;text-decoration:none}
       <input type="file" id="n-pdf-input" accept=".pdf" style="display:none" onchange="handleCurriculumFile(this)">
       <button class="modal-close" onclick="closeNew()">✕</button>
     </div>
-    <div id="n-ai-status" style="display:none;padding:0 22px;padding-top:10px"></div>
-    <div class="modal-body" style="padding:16px 22px 20px;overflow-y:auto;max-height:60vh">
+    <div class="modal-body" style="padding:16px 22px 20px;overflow-y:auto">
+      <div id="n-ai-status" style="display:none;margin:-4px -22px 14px;padding:0 22px 12px;border-bottom:1px solid var(--border)"></div>
       <div class="field-grid">
         <div class="field-group fg-full"><label class="field-lbl">Nome completo *</label><input class="field-input" id="n-nome" placeholder="Nome completo" autocomplete="off"></div>
         <div class="field-group"><label class="field-lbl">E-mail</label><input class="field-input" id="n-email" type="email" placeholder="email@exemplo.com" autocomplete="off"></div>
@@ -1581,7 +1590,8 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ── Google Drive OAuth (GIS popup flow) ──
 // Substitua pelo Client ID gerado no Google Cloud Console
 const GOOGLE_CLIENT_ID = '537631107304-oubpdolcprvc8nqpfmibd3oja7ng23ra.apps.googleusercontent.com';
-const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+// Escopo efetivo do Google Drive: auth/drive (acesso completo — necessário para pasta raiz fixa)
+// Configurado em _driveGetClient() → scope: 'https://www.googleapis.com/auth/drive'
 const DRIVE_ROOT_FOLDER_ID = '1G-gQBz-5BasfwrBogLSlTLbNt5aJTzc6'; // pasta raiz T4 no Drive
 
 const SYNC_INTERVAL = 60000;
@@ -1596,11 +1606,12 @@ async function getSupa() {
 }
 
 // Estágios REAIS conforme a planilha ⭐ DB_MASTER_V5
+// M9: 'Entrevista pessoal' → 'Pré-seleção' | 'Entrevista avaliação' → 'Entrevista'
 const PIPELINE_STAGES = [
   'Novo candidato',
   'Triagem',
-  'Entrevista pessoal',
-  'Entrevista avaliação',
+  'Pré-seleção',
+  'Entrevista',
   'Análise RH',
   'Curso de alemão',
   'Documentação',
@@ -1623,8 +1634,8 @@ const STAGE_COLORS = ['#94a3b8','#38bdf8','#c084fc','#a78bfa','#f5c84a','#ff8c42
 const STATUS_BADGE = {
   'Novo candidato':'b-triagem',
   'Triagem':'b-triagem',
-  'Entrevista pessoal':'b-entrevista',
-  'Entrevista avaliação':'b-entrevista',
+  'Pré-seleção':'b-entrevista',
+  'Entrevista':'b-entrevista',
   'Análise RH':'b-analise',
   'Curso de alemão':'b-curso',
   'Documentação':'b-docs',
@@ -1873,6 +1884,13 @@ const FIELD_MAP = {
   'Registro número':'registro_numero',
   'Registro validade':'registro_validade',
   'Registro arquivo':'registro_arquivo',
+  /* ── M6: Campos de triagem IA ── */
+  'AI Summary':'ai_summary',
+  'AI Missing Fields':'ai_missing_fields',
+  'AI Attention Flags':'ai_attention_flags',
+  /* ── M10: Bolsa do curso de alemão ── */
+  'Bolsa concedida':'bolsa_concedida',
+  'Bolsa percentual':'bolsa_percentual',
 };
 const REV_MAP = Object.fromEntries(Object.entries(FIELD_MAP).map(([k,v])=>[v,k]));
 
@@ -1891,6 +1909,13 @@ function toFrontend(row) {
   if (!out['STATUS PIPELINE'] && row.status_pipeline) out['STATUS PIPELINE'] = row.status_pipeline;
   if (!out['Nível de alemão'] && row.nivel_alemao) out['Nível de alemão'] = row.nivel_alemao;
   if (!out['Nível alemão'] && row.nivel_alemao) out['Nível alemão'] = row.nivel_alemao;
+  // M6: AI Triagem
+  if (!out['AI Summary']        && row.ai_summary)        out['AI Summary']        = row.ai_summary;
+  if (!out['AI Missing Fields'] && row.ai_missing_fields) out['AI Missing Fields'] = row.ai_missing_fields;
+  if (!out['AI Attention Flags']&& row.ai_attention_flags)out['AI Attention Flags']= row.ai_attention_flags;
+  // M10: Bolsa
+  if (out['Bolsa concedida'] === undefined && row.bolsa_concedida !== undefined) out['Bolsa concedida'] = row.bolsa_concedida;
+  if (out['Bolsa percentual'] === undefined && row.bolsa_percentual !== undefined) out['Bolsa percentual'] = row.bolsa_percentual;
   // Jornada do Idioma
   if (!out['Instituição de ensino'] && row.instituicao_ensino) out['Instituição de ensino'] = row.instituicao_ensino;
   if (!out['Nível inicial'] && row.nivel_inicial) out['Nível inicial'] = row.nivel_inicial;
@@ -1980,46 +2005,19 @@ async function apiPost(body) {
     snakeFields.ultima_atualizacao = new Date().toISOString();
     snakeFields.atualizado_por = actor;
 
-    // ── Auto-healing save: se o Supabase retornar erro de coluna inexistente,
-    //    remove a coluna problemática do payload e tenta novamente (até 12x).
-    //    Isso garante que campos novos que ainda não existem no DB nunca
-    //    bloqueiem o save dos demais campos.
-    const skipped = [];
-    let payload = { ...snakeFields };
-    let lastError = null;
-    for (let attempt = 0; attempt < 12; attempt++) {
-      const { error } = await supa.from('candidatos').update(payload).eq('id', body.id);
-      if (!error) {
-        // Salvo com sucesso — avisar se algum campo foi ignorado
-        if (skipped.length) {
-          console.warn('[T4] Campos ignorados (coluna ausente no Supabase):', skipped);
-          // Toast informativo (não bloqueante)
-          setTimeout(() => toast(
-            `⚠ ${skipped.length} campo(s) não salvo(s) — coluna ainda não existe no Supabase: ${skipped.slice(0,3).join(', ')}`,
-            'warn', 6000
-          ), 200);
-        }
-        syncToSheet(body.id, body.fields || {}, actor);
-        return { ok: true, skipped };
+    // ── Save direto: sem auto-healing. Erro de schema aparece de forma clara. ──
+    const { error } = await supa.from('candidatos').update(snakeFields).eq('id', body.id);
+    if (error) {
+      const isSchemaErr = /Could not find the '(\w+)' column/i.test(error.message);
+      if (isSchemaErr) {
+        const col = (error.message.match(/Could not find the '(\w+)' column/i)||[])[1] || '?';
+        console.error('[T4] Erro de schema ao salvar candidato — coluna ausente no Supabase:', col, error.message);
+        throw new Error(`Coluna "${col}" não existe no banco. Execute o SQL de migração para adicioná-la antes de salvar.`);
       }
-      // Detecta erro de coluna ausente: "Could not find the 'X' column of 'Y' in the schema cache"
-      const colMatch = error.message.match(/Could not find the '(\w+)' column/i);
-      if (colMatch) {
-        const badCol = colMatch[1];
-        skipped.push(badCol);
-        delete payload[badCol];
-        lastError = error;
-        continue; // tenta de novo sem essa coluna
-      }
-      // Qualquer outro erro: lança imediatamente
       throw new Error(error.message);
     }
-    // Se chegou aqui, esgotou tentativas mas salvou o que pôde
-    if (Object.keys(payload).length > 2) { // 2 = apenas os metadados
-      console.error('[T4] Esgotou tentativas de save após remover colunas ausentes:', skipped);
-    }
     syncToSheet(body.id, body.fields || {}, actor);
-    return { ok: true, skipped };
+    return { ok: true };
   }
 
   if (action === 'createCandidate') {
@@ -2037,25 +2035,20 @@ async function apiPost(body) {
     if (!snakeFields.status_pipeline) snakeFields.status_pipeline = 'Novo candidato';
     if (!snakeFields.ativo) snakeFields.ativo = 'SIM';
 
-    // ── Auto-healing insert: remove colunas inexistentes e tenta novamente ──
-    const skipped = [];
-    let payload = { ...snakeFields };
-    let inserted = null;
-    for (let attempt = 0; attempt < 12; attempt++) {
-      const { data, error } = await supa.from('candidatos').insert(payload).select().single();
-      if (!error) { inserted = data; break; }
-      const colMatch = error.message.match(/Could not find the '(\w+)' column/i);
-      if (colMatch) {
-        skipped.push(colMatch[1]);
-        delete payload[colMatch[1]];
-        continue;
+    // ── Insert direto: sem auto-healing. Erro de schema aparece de forma clara. ──
+    const { data: inserted, error: insErr } = await supa.from('candidatos').insert(snakeFields).select().single();
+    if (insErr) {
+      const isSchemaErr = /Could not find the '(\w+)' column/i.test(insErr.message);
+      if (isSchemaErr) {
+        const col = (insErr.message.match(/Could not find the '(\w+)' column/i)||[])[1] || '?';
+        console.error('[T4] Erro de schema ao criar candidato — coluna ausente:', col);
+        throw new Error(`Coluna "${col}" não existe no banco. Execute o SQL de migração antes de criar candidatos com esse campo.`);
       }
-      throw new Error(error.message);
+      throw new Error(insErr.message);
     }
-    if (!inserted) throw new Error('Falha ao criar candidato após remover colunas ausentes.');
-    if (skipped.length) console.warn('[T4] Campos ignorados no insert:', skipped);
+    if (!inserted) throw new Error('Falha ao criar candidato: nenhum registro retornado.');
     syncToSheet(id, { ...fields, ID: id }, actor);
-    return { ok:true, id, candidate: toFrontend(inserted), skipped };
+    return { ok:true, id, candidate: toFrontend(inserted) };
   }
 
   if (action === 'setActive') {
@@ -2655,6 +2648,7 @@ function _navSetupUI(view) {
   document.getElementById('tb-title').textContent = titles[view] || view;
   const showSearch = ['candidates','kanban','triagem','entrevistas','analise','alemao','documentacao','employer','inativos'].includes(view);
   document.getElementById('search-wrap').style.display = showSearch ? 'flex' : 'none';
+  document.getElementById('nlp-search-wrap').style.display = showSearch ? 'flex' : 'none';
 }
 
 function nav(view) {
@@ -3400,7 +3394,7 @@ function renderTable(el, filterStatus) {
   const pages  = Math.ceil(total / S.pageSize);
   const paged  = list.slice((S.page-1)*S.pageSize, S.page*S.pageSize);
 
-  const statusOpts = ['','Novo candidato','Triagem','Entrevista pessoal','Entrevista avaliação',
+  const statusOpts = ['','Novo candidato','Triagem','Pré-seleção','Entrevista',
     'Análise RH','Curso de alemão','Documentação','Jurídico',
     'Matching Instituição','Employer / Matching','Aprovado / Pronto','Contratado',
     'Não qualificado/ base de dados','Desistiu','Inativo / Arquivado'];
@@ -3536,6 +3530,7 @@ function renderTable(el, filterStatus) {
       <th style="min-width:220px">Jornada de Nível</th>
       <th>Início</th>
       <th>Previsão Fim</th>
+      <th>Bolsa</th>
       <th>Horário / Dias</th>
       <th>Responsável</th>
       <th>Última atualização</th>
@@ -3577,6 +3572,11 @@ function renderTable(el, filterStatus) {
       const hora  = fv(c,'Horário e Dias de Aula','horario_dias_aula') || '—';
       const resp  = fv(c,'Responsável interno','responsavel_interno') || '—';
       const upd   = (fv(c,'Última atualização','ultima_atualizacao') || '').substring(0,10) || '—';
+      const bolsaVal = c['Bolsa concedida'] === true || c['Bolsa concedida'] === 'true' || c['bolsa_concedida'] === true;
+      const bolsaPct = c['Bolsa percentual'] || c['bolsa_percentual'] || 0;
+      const bolsaHtml = bolsaVal
+        ? `<span style="color:var(--green);font-weight:600">✓ ${bolsaPct}%</span>`
+        : `<span style="color:var(--txt3)">—</span>`;
       const stepper = levelStepper(ini, al, alvo);
       return `<tr onclick="openCand('${esc(c.ID)}')">
         <td class="td-name">${esc(c['Nome completo']||'—')}</td>
@@ -3584,6 +3584,7 @@ function renderTable(el, filterStatus) {
         <td>${stepper}</td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--txt3)">${dtIni}</td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--txt3)">${dtFim}</td>
+        <td style="font-size:11.5px;text-align:center">${bolsaHtml}</td>
         <td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(hora)}</td>
         <td style="font-size:11.5px">${esc(resp)}</td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--txt3)">${upd}</td>
@@ -3859,7 +3860,7 @@ function getReadiness(c) {
     if (!profissao) return { label: '⚠ Travado: sem profissão', cls: 'pront-warn' };
     return { label: '→ Pronto para entrevista', cls: 'pront-warn' };
   }
-  if (status === 'Entrevista pessoal' || status === 'Entrevista avaliação') {
+  if (status === 'Pré-seleção' || status === 'Entrevista') {
     if (!analise) return { label: '→ Aguardando análise RH', cls: 'pront-warn' };
     return { label: '✓ Entrevista concluída', cls: 'pront-ok' };
   }
@@ -3919,7 +3920,7 @@ function getOperationalSummary(c) {
   } else if (status === 'Triagem' || status === 'Novo candidato') {
     acao = analise ? 'Revisar análise e avançar' : 'Avaliar perfil e entrevistar';
     acaoCls = 'warn';
-  } else if (status === 'Entrevista pessoal' || status === 'Entrevista avaliação') {
+  } else if (status === 'Pré-seleção' || status === 'Entrevista') {
     acao = analise ? 'Análise concluída — avançar' : 'Registrar análise RH';
     acaoCls = analise ? 'ok' : 'warn';
   } else if (status === 'Análise RH') {
@@ -4138,7 +4139,22 @@ function buildPanel(tabId, c) {
       <div class="field-grid g1">${fld('Resumo profissional','Resumo profissional','textarea',null,true)}</div>
     </div>`;
     case 't-entrevista': return `<div>
-      <div class="section-hdr">Dados da Entrevista</div>
+      <div class="section-hdr" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Dados da Entrevista</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-xs btn-ghost" style="gap:4px"
+            onclick="triggerInterviewUpload('${esc(c['ID']||c.ID||'')}')">
+            📋 Carregar entrevista PDF
+          </button>
+          <button class="btn btn-xs btn-ghost" style="gap:4px;color:var(--gold)"
+            onclick="generateInterviewQuestions('${esc(c['ID']||c.ID||'')}')">
+            ✦ Gerar perguntas
+          </button>
+        </div>
+      </div>
+      <input type="file" id="interview-pdf-input-${esc(c['ID']||c.ID||'')}" accept=".pdf" style="display:none"
+             onchange="handleInterviewFile(this,'${esc(c['ID']||c.ID||'')}')">
+      <div id="interview-preview-${esc(c['ID']||c.ID||'')}" style="display:none;margin:10px 0 6px;padding:12px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2)"></div>
       <div class="field-grid">
         ${fld('Data da Entrevista','Data da entrevista')}${fld('Resultado entrevista','Resultado','select')}
         ${fld('Avaliador','Avaliador','select')}<div></div>
@@ -4150,6 +4166,7 @@ function buildPanel(tabId, c) {
         ${fld('Relato sobre a experiência profissional','Relato exp. profissional','textarea',null,true)}
         ${fld('Como é sua organização financeira?\nTem reserva?\nComo será o preparo para Alemanha?','Organização financeira','textarea',null,true)}
       </div>
+      <div id="questions-block-${esc(c['ID']||c.ID||'')}" style="display:none;margin-top:14px"></div>
     </div>`;
     case 't-analise': return `<div>
       <div class="section-hdr">Classificação & Avaliação</div>
@@ -4166,6 +4183,27 @@ function buildPanel(tabId, c) {
         ${fld('Perfil profissional para apresentação','Perfil para apresentação','textarea',null,true)}
         ${fld('Observações internas','Observações internas','textarea',null,true)}
       </div>
+      ${(()=>{
+        const sum  = c['AI Summary'] || c['ai_summary'] || '';
+        const miss = c['AI Missing Fields'] || c['ai_missing_fields'] || '';
+        const attn = c['AI Attention Flags'] || c['ai_attention_flags'] || '';
+        if (!sum && !miss && !attn) return '';
+        return `<div class="section-hdr" style="margin-top:14px">🤖 Triagem IA <span style="font-size:10px;font-weight:400;color:var(--txt3);margin-left:6px">gerado automaticamente — não substitui avaliação humana</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+          ${sum ? `<div style="background:var(--blue-bg);border:1px solid rgba(56,189,248,.2);border-radius:var(--r);padding:10px 13px;font-size:12.5px;line-height:1.55">
+            <span style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);display:block;margin-bottom:4px">Resumo</span>
+            ${esc(sum)}
+          </div>` : ''}
+          ${miss ? `<div style="background:var(--yellow-bg);border:1px solid rgba(245,192,0,.2);border-radius:var(--r);padding:10px 13px;font-size:12.5px;line-height:1.55">
+            <span style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:4px">Campos não encontrados no currículo</span>
+            ${esc(miss)}
+          </div>` : ''}
+          ${attn ? `<div style="background:var(--orange-bg);border:1px solid rgba(255,140,66,.2);border-radius:var(--r);padding:10px 13px;font-size:12.5px;line-height:1.55">
+            <span style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--orange);display:block;margin-bottom:4px">Pontos de atenção identificados</span>
+            ${esc(attn)}
+          </div>` : ''}
+        </div>`;
+      })()}
     </div>`;
     case 't-idioma': {
       const NIVEL_OPT = ['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
@@ -4281,6 +4319,23 @@ function buildPanel(tabId, c) {
                   </select>
                   <button type="button" class="field-select-add" onclick="quickAddEnum('Resultado da prova',this)">+</button>
                 </div>
+              </div>
+              <!-- M10: Bolsa -->
+              <div class="field-group">
+                <label class="field-lbl">Recebeu bolsa?</label>
+                <div class="field-select-wrap">
+                  <select class="field-select" data-field="Bolsa concedida" onchange="onEdit(this)">
+                    <option value="" ${!c['Bolsa concedida']?'selected':''}>— Selecionar —</option>
+                    <option value="true"  ${c['Bolsa concedida']===true||c['Bolsa concedida']==='true'?'selected':''}>Sim</option>
+                    <option value="false" ${c['Bolsa concedida']===false||c['Bolsa concedida']==='false'?'selected':''}>Não</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-lbl">Percentual da bolsa (%)</label>
+                <input class="field-input" type="number" min="0" max="100" data-field="Bolsa percentual"
+                  value="${esc(c['Bolsa percentual']||c['bolsa_percentual']||'')}"
+                  oninput="onEdit(this)" placeholder="Ex: 50">
               </div>
             </div>
           </div>
@@ -4701,8 +4756,214 @@ function populateNewForm() {
 
 const PARSE_CURRICULUM_URL =
   'https://xcxqtjzlqmncwnhbolnl.supabase.co/functions/v1/parse-curriculum';
+const PARSE_INTERVIEW_URL =
+  'https://xcxqtjzlqmncwnhbolnl.supabase.co/functions/v1/parse-interview';
+const GENERATE_QUESTIONS_URL =
+  'https://xcxqtjzlqmncwnhbolnl.supabase.co/functions/v1/generate-questions';
 
-// Abre o file picker quando o usuário clica em "✨ Currículo PDF"
+// ══════════════════════════════════════════════════════════════
+// M11 — Upload e parsing de entrevista PDF
+// ══════════════════════════════════════════════════════════════
+
+function triggerInterviewUpload(candId) {
+  const inp = document.getElementById(`interview-pdf-input-${candId}`);
+  if (!inp) { toast('⚠ Reabra o candidato e tente novamente.', 'warn'); return; }
+  inp.value = '';
+  inp.click();
+}
+
+async function handleInterviewFile(input, candId) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  // Apenas PDF — não enviar DOCX binário para Gemini
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    toast('⚠ Apenas arquivos PDF são aceitos para parsing de entrevista.', 'warn', 5000);
+    return;
+  }
+
+  const previewEl = document.getElementById(`interview-preview-${candId}`);
+  if (previewEl) {
+    previewEl.style.display = 'block';
+    previewEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--txt3);font-size:12.5px">
+      <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
+      Processando entrevista com IA...
+    </div>`;
+  }
+
+  try {
+    const supa = await getSupa();
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session?.access_token) throw new Error('Sessão expirada. Faça login novamente.');
+
+    // Converter para base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = () => reject(new Error('Erro ao ler o arquivo.'));
+      reader.readAsDataURL(file);
+    });
+
+    const res = await fetch(PARSE_INTERVIEW_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ pdf_base64: base64, mime_type: 'application/pdf' }),
+    });
+
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Erro ao processar entrevista.');
+
+    // Exibe prévia para revisão humana — NÃO salva automaticamente
+    const d = data.data || {};
+    const fields = [
+      { key: 'Quem é você?',                  val: d.quem_e_voce },
+      { key: 'Porque deseja ir para Alemanha, como surgiu o interesse?', val: d.porque_alemanha },
+      { key: 'Relato sobre a experiência profissional', val: d.relato_experiencia_profissional },
+      { key: 'Como é sua organização financeira?\nTem reserva?\nComo será o preparo para Alemanha?', val: d.organizacao_financeira },
+      { key: 'Perfil',                         val: d.perfil },
+      { key: 'Análise do recrutador',          val: d.analise_do_recrutador },
+      { key: 'Pontos fortes',                  val: d.pontos_fortes },
+      { key: 'Pontos de atenção',              val: d.pontos_de_atencao },
+      { key: 'Diferenciais do perfil',         val: d.diferenciais_do_perfil },
+    ].filter(f => f.val && f.val.trim());
+
+    if (!previewEl) return;
+
+    previewEl.innerHTML = `
+      <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--blue);margin-bottom:8px">
+        🤖 Prévia da entrevista extraída por IA — revise antes de aplicar
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto">
+        ${fields.map(f => `
+          <div style="background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);padding:8px 10px">
+            <div style="font-size:10px;font-weight:700;color:var(--txt3);margin-bottom:3px">${esc(f.key)}</div>
+            <div style="font-size:12px;color:var(--txt);line-height:1.5;white-space:pre-wrap">${esc(f.val)}</div>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="_applyInterviewFields(${JSON.stringify(fields).replace(/"/g,'&quot;')},'${esc(candId)}')">
+          ✓ Aplicar campos
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('interview-preview-${esc(candId)}').style.display='none'">
+          Descartar
+        </button>
+      </div>`;
+
+  } catch(e) {
+    if (previewEl) {
+      previewEl.style.display = 'block';
+      previewEl.innerHTML = `<div style="color:var(--red);font-size:12.5px">❌ ${esc(e.message)}</div>`;
+    }
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
+// Aplica os campos extraídos nos textareas/inputs do painel — só após clique humano
+function _applyInterviewFields(fields, candId) {
+  // Mapa: chave retornada pelo parser → data-field no DOM
+  const fieldKeyMap = {
+    'Quem é você?':                   'Quem é você?',
+    'Porque deseja ir para Alemanha, como surgiu o interesse?': 'Porque deseja ir para Alemanha, como surgiu o interesse?',
+    'Relato sobre a experiência profissional': 'Relato sobre a experiência profissional',
+    'Como é sua organização financeira?\nTem reserva?\nComo será o preparo para Alemanha?': 'Como é sua organização financeira?\nTem reserva?\nComo será o preparo para Alemanha?',
+    'Perfil':              'Perfil',
+    'Análise do recrutador': 'Análise do recrutador',
+    'Pontos fortes':       'Pontos fortes',
+    'Pontos de atenção':   'Pontos de atenção',
+    'Diferenciais do perfil': 'Diferenciais do perfil',
+  };
+
+  let applied = 0;
+  fields.forEach(f => {
+    const dataField = fieldKeyMap[f.key] || f.key;
+    // Procura no modal do candidato o elemento com data-field correspondente
+    const el = document.querySelector(`[data-field="${CSS.escape(dataField)}"]`);
+    if (el && f.val && !el.value.trim()) {
+      el.value = f.val;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      applied++;
+    }
+  });
+
+  const previewEl = document.getElementById(`interview-preview-${candId}`);
+  if (previewEl) previewEl.style.display = 'none';
+
+  toast(applied > 0
+    ? `✅ ${applied} campo(s) preenchido(s) a partir da entrevista. Revise e salve.`
+    : '⚠ Nenhum campo vazio encontrado para preencher.', applied > 0 ? 'ok' : 'warn', 5000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// M12 — Geração de perguntas de entrevista
+// ══════════════════════════════════════════════════════════════
+
+async function generateInterviewQuestions(candId) {
+  const cand = (S.candidates || []).find(c => (fv(c,'ID','id')||'') === candId);
+  if (!cand) { toast('⚠ Candidato não encontrado.', 'warn'); return; }
+
+  const qBlock = document.getElementById(`questions-block-${candId}`);
+  if (qBlock) {
+    qBlock.style.display = 'block';
+    qBlock.innerHTML = `<div style="display:flex;align-items:center;gap:8px;color:var(--txt3);font-size:12.5px;padding:10px 0">
+      <div class="spinner" style="width:16px;height:16px;border-width:2px"></div>
+      Gerando perguntas de entrevista...
+    </div>`;
+  }
+
+  try {
+    const supa = await getSupa();
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session?.access_token) throw new Error('Sessão expirada.');
+
+    // Payload com contexto real do candidato
+    const payload = {
+      nome:       fv(cand,'Nome completo','nome_completo') || '',
+      profissao:  fv(cand,'Profissão principal','profissao_principal') || fv(cand,'Profissão') || '',
+      status:     fv(cand,'STATUS PIPELINE','status_pipeline') || '',
+      resumo:     fv(cand,'Resumo profissional','resumo_profissional') || fv(cand,'Observação','observacao') || '',
+      ai_summary: cand['AI Summary'] || cand['ai_summary'] || '',
+      ai_missing: cand['AI Missing Fields'] || cand['ai_missing_fields'] || '',
+      ai_atencao: cand['AI Attention Flags'] || cand['ai_attention_flags'] || '',
+    };
+
+    const res = await fetch(GENERATE_QUESTIONS_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + session.access_token,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Erro ao gerar perguntas.');
+
+    const questions = data.questions || [];
+
+    if (qBlock) {
+      qBlock.innerHTML = `
+        <div class="section-hdr" style="margin-top:0">
+          ✦ Perguntas sugeridas para a entrevista
+          <span style="font-size:10px;font-weight:400;color:var(--txt3);margin-left:6px">geradas por IA — use como guia, não como roteiro fixo</span>
+          <button class="btn btn-xs btn-ghost" style="margin-left:auto" onclick="this.closest('[id]').style.display='none'">Fechar</button>
+        </div>
+        <ol style="margin:8px 0 0 18px;display:flex;flex-direction:column;gap:7px">
+          ${questions.map(q => `<li style="font-size:12.5px;color:var(--txt);line-height:1.55">${esc(q)}</li>`).join('')}
+        </ol>`;
+    }
+
+  } catch(e) {
+    if (qBlock) {
+      qBlock.innerHTML = `<div style="color:var(--red);font-size:12.5px;padding:8px 0">❌ ${esc(e.message)}</div>`;
+    }
+    toast('❌ ' + e.message, 'err');
+  }
+}
 function triggerCurriculumParse() {
   document.getElementById('n-pdf-input').value = '';
   document.getElementById('n-pdf-input').click();
@@ -4760,7 +5021,7 @@ async function handleCurriculumFile(input) {
     // Preenche o formulário com os dados extraídos
     // Edge Function retorna { ok, data } — não { ok, fields }
     _pendingCurriculumFile = file;  // retém o arquivo para upload ao Drive após o save
-    _fillNewFormFromAI(data.data, file.name);
+    _fillNewFormFromAI(data.data, file.name, data);
 
   } catch (e) {
     statusEl.innerHTML = `<div class="ai-parse-bar" style="color:var(--red);background:var(--red-bg);border-color:rgba(255,61,90,.25)">
@@ -5284,6 +5545,111 @@ async function quickAddEnum(field, btn, targetSelectId='') {
 // ══════════════════════════════════════════════════════════════
 // FILTERS & HELPERS
 // ══════════════════════════════════════════════════════════════
+
+// ── M7: Grupos semânticos de profissão ────────────────────────
+// Chave = nome do grupo de busca; valor = termos que englobam
+const PROF_GROUPS = {
+  'enfermagem': ['enfermeiro','enfermeira','enfermagem','bacharel em enfermagem',
+    'técnico de enfermagem','tecnico de enfermagem','técnica em enfermagem',
+    'tecnica em enfermagem','auxiliar de enfermagem','aux de enfermagem'],
+  'medicina': ['médico','medico','médica','medica','clínico geral','clinico geral',
+    'cirurgião','cirurgiã','pediatra','cardiologista','ginecologista','psiquiatra',
+    'medicina','doutor','doutora'],
+  'fisioterapia': ['fisioterapeuta','fisioterapia','fisio','reabilitação fisica'],
+  'farmácia': ['farmacêutico','farmaceutico','farmacêutica','farmaceutica','farmácia','farmacia'],
+  'odontologia': ['dentista','cirurgião dentista','odontologia','odontólogo'],
+  'nutrição': ['nutricionista','nutrição','nutricao'],
+  'psicologia': ['psicólogo','psicologa','psicologia','terapeuta'],
+  'fonoaudiologia': ['fonoaudiólogo','fonoaudiologia','fono'],
+  'terapia ocupacional': ['terapeuta ocupacional','terapia ocupacional'],
+  'radiologia': ['radiologista','radiologia','técnico em radiologia','tecnico em radiologia'],
+  'administrativo': ['administrativo','administrativa','assistente administrativo',
+    'secretária','secretario','auxiliar administrativo','recepcionista','recepcao','recepção'],
+  'ti': ['programador','desenvolvedor','developer','analista de sistemas','ti','t.i.',
+    'suporte técnico','infraestrutura','devops','engenheiro de software'],
+  'rh': ['rh','recursos humanos','recrutador','recruiter','people','analista de rh'],
+};
+
+// Retorna true se o valor real cadastrado pertence ao grupo semântico buscado
+function checkSemanticMatch(searchQuery, dbValue) {
+  if (!searchQuery || !dbValue) return false;
+  const q = searchQuery.toLowerCase().trim();
+  const v = dbValue.toLowerCase().trim();
+  // Match exato primeiro
+  if (v.includes(q) || q.includes(v)) return true;
+  // Match por grupo semântico
+  for (const [grupo, termos] of Object.entries(PROF_GROUPS)) {
+    const qInGrupo = grupo.includes(q) || termos.some(t => t.includes(q) || q.includes(t));
+    const vInGrupo = grupo.includes(v) || termos.some(t => t.includes(v) || v.includes(t));
+    if (qInGrupo && vInGrupo) return true;
+  }
+  return false;
+}
+
+// ── M8: Parser local de linguagem natural ─────────────────────
+// Interpreta frases simples e retorna estrutura de filtro
+// Não usa Gemini — 100% client-side
+function nlpParseQuery(phrase) {
+  const result = { profissao: null, nivel_alemao: null, cidade: null, idadeMax: null, idadeMin: null, rawQuery: null };
+  if (!phrase || phrase.trim().length < 3) return result;
+
+  const p = phrase.toLowerCase().trim();
+
+  // Nível de alemão
+  const levelMatch = p.match(/\b(a1|a2|b1|b2\+?|c1|c2)\b/i);
+  if (levelMatch) result.nivel_alemao = levelMatch[1].toUpperCase().replace('B2+', 'B2+');
+
+  // Idade — padrões: "menos de 30", "até 35 anos", "abaixo de 40", "com menos de 25"
+  const idadeMaxMatch = p.match(/(?:menos de|até|abaixo de|com menos de|max(?:imo)?\s+de?)\s+(\d{1,3})\s*(?:anos?)?/i);
+  if (idadeMaxMatch) result.idadeMax = parseInt(idadeMaxMatch[1], 10);
+
+  // Idade mínima: "mais de 25", "acima de 30", "pelo menos 28 anos"
+  const idadeMinMatch = p.match(/(?:mais de|acima de|pelo menos|min(?:imo)?\s+de?)\s+(\d{1,3})\s*(?:anos?)?/i);
+  if (idadeMinMatch) result.idadeMin = parseInt(idadeMinMatch[1], 10);
+
+  // Cidade — "de São Paulo", "em Curitiba"
+  const cidadeMatch = p.match(/\b(?:de|em|no|na|do|da)\s+([a-záàâãéèêíïóôõöúüçñ][a-záàâãéèêíïóôõöúüçñ\s]{2,20}?)(?:\s+com|\s+e\s|\s*$)/i);
+  if (cidadeMatch) result.cidade = cidadeMatch[1].trim();
+
+  // Profissão — tenta match nos grupos
+  for (const [grupo, termos] of Object.entries(PROF_GROUPS)) {
+    if (p.includes(grupo) || termos.some(t => p.includes(t))) {
+      result.profissao = grupo;
+      break;
+    }
+  }
+
+  // Se não identificou nada estruturado, usa como busca textual livre
+  if (!result.profissao && !result.nivel_alemao && !result.cidade && result.idadeMax === null && result.idadeMin === null) {
+    result.rawQuery = phrase.trim();
+  }
+
+  return result;
+}
+
+// Aplica busca inteligente NLP
+function applyNlpSearch(phrase) {
+  const parsed = nlpParseQuery(phrase);
+  S.filter._nlpProfissao = null;
+  S.filter._nlpAlemao    = null;
+  S.filter._nlpCidade    = null;
+  S.filter._nlpIdadeMax  = null;
+  S.filter._nlpIdadeMin  = null;
+  S.filter.q             = '';
+
+  if (parsed.rawQuery) {
+    S.filter.q = parsed.rawQuery;
+  } else {
+    if (parsed.profissao)    S.filter._nlpProfissao = parsed.profissao;
+    if (parsed.nivel_alemao) S.filter._nlpAlemao    = parsed.nivel_alemao;
+    if (parsed.cidade)       S.filter._nlpCidade    = parsed.cidade;
+    if (parsed.idadeMax !== null) S.filter._nlpIdadeMax = parsed.idadeMax;
+    if (parsed.idadeMin !== null) S.filter._nlpIdadeMin = parsed.idadeMin;
+  }
+  S.page = 1;
+  renderView();
+}
+
 function isActiveCand(c) {
   const ativo  = fv(c,'Ativo');
   const status = fv(c,'STATUS PIPELINE');
@@ -5295,13 +5661,23 @@ function filterCands(list, includeInactive=false) {
   if (!includeInactive) r = r.filter(c => isActiveCand(c));
   if (S.filter.status)   r = r.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
   if (S.filter.perfil)   r = r.filter(c => fv(c,'Perfil') === S.filter.perfil);
-  if (S.filter.profissao)r = r.filter(c => fv(c,'Profissão principal','Profissão') === S.filter.profissao);
+  // M7: filtro de profissão usa checkSemanticMatch (agrupamento semântico)
+  if (S.filter.profissao) r = r.filter(c => checkSemanticMatch(S.filter.profissao, fv(c,'Profissão principal','Profissão')||''));
+  // M8: filtros NLP
+  if (S.filter._nlpProfissao) r = r.filter(c => checkSemanticMatch(S.filter._nlpProfissao, fv(c,'Profissão principal','Profissão')||''));
+  if (S.filter._nlpAlemao)    r = r.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter._nlpAlemao);
+  if (S.filter._nlpCidade)    r = r.filter(c => (fv(c,'Cidade atual')||'').toLowerCase().includes(S.filter._nlpCidade.toLowerCase()));
+  if (S.filter._nlpIdadeMax !== null && S.filter._nlpIdadeMax !== undefined) {
+    r = r.filter(c => { const id = parseInt(fv(c,'Idade','idade')||'0',10); return id > 0 && id <= S.filter._nlpIdadeMax; });
+  }
+  if (S.filter._nlpIdadeMin !== null && S.filter._nlpIdadeMin !== undefined) {
+    r = r.filter(c => { const id = parseInt(fv(c,'Idade','idade')||'0',10); return id >= S.filter._nlpIdadeMin; });
+  }
   if (S.filter.empregador === '__filled__') r = r.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim());
   else if (S.filter.empregador)             r = r.filter(c => fv(c,'Hospital alvo','Empresa / Empregador') === S.filter.empregador);
   if (S.filter.alemao)   r = r.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
   if (S.filter.substatus)  r = r.filter(c => fv(c,'Substatus','substatus') === S.filter.substatus);
   if (S.filter.prioridade) r = r.filter(c => fv(c,'Prioridade comercial','prioridade_comercial') === S.filter.prioridade);
-  // _customFn: predicado opcional para filtros de múltiplos valores (ex: B1+)
   if (typeof S.filter._customFn === 'function') r = r.filter(S.filter._customFn);
   if (S.filter.q) {
     const q = S.filter.q.toLowerCase();
@@ -5443,9 +5819,11 @@ function calcPendenciaDocumentalCritica(c) {
 }
 
 function clearFilters() {
-  S.filter = { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null };
+  S.filter = { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null, _nlpProfissao: null, _nlpAlemao: null, _nlpCidade: null, _nlpIdadeMax: null, _nlpIdadeMin: null };
   const gs = document.getElementById('global-search');
   if (gs) gs.value = '';
+  const ns = document.getElementById('nlp-search-input');
+  if (ns) ns.value = '';
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -5681,7 +6059,7 @@ function agFromDb(row) {
     id:            row.id,
     candidatoId:   row.candidato_id   || '',
     candidatoNome: row.candidato_nome  || '—',
-    tipo:          row.tipo            || 'Entrevista Pessoal',
+    tipo:          row.tipo            || 'Pré-seleção',
     date:          row.data_agendamento|| '',
     hora:          row.hora            ? String(row.hora).substring(0,5) : '',
     responsavel:   row.responsavel     || '',
@@ -5696,7 +6074,7 @@ function agToDb(ev, actor) {
   return {
     candidato_id:    ev.candidatoId   || null,
     candidato_nome:  ev.candidatoNome || '—',
-    tipo:            ev.tipo          || 'Entrevista Pessoal',
+    tipo:            ev.tipo          || 'Pré-seleção',
     data_agendamento:ev.date,
     hora:            ev.hora          || null,
     responsavel:     ev.responsavel   || null,
@@ -5774,12 +6152,15 @@ function agEventsForDate(dateStr) {
 }
 
 // ── Cores por tipo ────────────────────────────────────────────
+// M3-FIX: Tipos de evento da agenda alinhados com os nomes do pipeline (M9)
+// 'Pré-seleção' = primeiro contato / entrevista inicial
+// 'Entrevista'  = entrevista de avaliação aprofundada
 const AG_COLORS = {
-  'Entrevista Pessoal':      { bg:'rgba(56,189,248,.18)',  border:'#38bdf8', text:'#38bdf8' },
-  'Avaliação Técnica':       { bg:'rgba(192,132,252,.18)', border:'#c084fc', text:'#c084fc' },
-  'Matching Empregador':     { bg:'rgba(45,212,191,.18)',  border:'#2dd4bf', text:'#2dd4bf' },
-  'Entrevista de Avaliação': { bg:'rgba(245,192,0,.18)',   border:'#f5c000', text:'#f5c000' },
-  'Outro':                   { bg:'rgba(122,128,160,.18)', border:'#7a80a0', text:'#7a80a0' },
+  'Pré-seleção':         { bg:'rgba(56,189,248,.18)',  border:'#38bdf8', text:'#38bdf8' },
+  'Entrevista':          { bg:'rgba(245,192,0,.18)',   border:'#f5c000', text:'#f5c000' },
+  'Avaliação Técnica':   { bg:'rgba(192,132,252,.18)', border:'#c084fc', text:'#c084fc' },
+  'Matching Empregador': { bg:'rgba(45,212,191,.18)',  border:'#2dd4bf', text:'#2dd4bf' },
+  'Outro':               { bg:'rgba(122,128,160,.18)', border:'#7a80a0', text:'#7a80a0' },
 };
 
 // ── Modal de nova/editar entrevista ───────────────────────────
@@ -5924,7 +6305,13 @@ async function agDeleteAndClose(id) {
 }
 
 // ── Helpers de data ───────────────────────────────────────────
-function agFmtDateStr(d) { return d.toISOString().split('T')[0]; }
+// CORRIGIDO M3: usa hora local em vez de UTC — evita deslocamento de 1 dia
+function agFmtDateStr(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dy}`;
+}
 
 function agMonthDays(year, month) {
   const first = new Date(year, month, 1);
