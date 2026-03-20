@@ -4597,6 +4597,8 @@ function parseRhDocxHtml(html) {
   const out = {};
   const meta = { warnings: [], conflicts: [] };
 
+  const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   const applyGridTable = (table) => {
     if (!table) return;
     table.querySelectorAll('tr').forEach(tr => {
@@ -4610,35 +4612,50 @@ function parseRhDocxHtml(html) {
     });
   };
 
-  applyGridTable(tables[1]);
-  applyGridTable(tables[6]);
-
-  const interviewTables = [2,3,4,5];
-  const interviewFields = [
-    'quem_e_voce',
-    'porque_deseja_ir_para_alemanha_como_surgiu_o_interesse',
-    'relato_sobre_a_experiencia_profissional',
-    'organizacao_financeira',
+  const narrativeMatchers = [
+    { field: 'quem_e_voce', labels: ['Quem é você?', 'Quem e voce?', 'Quem é você', 'Quem e voce'] },
+    { field: 'porque_deseja_ir_para_alemanha_como_surgiu_o_interesse', labels: ['Porque deseja ir para Alemanha, como surgiu o interesse?', 'Por que deseja ir para Alemanha, como surgiu o interesse?', 'Porque deseja ir para Alemanha, como surgiu o interesse', 'Por que deseja ir para Alemanha, como surgiu o interesse'] },
+    { field: 'relato_sobre_a_experiencia_profissional', labels: ['Relato sobre a experiência profissional', 'Relato sobre a experiencia profissional'] },
+    { field: 'organizacao_financeira', labels: ['Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha?', 'Como e sua organizacao financeira? Tem reserva? Como sera o preparo para Alemanha?', 'Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha', 'Como e sua organizacao financeira? Tem reserva? Como sera o preparo para Alemanha'] },
+    { field: 'analise_do_recrutador', labels: ['Análise do recrutador', 'Analise do recrutador'] },
+    { field: 'diferenciais_do_perfil', labels: ['Diferenciais do perfil'] },
+    { field: 'pontos_fortes', labels: ['Pontos fortes'] },
+    { field: 'pontos_de_atencao', labels: ['Pontos de atenção', 'Pontos de atencao'] },
+    { field: 'perfil_profissional_para_apresentacao', labels: ['Perfil profissional para apresentação', 'Perfil profissional para apresentacao'] },
+    { field: 'observacoes_internas', labels: ['Observações internas', 'Observacoes internas'] },
   ];
-  interviewFields.forEach((field, idx) => {
-    const table = tables[interviewTables[idx]];
-    if (!table) return;
-    const text = rhStripPlaceholders(table.textContent || '');
-    if (text) out[field] = text;
-  });
 
-  const analysisTables = [7,8,9,10];
-  const analysisFields = [
-    'analise_do_recrutador',
-    'diferenciais_do_perfil',
-    'pontos_fortes',
-    'pontos_de_atencao',
-  ];
-  analysisFields.forEach((field, idx) => {
-    const table = tables[analysisTables[idx]];
+  const stripLeadingLabel = (text, labels) => {
+    let outText = rhStripPlaceholders(text || '');
+    for (const label of labels) {
+      const re = new RegExp('^\\s*' + escapeRegex(label) + '\\s*[:\\-–—]?\\s*', 'i');
+      outText = outText.replace(re, '').trim();
+    }
+    return rhStripPlaceholders(outText);
+  };
+
+  const tryNarrativeTable = (table) => {
     if (!table) return;
-    const text = rhStripPlaceholders(table.textContent || '');
-    if (text) out[field] = text;
+    const rawText = rhStripPlaceholders(table.textContent || '');
+    if (!rawText) return;
+    const normText = rhNormLabel(rawText);
+    for (const matcher of narrativeMatchers) {
+      if (out[matcher.field]) continue;
+      const hasLabel = matcher.labels.some(label => {
+        const normLabel = rhNormLabel(label);
+        return normText.startsWith(normLabel) || normText.includes(normLabel);
+      });
+      if (!hasLabel) continue;
+      const value = stripLeadingLabel(rawText, matcher.labels);
+      if (!value) continue;
+      setRhField(out, matcher.field, value, meta);
+      break;
+    }
+  };
+
+  tables.forEach(table => {
+    applyGridTable(table);
+    tryNarrativeTable(table);
   });
 
   return { fields: out, meta };
