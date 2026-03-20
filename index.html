@@ -4992,10 +4992,8 @@ async function extractCurriculumTextFromPdf(file) {
       if (!str) continue;
       const y = Array.isArray(item.transform) ? item.transform[5] : null;
       if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
-        pageText += '
-';
-      } else if (pageText && !pageText.endsWith('
-')) {
+        pageText += '\n';
+      } else if (pageText && !pageText.endsWith('\n')) {
         pageText += ' ';
       }
       pageText += str;
@@ -5005,9 +5003,7 @@ async function extractCurriculumTextFromPdf(file) {
     pages.push(pageText.trim());
   }
 
-  return pages.filter(Boolean).join('
-
-');
+  return pages.filter(Boolean).join('\n\n');
 }
 
 function triggerCurriculumImport() {
