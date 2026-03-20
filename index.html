@@ -1898,7 +1898,11 @@ const FIELD_MAP = {
   'Bolsa concedida':'bolsa_concedida',
   'Bolsa percentual':'bolsa_percentual',
 };
-const REV_MAP = Object.fromEntries(Object.entries(FIELD_MAP).map(([k,v])=>[v,k]));
+const REV_MAP_MULTI = Object.entries(FIELD_MAP).reduce((acc, [k, v]) => {
+  (acc[v] ||= []).push(k);
+  return acc;
+}, {});
+const REV_MAP = Object.fromEntries(Object.entries(REV_MAP_MULTI).map(([k, arr]) => [k, arr[arr.length - 1]]));
 
 // Converte registro snake_case → objeto com aliases originais (para o frontend)
 function toFrontend(row) {
@@ -1906,8 +1910,10 @@ function toFrontend(row) {
   const out = {};
   for (const [k, v] of Object.entries(row)) {
     out[k] = v; // mantém snake_case
-    const alias = REV_MAP[k];
-    if (alias && alias !== k) out[alias] = v; // adiciona alias original
+    const aliases = REV_MAP_MULTI[k] || [];
+    aliases.forEach(alias => {
+      if (alias && alias !== k) out[alias] = v;
+    });
   }
   // Garantias especiais
   if (!out['ID'] && row.id) out['ID'] = row.id;
@@ -2828,7 +2834,7 @@ function renderDashboard(el) {
   const b2plus        = ativos.filter(c => ['B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length;
   const semAlemao     = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a||['Nenhum','A0',''].includes(a); }).length;
   const triagem       = ativos.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
-  const entrevistaData= cands.filter(c => (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() || (fv(c,'Data da Entrevista','Data entrevista')||'').trim());
+  const entrevistaData= cands.filter(c => (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() || (fv(c,'Data da Entrevista','Data da entrevista','data_da_entrevista')||'').trim());
   const analiseData   = cands.filter(c => (fv(c,'Análise do recrutador','Análise recrutador')||'').trim() || (fv(c,'Pontos fortes')||'').trim());
   const cursoAlemao   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Curso de alemão');
   const docStage      = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Documentação');
@@ -3306,7 +3312,7 @@ function renderKanban(el) {
 function kanbanCard(c) {
   const score = c['_score'] || 0;
   const al    = c['Nível de alemão'] || '';
-  const perf  = c['Perfil'] || '';
+  const perf  = fv(c,'Perfil','Perfil do candidato','perfil') || '';
   const pc    = PERFIL_BADGE[perf] || '';
   const alColor = ALEMAO_COLORS[al] || 'var(--txt3)';
   return `<div class="k-card" onclick="openCand('${esc(c.ID)}')">
@@ -3337,7 +3343,7 @@ function renderTable(el, filterStatus) {
     // Mostra todos que têm dados de entrevista preenchidos (independente do status atual)
     list = S.candidates.filter(c =>
       (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() ||
-      (fv(c,'Data da Entrevista','Data entrevista')||'').trim() ||
+      (fv(c,'Data da Entrevista','Data da entrevista','data_da_entrevista')||'').trim() ||
       (fv(c,'Avaliador')||'').trim()
     );
   } else if (filterStatus === '__analise') {
@@ -3478,7 +3484,7 @@ function renderTable(el, filterStatus) {
       const pfc = PERFIL_BADGE[pf]||'';
       const al  = fv(c,'Nível de alemão','Nível alemão')||'';
       const alc = ALEMAO_COLORS[al]||'var(--txt3)';
-      const dt  = fv(c,'Data da Entrevista','Data entrevista')||'';
+      const dt  = fv(c,'Data da Entrevista','Data da entrevista','data_da_entrevista')||'';
       const dtFmt = dt ? dt.substring(0,10) : '—';
       return `<tr onclick="openCand('${esc(c.ID)}')">
         <td class="td-name">${esc(c['Nome completo']||'—')}</td>
@@ -3635,7 +3641,7 @@ function renderTable(el, filterStatus) {
     rows = paged.map(c => {
       const st=c['STATUS PIPELINE']||'';
       const sc=STATUS_BADGE[st]||'b-inativo';
-      const pf=c['Perfil']||'';
+      const pf=fv(c,'Perfil','Perfil do candidato','perfil')||'';
       const pfc=PERFIL_BADGE[pf]||'';
       const al=fv(c,'Nível de alemão','Nível alemão')||'';
       const alc=ALEMAO_COLORS[al]||'var(--txt3)';
@@ -3706,7 +3712,7 @@ function renderInativo(el) {
       <td style="font-size:11px;color:var(--txt3)">${esc(c['Data inativação']||'—')}</td>
       <td>${c['Reativável']==='SIM'?'<span style="color:var(--green);font-size:12px;font-weight:600">Sim</span>':'<span style="color:var(--txt3);font-size:12px">Não</span>'}</td>
       <td>${esc(fv(c,'Nível de alemão','Nível alemão')||'—')}</td>
-      <td>${esc(c['Perfil']||'—')}</td>
+      <td>${esc(fv(c,'Perfil','Perfil do candidato','perfil')||'—')}</td>
     </tr>`).join('');
 
   // ── Opções de status para filtrar inativos ──────────────────
@@ -3969,9 +3975,9 @@ function getOperationalSummary(c) {
 function buildCandModal(c) {
   const initials = (c['Nome completo']||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
   document.getElementById('cm-av').textContent = initials;
-  document.getElementById('cm-name').textContent = c['Nome completo'] || '—';
+  document.getElementById('cm-name').textContent = fv(c,'Nome completo','nome_completo') || '—';
   const st=c['STATUS PIPELINE']||''; const sc=STATUS_BADGE[st]||'b-inativo';
-  const pf=c['Perfil']||''; const pfc=PERFIL_BADGE[pf]||''; const score=c['_score']||0;
+  const pf=fv(c,'Perfil','Perfil do candidato','perfil')||''; const pfc=PERFIL_BADGE[pf]||''; const score=c['_score']||0;
   document.getElementById('cm-meta').innerHTML = `
     ${st?`<span class="badge ${sc}">${esc(st)}</span>`:''}
     ${pf?`<span class="badge ${pfc}">${esc(pf)}</span>`:''}
@@ -4062,7 +4068,7 @@ function buildCandModal(c) {
 function buildPanel(tabId, c) {
   const enums = S.enums;
   function fld(field, label, type='text', opts=null, fullWidth=false) {
-    const v = c[field] || '';
+    const v = fv(c, field, FIELD_MAP[field], ...((REV_MAP_MULTI[FIELD_MAP[field]] || []).filter(a => a !== field))) || '';
     const cls = fullWidth ? 'field-group fg-full' : 'field-group';
     if (type === 'select') {
       const options = (opts || enums[field] || []).map(o =>
@@ -4761,7 +4767,7 @@ function onEdit(el) {
   // Block viewers from editing
   const sess = getSession();
   if (sess?.role === 'viewer') {
-    el.value = S.currentCand ? (S.currentCand[el.dataset.field] || '') : '';
+    el.value = S.currentCand ? (fv(S.currentCand, el.dataset.field, FIELD_MAP[el.dataset.field], ...((REV_MAP_MULTI[FIELD_MAP[el.dataset.field]] || []).filter(a => a !== el.dataset.field))) || '') : '';
     toast('🔒 Visualizadores não podem editar.', 'warn', 2000);
     return;
   }
