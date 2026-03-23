@@ -1407,7 +1407,7 @@ a{color:inherit;text-decoration:none}
       <div class="login-willkommen">Acesse sua conta para continuar · <span>Willkommen zurück</span></div>
       <div class="login-field">
         <label class="login-label">Usuário</label>
-        <input class="login-input" type="text" id="li-user" placeholder="usuario@talents4.com" autocomplete="username">
+        <input class="login-input" type="text" id="li-user" placeholder="usuario" autocomplete="username">
       </div>
       <div class="login-field">
         <label class="login-label">Senha</label>
@@ -1558,8 +1558,8 @@ a{color:inherit;text-decoration:none}
     <div class="modal-body" style="padding:16px 22px 20px">
       <div class="field-grid">
         <div class="field-group fg-full"><label class="field-lbl">Nome completo</label><input class="field-input" id="um-nome" placeholder="Nome do colaborador"></div>
-        <div class="field-group fg-full"><label class="field-lbl">Usuário (login) *</label><input class="field-input" id="um-user" placeholder="usuario@talents4.com"></div>
-        <div class="field-group"><label class="field-lbl">Senha *</label><input class="field-input" type="password" id="um-pass" placeholder="Mínimo 6 caracteres"></div>
+        <div class="field-group fg-full"><label class="field-lbl">Usuário (login) *</label><input class="field-input" id="um-user" placeholder="usuario"></div>
+        <div class="field-group"><label class="field-lbl">Senha *</label><input class="field-input" type="password" id="um-pass" placeholder="Mínimo 10 caracteres"></div>
         <div class="field-group"><label class="field-lbl">Confirmar senha</label><input class="field-input" type="password" id="um-pass2" placeholder="Repetir senha"></div>
         <div class="field-group fg-full"><label class="field-lbl">Perfil de acesso</label>
           <select class="field-select" id="um-role">
@@ -2622,16 +2622,19 @@ async function initApp() {
 async function loadAll() {
   setSyncStatus('loading');
   try {
-    const [candResp, dashResp, schemaResp] = await Promise.all([
+    const [candResp, dashResp, schemaResp, usersResp] = await Promise.all([
       apiGet({ route:'candidates', includeHidden:'true', pageSize:500 }),
       apiGet({ route:'dashboard' }),
       apiGet({ route:'schema' }),
+      apiGet({ route:'users' }).catch(() => ({ users: S.users || [] })),
     ]);
     S.candidates = candResp.items || candResp.candidates || [];
     S.dashboard  = dashResp.dashboard || dashResp;
     S.schema     = schemaResp.schema || schemaResp.fields || [];
     S.enums      = schemaResp.enums  || {};
-    S.users      = schemaResp.users  || S.users || [];
+    const fetchedUsers = Array.isArray(usersResp?.users) ? usersResp.users : [];
+    if (fetchedUsers.length) S.users = fetchedUsers;
+    else S.users = Array.isArray(S.users) && S.users.length ? S.users : [];
     S.lastSync   = new Date();
     updateBadges();
     setSyncStatus('ok');
@@ -5366,17 +5369,35 @@ function renderSettings(el) {
   }
 
   const users = getUsers();
-  const userRows = users.map((u,i) => `
+  const sess = getSession() || {};
+  const roleOptions = (currentRole) => `
+    <option value="admin" ${currentRole==='admin'?'selected':''}>Administrador</option>
+    <option value="recrutador" ${currentRole==='recrutador'?'selected':''}>Recrutador</option>
+    <option value="viewer" ${currentRole==='viewer'?'selected':''}>Visualizador</option>`;
+  const userRows = users.map((u,i) => {
+    const isProtectedRoot = u.user === 'admin';
+    const isSelf = u.user === sess.user;
+    const isInactive = String(u.ativo || 'SIM').toUpperCase() === 'NÃO';
+    const canManage = !isProtectedRoot && !isSelf;
+    return `
     <div class="user-row">
       <div class="ua" style="background:${u.color||'var(--accent)'}">${(u.nome||'?')[0]}</div>
-      <div style="flex:1">
+      <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px">${esc(u.nome)}</div>
-        <div style="font-size:11px;color:var(--txt3)">${esc(u.user)} · ${u.role}</div>
+        <div style="font-size:11px;color:var(--txt3)">${esc(u.user)} · ${u.role} · ${isInactive ? 'inativo' : 'ativo'}</div>
       </div>
-      ${u.user!=='admin'
-        ? `<button class="btn btn-xs btn-ghost" onclick="deleteUser(${i})">Remover</button>`
-        : '<span style="font-size:11px;color:var(--txt3)">protegido</span>'}
-    </div>`).join('');
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
+        <select class="filter-select" style="min-width:140px" onchange="changeUserRole('${esc(u.user)}', this.value)" ${canManage ? '' : 'disabled'}>
+          ${roleOptions(u.role)}
+        </select>
+        ${canManage
+          ? isInactive
+            ? `<span style="font-size:11px;color:var(--txt3)">inativo</span>`
+            : `<button class="btn btn-xs btn-ghost" onclick="deactivateUser('${esc(u.user)}')">Inativar</button>`
+          : `<span style="font-size:11px;color:var(--txt3)">${isProtectedRoot ? 'protegido' : 'sessão atual'}</span>`}
+      </div>
+    </div>`;
+  }).join('');
 
   const enumFields = Object.keys(S.enums).filter(Boolean).sort();
   const enumFieldOpts = enumFields.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
@@ -5402,7 +5423,7 @@ function renderSettings(el) {
           </div>
           <div class="settings-card" style="margin-top:16px">
             <h3>Ponto crítico de segurança</h3>
-            <p>A criação de usuários pelo CRM ainda depende do fluxo atual de autenticação. Antes de usar em produção, desative cadastros públicos no Supabase Auth e trate a criação de usuários em backend administrativo seguro.</p>
+            <p>A criação de usuários agora roda em backend administrativo seguro. Alteração de categoria e inativação também passam por esse backend e exigem admin.</p>
           </div>
         </div>
 
@@ -5530,10 +5551,10 @@ async function saveUser() {
         ativo: 'SIM'
       }
     });
-    if (Array.isArray(res?.users)) S.users = res.users;
+    if (Array.isArray(res?.users) && res.users.length) S.users = res.users;
     closeUserModal();
-    await loadAll();
     nav('settings');
+    renderView();
     toast('✅ Usuário criado com segurança.', 'ok');
   } catch(e) {
     err.textContent='Erro: '+(e?.message || String(e));
@@ -5541,17 +5562,35 @@ async function saveUser() {
   }
 }
 
-async function deleteUser(idx) {
-  const users = getUsers();
-  const u = users[idx];
-  if (!u) return;
-  if (!confirm(`Remover o usuário "${u.nome}"?`)) return;
+async function changeUserRole(username, nextRole) {
+  if (!canAdmin()) { toast('❌ Apenas admin pode alterar categoria.', 'err'); return; }
+  if (!username) return;
   try {
-    await apiPost({ action:'deleteUser', userLogin: u.user });
-    await loadAll();
+    const res = await invokeAdminUserLifecycle('updateUserRole', { username, role: nextRole });
+    if (Array.isArray(res?.users) && res.users.length) S.users = res.users;
     nav('settings');
-    toast('✅ Usuário removido.', 'ok');
-  } catch(e) { toast('❌ '+e.message, 'err'); }
+    renderView();
+    toast('✅ Categoria atualizada.', 'ok');
+  } catch(e) {
+    toast('❌ ' + (e?.message || String(e)), 'err');
+    nav('settings');
+    renderView();
+  }
+}
+
+async function deactivateUser(username) {
+  if (!canAdmin()) { toast('❌ Apenas admin pode inativar usuários.', 'err'); return; }
+  if (!username) return;
+  if (!confirm(`Inativar o usuário "${username}"?`)) return;
+  try {
+    const res = await invokeAdminUserLifecycle('deactivateUser', { username });
+    if (Array.isArray(res?.users) && res.users.length) S.users = res.users;
+    nav('settings');
+    renderView();
+    toast('✅ Usuário inativado.', 'ok');
+  } catch(e) {
+    toast('❌ ' + (e?.message || String(e)), 'err');
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
