@@ -557,6 +557,7 @@ a{color:inherit;text-decoration:none}
 .settings-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:22px;margin-bottom:16px}
 .settings-card h3{font-size:14px;font-weight:700;margin-bottom:4px}
 .settings-card p{font-size:12.5px;color:var(--txt3);margin-bottom:18px}
+.admin-mfa-banner{display:none;margin:0 0 14px;padding:10px 14px;border:1px solid #f5c84a;background:rgba(245,200,74,.08);border-radius:var(--r2);font-size:12.5px;color:var(--txt2);align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.admin-mfa-banner.show{display:flex}.admin-mfa-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--border);font-size:11px;background:var(--bg2)}.mfa-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.mfa-qr-wrap{display:flex;align-items:center;justify-content:center;min-height:220px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);padding:12px}.mfa-qr-wrap img{max-width:100%;height:auto}.mfa-secret{font-family:var(--mono);font-size:12px;word-break:break-all;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px}.mfa-status-list{font-size:12px;color:var(--txt2);display:flex;flex-direction:column;gap:8px}.mfa-status-list strong{color:var(--txt)}
 .user-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
 .user-row:last-child{border-bottom:none}
 .ua{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
@@ -1476,6 +1477,7 @@ a{color:inherit;text-decoration:none}
       </div>
       <button class="btn btn-ghost btn-sm" onclick="forceSync()" title="Sincronizar dados">↻ Sync</button>
     </div>
+    <div id="admin-mfa-banner" class="admin-mfa-banner"></div>
     <div id="content"></div>
   </div>
 </div>
@@ -1574,6 +1576,52 @@ a{color:inherit;text-decoration:none}
     <div class="modal-footer">
       <button class="btn btn-primary" onclick="saveUser()">Salvar Usuário</button>
       <button class="btn btn-ghost" onclick="closeUserModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ADMIN MFA OVERLAY ════════ -->
+<div class="overlay" id="mfa-overlay" onclick="closeMfaOverlay(event)">
+  <div class="modal" style="width:min(760px,96vw);max-height:92vh">
+    <div class="modal-hdr">
+      <div class="modal-av">🔐</div>
+      <div style="flex:1">
+        <div class="modal-title" id="mfa-title">Segurança adicional para administrador</div>
+        <div style="font-size:12px;color:var(--txt3)" id="mfa-subtitle">Configure ou valide o app autenticador para liberar ações administrativas.</div>
+      </div>
+      <button class="modal-close" onclick="closeMfaOverlay(true)">✕</button>
+    </div>
+    <div class="modal-body" style="padding:16px 22px 20px;overflow-y:auto">
+      <div id="mfa-alert" style="font-size:12px;color:var(--txt3);margin-bottom:14px"></div>
+      <div id="mfa-setup-view" style="display:none">
+        <div class="mfa-grid">
+          <div class="mfa-qr-wrap" id="mfa-qr-wrap"><span style="font-size:12px;color:var(--txt3)">Gerando QR Code…</span></div>
+          <div>
+            <div style="font-size:12px;color:var(--txt3);margin-bottom:10px">1. Abra seu app autenticador. 2. Escaneie o QR Code. 3. Digite abaixo o código de 6 dígitos para concluir.</div>
+            <div style="font-size:11px;color:var(--txt3);margin-bottom:6px">Chave manual</div>
+            <div class="mfa-secret" id="mfa-secret">—</div>
+            <div class="field-group fg-full" style="margin-top:12px">
+              <label class="field-lbl">Código do autenticador</label>
+              <input class="field-input" id="mfa-code-setup" inputmode="numeric" autocomplete="one-time-code" placeholder="000000">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="mfa-verify-view" style="display:none">
+        <div class="mfa-status-list" id="mfa-factor-list"></div>
+        <div class="field-group fg-full" style="margin-top:14px">
+          <label class="field-lbl">Código do autenticador</label>
+          <input class="field-input" id="mfa-code-verify" inputmode="numeric" autocomplete="one-time-code" placeholder="000000">
+        </div>
+      </div>
+      <div id="mfa-manage-view" style="display:none">
+        <div class="mfa-status-list" id="mfa-manage-list"></div>
+      </div>
+      <div id="mfa-err" style="color:var(--red);font-size:12px;margin-top:10px;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="mfa-primary-btn" onclick="handleMfaPrimaryAction()">Continuar</button>
+      <button class="btn btn-ghost" id="mfa-secondary-btn" onclick="handleMfaSecondaryAction()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1711,6 +1759,239 @@ function saveUsers(_)  { /* usuários gerenciados pelo Supabase Auth */ }
 function getSession()  { try { return JSON.parse(sessionStorage.getItem('t4_session') || 'null'); } catch { return null; } }
 function setSession(u) { try { sessionStorage.setItem('t4_session', JSON.stringify(u)); } catch(_) {} }
 function clearSession(){ try { sessionStorage.removeItem('t4_session'); } catch(_) {} }
+
+function getMfaState() { return S.mfa || { loaded:false, currentLevel:'aal1', nextLevel:'aal1', factors:[], verifiedFactors:[] }; }
+function hasAdminMfaVerified() {
+  const s = getSession();
+  return !!(s?.role === 'admin' && getMfaState().currentLevel === 'aal2');
+}
+function normalizeMfaFactors(data) {
+  const totp = Array.isArray(data?.totp) ? data.totp : [];
+  const phone = Array.isArray(data?.phone) ? data.phone : [];
+  const all = Array.isArray(data?.all) ? data.all : [...totp, ...phone];
+  return all.map((f) => ({
+    id: f.id,
+    factorType: f.factor_type || f.factorType || f.type || 'totp',
+    status: String(f.status || '').toLowerCase(),
+    friendlyName: f.friendly_name || f.friendlyName || f.factor_type || 'Fator MFA',
+    createdAt: f.created_at || f.createdAt || null,
+  }));
+}
+async function refreshAdminMfaState(renderAfter=false) {
+  const sess = getSession();
+  if (sess?.role !== 'admin') {
+    S.mfa = { loaded:true, currentLevel:'aal1', nextLevel:'aal1', factors:[], verifiedFactors:[] };
+    renderAdminMfaBanner();
+    if (renderAfter && S.view === 'settings') renderView();
+    return S.mfa;
+  }
+  const supa = await getSupa();
+  const [{ data: aalData, error: aalError }, { data: factorsData, error: factorsError }] = await Promise.all([
+    supa.auth.mfa.getAuthenticatorAssuranceLevel(),
+    supa.auth.mfa.listFactors(),
+  ]);
+  if (aalError) throw aalError;
+  if (factorsError) throw factorsError;
+  const factors = normalizeMfaFactors(factorsData);
+  const verifiedFactors = factors.filter((f) => f.status === 'verified');
+  S.mfa = {
+    loaded: true,
+    currentLevel: aalData?.currentLevel || 'aal1',
+    nextLevel: aalData?.nextLevel || 'aal1',
+    currentAuthenticationMethods: aalData?.currentAuthenticationMethods || [],
+    factors,
+    verifiedFactors,
+  };
+  renderAdminMfaBanner();
+  if (renderAfter && S.view === 'settings') renderView();
+  return S.mfa;
+}
+function renderAdminMfaBanner() {
+  const banner = document.getElementById('admin-mfa-banner');
+  const sess = getSession();
+  if (!banner) return;
+  banner.classList.remove('show');
+  banner.innerHTML = '';
+  if (sess?.role !== 'admin') return;
+  const mfa = getMfaState();
+  const verifiedCount = (mfa.verifiedFactors || []).length;
+  if (mfa.currentLevel === 'aal2') {
+    banner.classList.add('show');
+    banner.innerHTML = `
+      <div>
+        <strong style="color:var(--txt)">Administrador com MFA validado</strong>
+        <div style="font-size:11px;color:var(--txt3)">${verifiedCount} fator(es) verificado(s). Sessão administrativa em nível reforçado.</div>
+      </div>
+      <div class="admin-mfa-chip">AAL2 ativo</div>`;
+    return;
+  }
+  banner.classList.add('show');
+  const hasFactor = verifiedCount > 0 || mfa.nextLevel === 'aal2';
+  banner.innerHTML = `
+    <div>
+      <strong style="color:var(--txt)">MFA obrigatório para administradores</strong>
+      <div style="font-size:11px;color:var(--txt3)">${hasFactor ? 'Sua conta já tem fator cadastrado, mas esta sessão ainda não foi validada com MFA.' : 'Cadastre agora um app autenticador para liberar ações administrativas.'}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="admin-mfa-chip">${mfa.currentLevel === 'aal2' ? 'AAL2 ativo' : 'AAL1'}</div>
+      <button class="btn btn-sm btn-primary" onclick="openAdminMfaFlow()">${hasFactor ? 'Validar MFA' : 'Configurar MFA'}</button>
+    </div>`;
+}
+function requireAdminMfa() {
+  if (!canAdmin()) return false;
+  if (hasAdminMfaVerified()) return true;
+  toast('🔐 MFA obrigatório para ações administrativas. Valide o app autenticador.', 'warn', 5000);
+  openAdminMfaFlow();
+  return false;
+}
+function resetMfaDialogState() {
+  S.mfaDialog = { mode:null, pendingFactor:null, targetFactorId:null };
+  const err = document.getElementById('mfa-err'); if (err) { err.style.display='none'; err.textContent=''; }
+  ['mfa-code-setup','mfa-code-verify'].forEach((id) => { const el = document.getElementById(id); if (el) el.value=''; });
+}
+function closeMfaOverlay(arg=false) {
+  const overlay = document.getElementById('mfa-overlay');
+  if (!overlay) return;
+  if (arg && typeof arg === 'object') {
+    if (arg.target !== overlay) return;
+    overlay.classList.remove('open');
+    resetMfaDialogState();
+    return;
+  }
+  overlay.classList.remove('open');
+  if (arg === true) resetMfaDialogState();
+}
+function setMfaError(msg='') {
+  const err = document.getElementById('mfa-err');
+  if (!err) return;
+  err.textContent = msg || '';
+  err.style.display = msg ? 'block' : 'none';
+}
+function setMfaView(mode) {
+  S.mfaDialog.mode = mode;
+  document.getElementById('mfa-setup-view').style.display  = mode === 'setup' ? 'block' : 'none';
+  document.getElementById('mfa-verify-view').style.display = mode === 'verify' ? 'block' : 'none';
+  document.getElementById('mfa-manage-view').style.display = mode === 'manage' ? 'block' : 'none';
+  const primary = document.getElementById('mfa-primary-btn');
+  const secondary = document.getElementById('mfa-secondary-btn');
+  const title = document.getElementById('mfa-title');
+  const subtitle = document.getElementById('mfa-subtitle');
+  if (!primary || !secondary || !title || !subtitle) return;
+  if (mode === 'setup') {
+    title.textContent = 'Configurar MFA para administrador';
+    subtitle.textContent = 'Escaneie o QR Code no app autenticador e confirme com o código de 6 dígitos.';
+    primary.textContent = 'Ativar MFA';
+    secondary.textContent = 'Cancelar';
+  } else if (mode === 'verify') {
+    title.textContent = 'Validar MFA desta sessão';
+    subtitle.textContent = 'Digite o código atual do seu app autenticador para liberar ações administrativas.';
+    primary.textContent = 'Validar código';
+    secondary.textContent = 'Cancelar';
+  } else {
+    title.textContent = 'MFA do administrador';
+    subtitle.textContent = 'A sessão atual já está protegida com MFA.';
+    primary.textContent = 'Fechar';
+    secondary.textContent = 'Fechar';
+  }
+}
+function buildMfaManageList() {
+  const mfa = getMfaState();
+  const list = document.getElementById('mfa-manage-list');
+  if (!list) return;
+  const verified = mfa.verifiedFactors || [];
+  if (!verified.length) {
+    list.innerHTML = '<div>Nenhum fator verificado encontrado nesta conta.</div>';
+    return;
+  }
+  list.innerHTML = verified.map((f) => `<div>• <strong>${esc(f.friendlyName || 'Fator')}</strong> · ${esc(f.factorType)} · ${esc(f.status || 'verified')}</div>`).join('');
+}
+async function openAdminMfaFlow() {
+  if (!canAdmin()) { toast('❌ Apenas admin pode acessar o fluxo de MFA.', 'err'); return; }
+  resetMfaDialogState();
+  const overlay = document.getElementById('mfa-overlay');
+  if (overlay) overlay.classList.add('open');
+  const mfa = await refreshAdminMfaState(false).catch((e) => {
+    setMfaError('Falha ao consultar status de MFA: ' + (e?.message || e));
+    return getMfaState();
+  });
+  if (mfa.currentLevel === 'aal2') {
+    setMfaView('manage');
+    buildMfaManageList();
+    return;
+  }
+  const verified = mfa.verifiedFactors || [];
+  if (verified.length || mfa.nextLevel === 'aal2') {
+    setMfaView('verify');
+    const target = verified[0] || null;
+    S.mfaDialog.targetFactorId = target?.id || null;
+    const list = document.getElementById('mfa-factor-list');
+    if (list) {
+      list.innerHTML = verified.length
+        ? verified.map((f) => `<div>• <strong>${esc(f.friendlyName || 'Fator')}</strong> · ${esc(f.factorType)} · ${esc(f.status || 'verified')}</div>`).join('')
+        : '<div>Conta com MFA habilitado. Digite o código do autenticador para concluir a validação desta sessão.</div>';
+    }
+    return;
+  }
+  await startAdminMfaEnrollment();
+}
+async function startAdminMfaEnrollment() {
+  const supa = await getSupa();
+  setMfaError('');
+  setMfaView('setup');
+  const qrWrap = document.getElementById('mfa-qr-wrap');
+  const secretEl = document.getElementById('mfa-secret');
+  if (qrWrap) qrWrap.innerHTML = '<span style="font-size:12px;color:var(--txt3)">Gerando QR Code…</span>';
+  const { data, error } = await supa.auth.mfa.enroll({ factorType:'totp', friendlyName:`T4 Admin ${getSession()?.user || ''}`.trim() || 'T4 Admin' });
+  if (error || !data) throw (error || new Error('Falha ao gerar MFA.'));
+  S.mfaDialog.pendingFactor = { id:data.id, qrCode:data.totp?.qr_code || '', secret:data.totp?.secret || '', uri:data.totp?.uri || '' };
+  if (qrWrap) qrWrap.innerHTML = data.totp?.qr_code ? `<img src="${data.totp.qr_code}" alt="QR Code MFA">` : '<span style="font-size:12px;color:var(--txt3)">QR Code indisponível. Use a chave manual.</span>';
+  if (secretEl) secretEl.textContent = data.totp?.secret || '—';
+}
+async function verifyAdminMfaEnrollment() {
+  const supa = await getSupa();
+  const code = document.getElementById('mfa-code-setup')?.value.trim() || '';
+  const factorId = S.mfaDialog.pendingFactor?.id;
+  if (!factorId) throw new Error('Nenhum fator MFA pendente para ativação.');
+  if (!/^\d{6}$/.test(code)) throw new Error('Digite o código de 6 dígitos do autenticador.');
+  const { error } = await supa.auth.mfa.challengeAndVerify({ factorId, code });
+  if (error) throw error;
+  await supa.auth.refreshSession();
+  await refreshAdminMfaState(true);
+  closeMfaOverlay(true);
+  toast('✅ MFA ativado e validado para esta sessão.', 'ok', 5000);
+}
+async function verifyAdminMfaChallenge() {
+  const supa = await getSupa();
+  const code = document.getElementById('mfa-code-verify')?.value.trim() || '';
+  const verified = getMfaState().verifiedFactors || [];
+  const factorId = S.mfaDialog.targetFactorId || verified[0]?.id;
+  if (!factorId) throw new Error('Nenhum fator MFA verificado encontrado para esta conta.');
+  if (!/^\d{6}$/.test(code)) throw new Error('Digite o código de 6 dígitos do autenticador.');
+  const { error } = await supa.auth.mfa.challengeAndVerify({ factorId, code });
+  if (error) throw error;
+  await supa.auth.refreshSession();
+  await refreshAdminMfaState(true);
+  closeMfaOverlay(true);
+  toast('✅ Sessão administrativa validada com MFA.', 'ok', 5000);
+}
+async function handleMfaPrimaryAction() {
+  setMfaError('');
+  const btn = document.getElementById('mfa-primary-btn');
+  const original = btn?.textContent || 'Continuar';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Processando...'; }
+  try {
+    if (S.mfaDialog.mode === 'setup') await verifyAdminMfaEnrollment();
+    else if (S.mfaDialog.mode === 'verify') await verifyAdminMfaChallenge();
+    else closeMfaOverlay(true);
+  } catch (e) {
+    setMfaError(e?.message || String(e));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = original; }
+  }
+}
+function handleMfaSecondaryAction() {
+  closeMfaOverlay(true);
+}
 
 // Carrega perfis de usuário (sem senhas — auth é do Supabase)
 async function fetchUsersForAuth() {
@@ -2604,14 +2885,20 @@ async function startRealtime() {
 async function initApp() {
   setSyncStatus('loading');
   populateNewForm();
-  initGermanGreeting(); // ← Saudação alemã dinâmica
+  initGermanGreeting();
   try {
     await loadAll();
-    agLoad().catch(e => console.warn('[Agenda] Load falhou na init:', e.message)); // não-bloqueante
+    await refreshAdminMfaState();
+    agLoad().catch(e => console.warn('[Agenda] Load falhou na init:', e.message));
     startRealtime().catch(e => console.warn('[Realtime]', e));
     nav('dashboard');
     startAutoSync();
     applyViewerRestrictions();
+    const sess = getSession();
+    const mfa = getMfaState();
+    if (sess?.role === 'admin' && mfa.currentLevel !== 'aal2') {
+      setTimeout(() => openAdminMfaFlow().catch(e => console.warn('[MFA]', e?.message || e)), 150);
+    }
   } catch(e) {
     setSyncStatus('err');
     toast('⚠ Erro ao carregar dados: ' + e.message, 'err');
@@ -5368,6 +5655,20 @@ function renderSettings(el) {
     return;
   }
 
+  const mfa = getMfaState();
+  if (!hasAdminMfaVerified()) {
+    el.innerHTML = `
+      <div class="settings-card">
+        <h3>MFA obrigatório para administradores</h3>
+        <p>Para liberar gerenciamento de usuários, listas e diagnósticos administrativos, valide esta sessão com o app autenticador. O Supabase diferencia sessões comuns (aal1) de sessões com segundo fator (aal2).<\/p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <span class="admin-mfa-chip">Sessão atual: ${esc(mfa.currentLevel || 'aal1').toUpperCase()}<\/span>
+          <button class="btn btn-primary btn-sm" onclick="openAdminMfaFlow()">${(mfa.verifiedFactors||[]).length || mfa.nextLevel === 'aal2' ? 'Validar MFA' : 'Configurar MFA'}<\/button>
+        <\/div>
+      <\/div>`;
+    return;
+  }
+
   const users = getUsers();
   const sess = getSession() || {};
   const roleOptions = (currentRole) => `
@@ -5417,13 +5718,22 @@ function renderSettings(el) {
             <h3>Gerenciar Usuários</h3>
             <p>Usuários com acesso ao sistema. Clique em "Novo" para adicionar.</p>
             <div>${userRows||'<p style="color:var(--txt3);font-size:12px">Nenhum usuário cadastrado</p>'}</div>
-            <div style="margin-top:14px">
+            <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Novo Usuário</button>
+              <button class="btn btn-ghost btn-sm" onclick="openAdminMfaFlow()">🔐 Ver MFA</button>
+            </div>
+          </div>
+          <div class="settings-card" style="margin-top:16px">
+            <h3>MFA administrativo</h3>
+            <p>Sessão atual em <strong style="color:var(--txt)">${esc((mfa.currentLevel || 'aal1').toUpperCase())}</strong>. Fatores verificados nesta conta: <strong style="color:var(--txt)">${(mfa.verifiedFactors||[]).length}</strong>.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <span class="admin-mfa-chip">${(mfa.currentLevel || 'aal1').toUpperCase()}</span>
+              <button class="btn btn-ghost btn-sm" onclick="openAdminMfaFlow()">Gerenciar MFA</button>
             </div>
           </div>
           <div class="settings-card" style="margin-top:16px">
             <h3>Ponto crítico de segurança</h3>
-            <p>A criação de usuários agora roda em backend administrativo seguro. Alteração de categoria e inativação também passam por esse backend e exigem admin.</p>
+            <p>A criação de usuários agora roda em backend administrativo seguro. Alteração de categoria e inativação também passam por esse backend e exigem sessão admin em AAL2.</p>
           </div>
         </div>
 
@@ -5527,6 +5837,7 @@ async function saveUser() {
   const err   = document.getElementById('um-err');
   err.style.display = 'none';
   if (!canAdmin())         { err.textContent='Apenas admin pode criar usuários.'; err.style.display='block'; return; }
+  if (!hasAdminMfaVerified()) { err.textContent='Valide o MFA do admin antes de criar usuários.'; err.style.display='block'; openAdminMfaFlow(); return; }
   if (!user)               { err.textContent='Usuário obrigatório.'; err.style.display='block'; return; }
   if (!/^[a-z0-9._-]{3,32}$/.test(user)) {
     err.textContent='Usuário inválido. Use 3-32 caracteres: letras minúsculas, números, ponto, hífen ou underscore.';
@@ -5564,6 +5875,7 @@ async function saveUser() {
 
 async function changeUserRole(username, nextRole) {
   if (!canAdmin()) { toast('❌ Apenas admin pode alterar categoria.', 'err'); return; }
+  if (!requireAdminMfa()) return;
   if (!username) return;
   try {
     const res = await invokeAdminUserLifecycle('updateUserRole', { username, role: nextRole });
@@ -5580,6 +5892,7 @@ async function changeUserRole(username, nextRole) {
 
 async function deactivateUser(username) {
   if (!canAdmin()) { toast('❌ Apenas admin pode inativar usuários.', 'err'); return; }
+  if (!requireAdminMfa()) return;
   if (!username) return;
   if (!confirm(`Inativar o usuário "${username}"?`)) return;
   try {
@@ -6058,6 +6371,7 @@ function launchConfetti() {
 function canEdit()   { const s = getSession(); return s?.role === 'admin' || s?.role === 'recrutador'; }
 function canDelete() { const s = getSession(); return s?.role === 'admin'; }
 function canAdmin()  { const s = getSession(); return s?.role === 'admin'; }
+function canAdminSecure() { return canAdmin() && hasAdminMfaVerified(); }
 
 // Aplica visual de lock em elementos para viewer
 function applyViewerRestrictions() {
@@ -6142,6 +6456,11 @@ function toast(msg, type='ok', duration=3500) {
         clearSession();
         document.getElementById('app').style.display = 'none';
         document.getElementById('login-screen').style.display = 'flex';
+        closeMfaOverlay(true);
+        return;
+      }
+      if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && canAdmin()) {
+        refreshAdminMfaState(S.view === 'settings').catch((e) => console.warn('[MFA refresh]', e?.message || e));
       }
     });
 
