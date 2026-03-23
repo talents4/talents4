@@ -1461,7 +1461,7 @@ a{color:inherit;text-decoration:none}
         <span style="color:var(--txt3);font-size:13px">⌕</span>
         <input type="text" placeholder="Buscar candidatos..." id="global-search" oninput="onSearch(this.value)">
       </div>
-      <!-- M8: Busca inteligente por linguagem natural (client-side, sem IA) -->
+      <!-- M8: Busca inteligente por linguagem natural -->
       <div class="search-wrap" id="nlp-search-wrap" style="display:none;width:260px;border-color:var(--border2)"
            title="Busca inteligente — ex: enfermeiros com B2, administrativos de Curitiba">
         <span style="color:var(--gold);font-size:12px">✦</span>
@@ -1594,6 +1594,7 @@ a{color:inherit;text-decoration:none}
 // ══════════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://xcxqtjzlqmncwnhbolnl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjeHF0anpscW1uY3duaGJvbG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1OTU4NjQsImV4cCI6MjA4OTE3MTg2NH0.TJ1KB6mwSE-wu3EBO8UfP7br6byIloDsr0ejJ4_3luc';
+const ADMIN_USER_LIFECYCLE_URL = `${SUPABASE_URL}/functions/v1/admin-user-lifecycle`;
 
 // ── Google Drive OAuth (GIS popup flow) ──
 // Substitua pelo Client ID gerado no Google Cloud Console
@@ -1611,6 +1612,35 @@ async function getSupa() {
   const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
   _supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   return _supa;
+}
+
+async function invokeAdminUserLifecycle(action, payload) {
+  const supa = await getSupa();
+  const { data: { session } } = await supa.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error('Sessão expirada. Entre novamente.');
+
+  const res = await fetch(ADMIN_USER_LIFECYCLE_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
+    body: JSON.stringify({ action, ...payload })
+  });
+
+  let data = null;
+  try { data = await res.json(); } catch { data = null; }
+  if (!res.ok || data?.ok === false) throw new Error(data?.error || `Falha na operação (${res.status})`);
+  return data;
+}
+
+function isStrongPassword(pwd) {
+  return typeof pwd === 'string'
+    && pwd.length >= 10
+    && /[a-z]/.test(pwd)
+    && /[A-Z]/.test(pwd)
+    && /\d/.test(pwd);
 }
 
 // Estágios REAIS do pipeline ⭐ DB_MASTER_V5
@@ -1974,7 +2004,7 @@ function toSnake(fields) {
 }
 
 const API_EDIT_ACTIONS = new Set(['updateCandidate','createCandidate','setActive','addInterview','advanceStage']);
-const API_ADMIN_ACTIONS = new Set(['saveUser','deleteUser','upsertEnum','removeEnum']);
+const API_ADMIN_ACTIONS = new Set(['deleteUser','upsertEnum','removeEnum']);
 const PROTECTED_CANDIDATE_WRITE_KEYS = new Set(['id','criado_em','ultima_atualizacao','atualizado_por']);
 
 function assertAuthorizedAction(action) {
@@ -1993,6 +2023,23 @@ function sanitizeCandidateWritePayload(snakeFields, mode='update') {
     delete out[k];
   });
   return out;
+}
+
+function generateCandidateId() {
+  const year = new Date().getFullYear();
+  try {
+    if (window.crypto?.randomUUID) {
+      return `T4-${year}-${window.crypto.randomUUID().replace(/-/g,'').slice(0,12).toUpperCase()}`;
+    }
+    if (window.crypto?.getRandomValues) {
+      const bytes = new Uint8Array(6);
+      window.crypto.getRandomValues(bytes);
+      const suffix = Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+      return `T4-${year}-${suffix}`;
+    }
+  } catch(_) {}
+  const fallback = `${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`.replace(/[^a-z0-9]/gi,'').slice(0,12).toUpperCase();
+  return `T4-${year}-${fallback}`;
 }
 
 // ── apiGet: wrapper compatível com o frontend existente ──────
@@ -2078,11 +2125,11 @@ async function apiPost(body) {
 
   if (action === 'createCandidate') {
     const fields = body.fields || {};
-    // ── nome_completo: lê de fields['Nome completo'] (correto) ou body.nome (legado)
+    // nome_completo: prioriza fields['Nome completo'] e usa body.nome apenas como compatibilidade
     if (!fields['Nome completo'] && body.nome) fields['Nome completo'] = body.nome;
     if (!fields['Nome completo']) throw new Error('Nome completo é obrigatório.');
 
-    const id = fields.ID || `T4-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`;
+    const id = fields.ID || generateCandidateId();
     const snakeFields = sanitizeCandidateWritePayload(toSnake(fields), 'create');
     snakeFields.id = id;
     snakeFields.criado_em = new Date().toISOString();
@@ -2138,41 +2185,7 @@ async function apiPost(body) {
   }
 
   if (action === 'saveUser') {
-    const u = body.user;
-
-    // ── 1. Cria/atualiza usuário no Supabase Auth ─────────────
-    // signUp com e-mail sintético username@t4ops.crm
-    // Requer "Disable email confirmations" no painel Supabase Auth.
-    if (u.pass) {
-      const { error: authErr } = await supa.auth.signUp({
-        email: `${u.user}@t4ops.crm`,
-        password: u.pass,
-        options: {
-          data: { username: u.user, nome: u.nome || u.user, role: u.role }
-        }
-      });
-      if (authErr && !authErr.message.includes('already registered')) {
-        // Não interrompe — continua a salvar o perfil mesmo que auth falhe
-        console.warn('[saveUser] Auth signup falhou:', authErr.message);
-      }
-    }
-
-    // ── 2. Upsert perfil em usuarios (sem senha) ──────────────
-    const payload = {
-      username: u.user, nome: u.nome || u.user, role: u.role,
-      color: u.color || '#5b6af0', ativo: u.ativo || 'SIM'
-    };
-    const { error: dbErr } = await supa.from('usuarios').upsert(payload, { onConflict: 'username' });
-    if (dbErr) throw new Error(dbErr.message);
-
-    // ── 3. Retorna lista atualizada (sem senhas) ──────────────
-    const { data: usersData } = await supa.from('usuarios')
-      .select('username, nome, role, color, ativo').order('nome');
-    const users = (usersData||[]).map(u2 => ({
-      user: u2.username, nome: u2.nome, role: u2.role, color: u2.color, ativo: u2.ativo
-    }));
-    S.users = users;
-    return { ok:true, users };
+    throw new Error('Criação de usuário deve ocorrer pela função segura do servidor.');
   }
 
   if (action === 'deleteUser') {
@@ -5343,6 +5356,15 @@ async function submitNew() {
 // SETTINGS — FIXED & COMPLETE
 // ══════════════════════════════════════════════════════════════
 function renderSettings(el) {
+  if (!canAdmin()) {
+    el.innerHTML = `
+      <div class="settings-card">
+        <h3>Acesso restrito</h3>
+        <p>As configurações administrativas ficam disponíveis apenas para administradores.</p>
+      </div>`;
+    return;
+  }
+
   const users = getUsers();
   const userRows = users.map((u,i) => `
     <div class="user-row">
@@ -5369,7 +5391,6 @@ function renderSettings(el) {
       </div>
       <div style="min-width:0">
 
-        <!-- USUÁRIOS -->
         <div class="settings-panel active" id="sp-users">
           <div class="settings-card">
             <h3>Gerenciar Usuários</h3>
@@ -5379,9 +5400,12 @@ function renderSettings(el) {
               <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Novo Usuário</button>
             </div>
           </div>
+          <div class="settings-card" style="margin-top:16px">
+            <h3>Ponto crítico de segurança</h3>
+            <p>A criação de usuários pelo CRM ainda depende do fluxo atual de autenticação. Antes de usar em produção, desative cadastros públicos no Supabase Auth e trate a criação de usuários em backend administrativo seguro.</p>
+          </div>
         </div>
 
-        <!-- LISTAS -->
         <div class="settings-panel" id="sp-listas">
           <div class="settings-card">
             <h3>Editor de Listas (Enums)</h3>
@@ -5397,21 +5421,10 @@ function renderSettings(el) {
           </div>
         </div>
 
-        <!-- CONEXÃO -->
         <div class="settings-panel" id="sp-conexao">
           <div class="settings-card">
             <h3>Conexão com o Backend</h3>
-            <p>Configurações da conexão Supabase.</p>
-            <div class="field-grid g1">
-              <div class="field-group">
-                <label class="field-lbl">Supabase URL</label>
-                <input class="field-input" value="${esc(SUPABASE_URL)}" readonly style="font-size:10px;font-family:var(--mono)">
-              </div>
-              <div class="field-group">
-                <label class="field-lbl">Anon Key (parcial)</label>
-                <input class="field-input" value="${esc(SUPABASE_ANON_KEY.slice(0,40)+'...')}" readonly style="font-size:11px;font-family:var(--mono)">
-              </div>
-            </div>
+            <p>Diagnóstico administrativo da conexão. Chaves não são exibidas na interface.</p>
             <div style="margin-top:14px;display:flex;gap:8px">
               <button class="btn btn-ghost btn-sm" onclick="testConnection()">🔌 Testar conexão</button>
               <button class="btn btn-ghost btn-sm" onclick="forceSync()">↻ Forçar sync</button>
@@ -5429,7 +5442,6 @@ function renderSettings(el) {
           </div>
         </div>
 
-        <!-- SISTEMA -->
         <div class="settings-panel" id="sp-sistema">
           <div class="settings-card">
             <h3>Diagnóstico do Sistema</h3>
@@ -5487,23 +5499,46 @@ function closeUserOverlay(e) { if(e.target===document.getElementById('user-overl
 
 async function saveUser() {
   const nome  = document.getElementById('um-nome').value.trim();
-  const user  = document.getElementById('um-user').value.trim();
+  const user  = document.getElementById('um-user').value.trim().toLowerCase();
   const pass  = document.getElementById('um-pass').value;
   const pass2 = document.getElementById('um-pass2').value;
   const role  = document.getElementById('um-role').value;
   const err   = document.getElementById('um-err');
   err.style.display = 'none';
-  if (!user)              { err.textContent='Usuário obrigatório.'; err.style.display='block'; return; }
-  if (!pass)              { err.textContent='Senha obrigatória.'; err.style.display='block'; return; }
-  if (pass !== pass2)     { err.textContent='As senhas não coincidem.'; err.style.display='block'; return; }
-  if (pass.length < 6)    { err.textContent='Senha mínimo 6 caracteres.'; err.style.display='block'; return; }
+  if (!canAdmin())         { err.textContent='Apenas admin pode criar usuários.'; err.style.display='block'; return; }
+  if (!user)               { err.textContent='Usuário obrigatório.'; err.style.display='block'; return; }
+  if (!/^[a-z0-9._-]{3,32}$/.test(user)) {
+    err.textContent='Usuário inválido. Use 3-32 caracteres: letras minúsculas, números, ponto, hífen ou underscore.';
+    err.style.display='block';
+    return;
+  }
+  if (!pass)               { err.textContent='Senha obrigatória.'; err.style.display='block'; return; }
+  if (pass !== pass2)      { err.textContent='As senhas não coincidem.'; err.style.display='block'; return; }
+  if (!isStrongPassword(pass)) {
+    err.textContent='Senha fraca. Use pelo menos 10 caracteres, com maiúscula, minúscula e número.';
+    err.style.display='block';
+    return;
+  }
   try {
-    await apiPost({ action:'saveUser', user:{ user, pass, nome:nome||user, role, color:'#c41e3a', ativo:'SIM' } });
+    const res = await invokeAdminUserLifecycle('createUser', {
+      user: {
+        user,
+        pass,
+        nome: nome || user,
+        role,
+        color: '#c41e3a',
+        ativo: 'SIM'
+      }
+    });
+    if (Array.isArray(res?.users)) S.users = res.users;
     closeUserModal();
     await loadAll();
     nav('settings');
-    toast('✅ Usuário salvo.', 'ok');
-  } catch(e) { err.textContent='Erro: '+e.message; err.style.display='block'; }
+    toast('✅ Usuário criado com segurança.', 'ok');
+  } catch(e) {
+    err.textContent='Erro: '+(e?.message || String(e));
+    err.style.display='block';
+  }
 }
 
 async function deleteUser(idx) {
@@ -5647,7 +5682,7 @@ function checkSemanticMatch(searchQuery, dbValue) {
 
 // ── M8: Parser local de linguagem natural ─────────────────────
 // Interpreta frases simples e retorna estrutura de filtro
-// Não usa Gemini — 100% client-side
+// Busca e extração executadas no navegador
 function nlpParseQuery(phrase) {
   const result = { profissao: null, nivel_alemao: null, cidade: null, idadeMax: null, idadeMin: null, rawQuery: null };
   if (!phrase || phrase.trim().length < 3) return result;
