@@ -1461,7 +1461,7 @@ a{color:inherit;text-decoration:none}
         <span style="color:var(--txt3);font-size:13px">⌕</span>
         <input type="text" placeholder="Buscar candidatos..." id="global-search" oninput="onSearch(this.value)">
       </div>
-      <!-- M8: Busca inteligente por linguagem natural (client-side, sem IA) -->
+      <!-- M8: Busca inteligente por linguagem natural (client-side) -->
       <div class="search-wrap" id="nlp-search-wrap" style="display:none;width:260px;border-color:var(--border2)"
            title="Busca inteligente — ex: enfermeiros com B2, administrativos de Curitiba">
         <span style="color:var(--gold);font-size:12px">✦</span>
@@ -1969,6 +1969,34 @@ function toSnake(fields) {
   for (const [k, v] of Object.entries(fields)) {
     const sk = FIELD_MAP[k] || k.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
     out[sk] = v === '' ? null : v;
+  }
+  return out;
+}
+
+function canonicalizeModule2Edits(fields) {
+  const out = {};
+  const canonicalBySnake = {
+    data_da_entrevista: 'Data da Entrevista',
+    avaliador: 'Avaliador',
+    perfil: 'Perfil',
+    resultado_entrevista: 'Resultado entrevista',
+    tipo_de_candidato: 'Tipo de candidato',
+    analise_do_recrutador: 'Análise do recrutador',
+    diferenciais_do_perfil: 'Diferenciais do perfil',
+    pontos_fortes: 'Pontos fortes',
+    pontos_de_atencao: 'Pontos de atenção',
+    perfil_profissional_para_apresentacao: 'Perfil profissional para apresentação',
+    observacoes_internas: 'Observações internas',
+    quem_e_voce: 'Quem é você?',
+    porque_deseja_ir_para_alemanha_como_surgiu_o_interesse: 'Porque deseja ir para Alemanha, como surgiu o interesse?',
+    relato_sobre_a_experiencia_profissional: 'Relato sobre a experiência profissional',
+    organizacao_financeira: 'Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha?'
+  };
+
+  for (const [key, value] of Object.entries(fields || {})) {
+    const snake = FIELD_MAP[key] || key;
+    const canonicalKey = canonicalBySnake[snake] || key;
+    out[canonicalKey] = value;
   }
   return out;
 }
@@ -4925,13 +4953,14 @@ async function saveCandidate() {
   const prevStatus = fv(S.currentCand, 'STATUS PIPELINE') || '';
 
   try {
-    const merged = { ...S.currentCand, ...S.pendingEdits };
+    const pendingEditsCanonical = canonicalizeModule2Edits(S.pendingEdits);
+    const merged = { ...S.currentCand, ...pendingEditsCanonical };
     const autoFields = {
       'Documentação completa': calcDocCompleta(merged),
-      'Pendência documental crítica': S.pendingEdits['Pendência documental crítica'] ?? calcPendenciaDocumentalCritica(merged)
+      'Pendência documental crítica': pendingEditsCanonical['Pendência documental crítica'] ?? calcPendenciaDocumentalCritica(merged)
     };
-    const fieldsToSave = { ...S.pendingEdits, ...autoFields };
-    const nFields = Object.keys(S.pendingEdits).length;
+    const fieldsToSave = { ...pendingEditsCanonical, ...autoFields };
+    const nFields = Object.keys(pendingEditsCanonical).length;
 
     // ── Rastreabilidade: detecta mudanças em campos críticos ─
     const histEntries = histBuildEntries(fieldsToSave, S.currentCand, sess?.nome || 'web');
@@ -5651,7 +5680,7 @@ function checkSemanticMatch(searchQuery, dbValue) {
 
 // ── M8: Parser local de linguagem natural ─────────────────────
 // Interpreta frases simples e retorna estrutura de filtro
-// Não usa Gemini — 100% client-side
+// Busca e leitura 100% client-side
 function nlpParseQuery(phrase) {
   const result = { profissao: null, nivel_alemao: null, cidade: null, idadeMax: null, idadeMin: null, rawQuery: null };
   if (!phrase || phrase.trim().length < 3) return result;
