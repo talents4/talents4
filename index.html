@@ -2245,6 +2245,7 @@ const S = {
   loading: false,
   currentCand: null,
   pendingEdits: {},
+  rhInterviewDraft: null,
   page: 1, pageSize: 80,
   filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null },
   syncTimer: null,
@@ -4541,6 +4542,7 @@ function renderInativo(el) {
 // ══════════════════════════════════════════════════════════════
 async function openCand(id) {
   S.pendingEdits = {};
+  S.rhInterviewDraft = null;
   let c = S.candidates.find(x => x.ID === id);
   if (!c) {
     try { const r = await apiGet({route:'candidate', id}); c = r.candidate; }
@@ -5300,228 +5302,332 @@ function switchTab(tabId) {
 }
 
 
-const RH_DOC_IMPORT_FIELDS = {
-  nome_completo: { uiField: 'Nome completo', overwriteIfEmptyOnly: true },
-  data_da_entrevista: { uiField: 'Data da Entrevista' },
-  email: { uiField: 'E-mail', overwriteIfEmptyOnly: true },
-  telefone: { uiField: 'Telefone', overwriteIfEmptyOnly: true },
-  profissao_principal: { uiField: 'Profissão principal', overwriteIfEmptyOnly: true },
-  nivel_alemao: { uiField: 'Nível alemão', overwriteIfEmptyOnly: true, isSelect: true },
-  area_profissional: { uiField: 'Área profissional', overwriteIfEmptyOnly: true },
-  resultado_entrevista: { uiField: 'Resultado entrevista', isSelect: true },
-  pais_de_origem: { uiField: 'País de origem', overwriteIfEmptyOnly: true },
-  cidade_atual: { uiField: 'Cidade atual', overwriteIfEmptyOnly: true },
-  avaliador: { uiField: 'Avaliador', isSelect: true },
-  quem_e_voce: { uiField: 'Quem é você?' },
-  porque_deseja_ir_para_alemanha_como_surgiu_o_interesse: { uiField: 'Porque deseja ir para Alemanha, como surgiu o interesse?' },
-  relato_sobre_a_experiencia_profissional: { uiField: 'Relato sobre a experiência profissional' },
-  organizacao_financeira: { uiField: 'Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha?' },
-  perfil: { uiField: 'Perfil', isSelect: true },
-  tipo_de_candidato: { uiField: 'Tipo de candidato', isSelect: true },
-  perfil_profissional_para_apresentacao: { uiField: 'Perfil profissional para apresentação' },
-  observacoes_internas: { uiField: 'Observações internas' },
-  analise_do_recrutador: { uiField: 'Análise do recrutador' },
-  diferenciais_do_perfil: { uiField: 'Diferenciais do perfil' },
-  pontos_fortes: { uiField: 'Pontos fortes' },
-  pontos_de_atencao: { uiField: 'Pontos de atenção' },
-};
 
-const RH_DOC_LABEL_MAP = {
-  'nome completo': 'nome_completo',
-  'data da entrevista': 'data_da_entrevista',
-  'e mail': 'email',
-  'telefone': 'telefone',
-  'profissao principal': 'profissao_principal',
-  'nivel de alemao': 'nivel_alemao',
-  'area profissional': 'area_profissional',
-  'resultado entrevista': 'resultado_entrevista',
-  'pais de origem': 'pais_de_origem',
-  'cidade atual': 'cidade_atual',
-  'avaliador responsavel': 'avaliador',
-  'avaliador': 'avaliador',
-  'perfil do candidato': 'perfil',
-  'perfil': 'perfil',
-  'tipo de candidato': 'tipo_de_candidato',
-  'perfil profissional para apresentacao': 'perfil_profissional_para_apresentacao',
-  'observacoes internas': 'observacoes_internas',
-  'analise do recrutador': 'analise_do_recrutador',
-  'diferenciais do perfil': 'diferenciais_do_perfil',
-  'pontos fortes': 'pontos_fortes',
-  'pontos de atencao': 'pontos_de_atencao',
-  'quem e voce': 'quem_e_voce',
-  'porque deseja ir para alemanha como surgiu o interesse': 'porque_deseja_ir_para_alemanha_como_surgiu_o_interesse',
-  'relato sobre a experiencia profissional': 'relato_sobre_a_experiencia_profissional',
-  'como e sua organizacao financeira tem reserva como sera o preparo para alemanha': 'organizacao_financeira',
-};
+const RH_DOC_SECTION_SPECS = [
+  { code:'1.1.', key:'nome_idade_cidade_atual', group:'dados_basicos_identificacao', label:'Nome completo, idade e cidade atual' },
+  { code:'1.2.', key:'formacao_academica_tecnica', group:'dados_basicos_identificacao', label:'Formação acadêmica e técnica' },
+  { code:'1.3.', key:'certificados_diplomas_disponiveis', group:'dados_basicos_identificacao', label:'Certificados ou diplomas disponíveis' },
+  { code:'1.4.', key:'documento_nacionalidade', group:'dados_basicos_identificacao', label:'Documento e nacionalidade' },
+  { code:'1.5.', key:'contato_organizacao_pessoal', group:'dados_basicos_identificacao', label:'Contato e organização pessoal' },
 
-function rhNormLabel(s) {
-  return String(s || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[()?:;,./\\-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLowerCase();
+  { code:'2.1.', key:'tempo_total_experiencia', group:'experiencia_profissional', label:'Tempo total de experiência' },
+  { code:'2.2.', key:'experiencias_principais', group:'experiencia_profissional', label:'Experiências principais' },
+  { code:'2.3.', key:'projeto_ou_experiencia_preferida', group:'experiencia_profissional', label:'Projeto ou experiência preferida' },
+  { code:'2.4.', key:'aderencia_tecnica_vaga', group:'experiencia_profissional', label:'Aderência técnica à vaga' },
+  { code:'2.5.', key:'pontos_tecnicos_fortes_fracos', group:'experiencia_profissional', label:'Pontos técnicos mais fortes e mais fracos' },
+
+  { code:'3.1.', key:'trabalho_atual', group:'situacao_atual_disponibilidade', label:'Trabalho atual' },
+  { code:'3.2.', key:'disponibilidade_mudanca', group:'situacao_atual_disponibilidade', label:'Disponibilidade para mudança' },
+  { code:'3.3.', key:'status_migratorio', group:'situacao_atual_disponibilidade', label:'Status migratório' },
+  { code:'3.4.', key:'prazo_realista_saida', group:'situacao_atual_disponibilidade', label:'Prazo realista de saída' },
+  { code:'3.5.', key:'flexibilidade_geografica', group:'situacao_atual_disponibilidade', label:'Flexibilidade geográfica' },
+
+  { code:'4.1.', key:'nivel_alemao', group:'idiomas', label:'Nível de alemão' },
+  { code:'4.2.', key:'nivel_ingles', group:'idiomas', label:'Nível de inglês' },
+  { code:'4.3.', key:'outras_linguas', group:'idiomas', label:'Outras línguas' },
+  { code:'4.4.', key:'comprovacao', group:'idiomas', label:'Comprovação' },
+  { code:'4.5.', key:'teste_pratico', group:'idiomas', label:'Teste prático' },
+
+  { code:'5.1.', key:'porque_alemanha', group:'motivacao_objetivo_profissional', label:'Por que Alemanha' },
+  { code:'5.2.', key:'motivacao_vaga_especifica', group:'motivacao_objetivo_profissional', label:'Motivação para a vaga específica' },
+  { code:'5.3.', key:'plano_carreira', group:'motivacao_objetivo_profissional', label:'Plano de carreira' },
+  { code:'5.4.', key:'coerencia_candidatura', group:'motivacao_objetivo_profissional', label:'Coerência da candidatura' },
+
+  { code:'6.1.', key:'tipo_vaga_preferido', group:'preferencias_profissionais', label:'Tipo de vaga preferido' },
+  { code:'6.2.', key:'abertura_funcao_tecnica_manual', group:'preferencias_profissionais', label:'Abertura para função técnica ou manual' },
+  { code:'6.3.', key:'faixa_atuacao_aceitavel', group:'preferencias_profissionais', label:'Faixa de atuação aceitável' },
+  { code:'6.4.', key:'turnos_rotina', group:'preferencias_profissionais', label:'Turnos e rotina' },
+  { code:'6.5.', key:'remuneracao_expectativa', group:'preferencias_profissionais', label:'Remuneração e expectativa' },
+
+  { code:'7.1.', key:'rede_apoio', group:'integracao_familia_adaptacao', label:'Rede de apoio' },
+  { code:'7.2.', key:'mudanca_sozinho_ou_familia', group:'integracao_familia_adaptacao', label:'Mudança sozinho ou com família' },
+  { code:'7.3.', key:'experiencia_internacional_previa', group:'integracao_familia_adaptacao', label:'Experiência internacional prévia' },
+  { code:'7.4.', key:'adaptacao_cultural', group:'integracao_familia_adaptacao', label:'Adaptação cultural' },
+  { code:'7.5.', key:'autonomia_pratica', group:'integracao_familia_adaptacao', label:'Autonomia prática' },
+
+  { code:'8.1.', key:'documentos_prontos', group:'documentacao_riscos_viabilidade', label:'Documentos prontos' },
+  { code:'8.2.', key:'reconhecimento_ou_traducao', group:'documentacao_riscos_viabilidade', label:'Reconhecimento ou tradução' },
+  { code:'8.3.', key:'restricoes_objetivas', group:'documentacao_riscos_viabilidade', label:'Restrições objetivas' },
+  { code:'8.4.', key:'comprometimento_real', group:'documentacao_riscos_viabilidade', label:'Comprometimento real' },
+
+  { code:'9.1.', key:'mensagem_final_candidato', group:'mensagem_final', label:'Mensagem final do candidato' },
+];
+
+function rhDocRawTextFromHtml(html) {
+  return rhCleanText(
+    String(html || '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|tr|li|h\d)>/gi, '\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&quot;/gi, '"')
+  );
 }
 
-function rhCleanText(s) {
-  return String(s || '')
-    .replace(/\u00A0/g, ' ')
-    .replace(/\r/g, '')
-    .replace(/[ \t]+\n/g, '\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+function rhEscapeRegex(s) {
+  return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function rhStripPlaceholders(text) {
-  let out = rhCleanText(text);
-  const placeholders = [
-    'Registrar exatamente a resposta do candidato ou síntese fiel do que foi dito.',
-    'Preencher somente com avaliação do analista responsável.',
-    'Observação operacional: campos não preenchidos devem permanecer em branco.',
-    'Formulário de Entrevista e Análise RH',
+function rhCaptureBetween(text, startLabel, endLabel) {
+  const re = new RegExp(rhEscapeRegex(startLabel) + '\\s*([\\s\\S]*?)\\s*' + rhEscapeRegex(endLabel), 'i');
+  const m = text.match(re);
+  return rhStripPlaceholders(m?.[1] || '');
+}
+
+function rhCaptureObservationBlock(text, code, nextCode) {
+  const tail = nextCode ? '(?=\\n\\s*' + rhEscapeRegex(nextCode) + '|\\n\\s*10\\.\\s*Avalia|$)' : '(?=\\n\\s*10\\.\\s*Avalia|$)';
+  const re = new RegExp('\\n?\\s*' + rhEscapeRegex(code) + '[\\s\\S]*?Observa(?:ç|c)ões?:\\s*([\\s\\S]*?)' + tail, 'i');
+  const m = text.match(re);
+  return rhStripPlaceholders(m?.[1] || '');
+}
+
+function rhParseNivelIdioma(raw) {
+  const txt = String(raw || '').toUpperCase();
+  const m = txt.match(/\b(A0|A1|A2|B1|B2|C1|C2)\b/);
+  return m ? m[1] : rhStripPlaceholders(raw || '');
+}
+
+function rhParseEmail(raw) {
+  const m = String(raw || '').match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
+  return m ? m[0] : '';
+}
+
+function rhParseTelefone(raw) {
+  const m = String(raw || '').match(/(\+?\d[\d\s().-]{7,}\d)/);
+  return m ? rhCleanText(m[1]) : '';
+}
+
+function rhParseCidadeAtual(raw) {
+  let txt = rhStripPlaceholders(raw || '');
+  if (!txt) return '';
+  txt = txt.replace(/^(meu nome .*? atualmente em\s+)/i, '');
+  const m = txt.match(/(?:moro atualmente em|moro em|estou em|cidade atual[:\-]?)(.*)$/i);
+  if (m?.[1]) return rhCleanText(m[1]);
+  const parts = txt.split(/,|\-|\u2013|\u2014/).map(s => rhCleanText(s)).filter(Boolean);
+  return parts.length >= 2 ? parts[parts.length - 1] : '';
+}
+
+function rhTriStateFromSegment(seg) {
+  const marks = [...String(seg || '').matchAll(/\[(x|X|✓|✔)\]|☒|■/g)].map(m => m[0]);
+  if (!marks.length) return '';
+  const slots = String(seg || '').split(/\[(?: |x|X|✓|✔)\]|☒|■/g);
+  // fallback simples: 1º marcado=baixo, 2º=médio, 3º=alto
+  const count = marks.length;
+  if (count === 1) {
+    const idx = String(seg || '').search(/\[(x|X|✓|✔)\]|☒|■/g);
+    const prefix = String(seg || '').slice(0, idx);
+    const openBoxesBefore = (prefix.match(/\[ \]/g) || []).length;
+    if (openBoxesBefore <= 0) return 'baixo';
+    if (openBoxesBefore === 1) return 'medio';
+    return 'alto';
+  }
+  return '';
+}
+
+function rhParseAvaliacao(text) {
+  const blockMatch = text.match(/10\.\s*Avalia(?:ç|c)ão[\s\S]*$/i);
+  const block = blockMatch ? blockMatch[0] : '';
+  const criteria = [
+    ['clareza_na_comunicacao', 'Clareza na comunicação'],
+    ['nivel_alemao_percebido', 'Nível de alemão percebido'],
+    ['aderencia_tecnica_a_vaga', 'Aderência técnica à vaga'],
+    ['maturidade_profissional', 'Maturidade profissional'],
+    ['motivacao_real_para_alemanha', 'Motivação real para a Alemanha'],
+    ['flexibilidade_e_adaptacao', 'Flexibilidade e adaptação'],
+    ['risco_de_desistencia', 'Risco de desistência'],
   ];
-  placeholders.forEach(p => {
-    out = out.replaceAll(p, '').trim();
-  });
-  return rhCleanText(out);
-}
-
-function setRhField(out, field, value, meta) {
-  const clean = rhStripPlaceholders(value);
-  if (!field || !clean) return;
-  if (field === 'avaliador' && out[field] && out[field] !== clean) {
-    meta.conflicts.push(`Avaliador com valores diferentes no documento: "${out[field]}" e "${clean}".`);
-    return;
-  }
-  if (out[field] && out[field] !== clean) {
-    meta.warnings.push(`Campo duplicado no documento: ${field}. Mantido o primeiro valor.`);
-    return;
-  }
-  out[field] = clean;
-}
-
-function parseRhDocxHtml(html) {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const tables = [...doc.querySelectorAll('table')];
   const out = {};
-  const meta = { warnings: [], conflicts: [] };
-
-  const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  const applyGridTable = (table) => {
-    if (!table) return;
-    table.querySelectorAll('tr').forEach(tr => {
-      const cells = [...tr.querySelectorAll('td,th')].map(td => rhCleanText(td.textContent));
-      for (let i = 0; i < cells.length; i += 2) {
-        const label = cells[i] || '';
-        const value = cells[i + 1] || '';
-        const field = RH_DOC_LABEL_MAP[rhNormLabel(label)];
-        if (field) setRhField(out, field, value, meta);
-      }
-    });
-  };
-
-  const narrativeMatchers = [
-    { field: 'quem_e_voce', labels: ['Quem é você?', 'Quem e voce?', 'Quem é você', 'Quem e voce'] },
-    { field: 'porque_deseja_ir_para_alemanha_como_surgiu_o_interesse', labels: ['Porque deseja ir para Alemanha, como surgiu o interesse?', 'Por que deseja ir para Alemanha, como surgiu o interesse?', 'Porque deseja ir para Alemanha, como surgiu o interesse', 'Por que deseja ir para Alemanha, como surgiu o interesse'] },
-    { field: 'relato_sobre_a_experiencia_profissional', labels: ['Relato sobre a experiência profissional', 'Relato sobre a experiencia profissional'] },
-    { field: 'organizacao_financeira', labels: ['Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha?', 'Como e sua organizacao financeira? Tem reserva? Como sera o preparo para Alemanha?', 'Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha', 'Como e sua organizacao financeira? Tem reserva? Como sera o preparo para Alemanha'] },
-    { field: 'analise_do_recrutador', labels: ['Análise do recrutador', 'Analise do recrutador'] },
-    { field: 'diferenciais_do_perfil', labels: ['Diferenciais do perfil'] },
-    { field: 'pontos_fortes', labels: ['Pontos fortes'] },
-    { field: 'pontos_de_atencao', labels: ['Pontos de atenção', 'Pontos de atencao'] },
-    { field: 'perfil_profissional_para_apresentacao', labels: ['Perfil profissional para apresentação', 'Perfil profissional para apresentacao'] },
-    { field: 'observacoes_internas', labels: ['Observações internas', 'Observacoes internas'] },
-  ];
-
-  const stripLeadingLabel = (text, labels) => {
-    let outText = rhStripPlaceholders(text || '');
-    for (const label of labels) {
-      const re = new RegExp('^\\s*' + escapeRegex(label) + '\\s*[:\\-–—]?\\s*', 'i');
-      outText = outText.replace(re, '').trim();
-    }
-    return rhStripPlaceholders(outText);
-  };
-
-  const tryNarrativeTable = (table) => {
-    if (!table) return;
-    const rawText = rhStripPlaceholders(table.textContent || '');
-    if (!rawText) return;
-    const normText = rhNormLabel(rawText);
-    for (const matcher of narrativeMatchers) {
-      if (out[matcher.field]) continue;
-      const hasLabel = matcher.labels.some(label => {
-        const normLabel = rhNormLabel(label);
-        return normText.startsWith(normLabel) || normText.includes(normLabel);
-      });
-      if (!hasLabel) continue;
-      const value = stripLeadingLabel(rawText, matcher.labels);
-      if (!value) continue;
-      setRhField(out, matcher.field, value, meta);
-      break;
-    }
-  };
-
-  tables.forEach(table => {
-    applyGridTable(table);
-    tryNarrativeTable(table);
-  });
-
-  return { fields: out, meta };
+  for (let i = 0; i < criteria.length; i++) {
+    const [key, label] = criteria[i];
+    const nextLabel = criteria[i+1]?.[1] || '';
+    const re = new RegExp(rhEscapeRegex(label) + '([\\s\\S]*?)' + (nextLabel ? '(?=' + rhEscapeRegex(nextLabel) + ')' : '$'), 'i');
+    const seg = (block.match(re) || [])[1] || '';
+    out[key] = rhTriStateFromSegment(seg);
+  }
+  return out;
 }
 
-function rhFindSelectOption(selectEl, value) {
-  if (!selectEl || !value) return null;
-  if (String(selectEl.tagName || '').toUpperCase() !== 'SELECT') return null;
-  const target = rhNormLabel(value);
-  return Array.from(selectEl.options || []).find(opt => rhNormLabel(opt.value || opt.textContent) === target) || null;
+function rhBuildDerivados(meta, respostas, avaliacao) {
+  const idiomas = respostas.idiomas || {};
+  const sit = respostas.situacao_atual_disponibilidade || {};
+  const pref = respostas.preferencias_profissionais || {};
+  const integ = respostas.integracao_familia_adaptacao || {};
+  const docs = respostas.documentacao_riscos_viabilidade || {};
+  const mot = respostas.motivacao_objetivo_profissional || {};
+  const exp = respostas.experiencia_profissional || {};
+
+  const nivelAlemao = rhParseNivelIdioma(idiomas.nivel_alemao || '');
+  const risco = avaliacao.risco_de_desistencia || '';
+  const docsTxt = rhNormLabel(docs.documentos_prontos || '');
+  const compTxt = rhNormLabel(docs.comprometimento_real || '');
+  const docsOk = docsTxt && !/(nao|não|falta|incompleto|pendente|sem)/i.test(docsTxt);
+  const commitmentHigh = /(avancar|avançar|disposto|sim|pronto|real)/i.test(compTxt);
+  const levelReady = ['B1','B2','C1','C2'].includes(nivelAlemao);
+  const pronto = levelReady && docsOk && commitmentHigh && risco !== 'alto' ? 'SIM' : 'NÃO';
+
+  const resumo = [
+    nivelAlemao ? `Alemão ${nivelAlemao}` : '',
+    sit.disponibilidade_mudanca ? `Disponibilidade: ${sit.disponibilidade_mudanca}` : '',
+    pref.tipo_vaga_preferido ? `Preferência: ${pref.tipo_vaga_preferido}` : '',
+    docs.comprometimento_real ? `Comprometimento: ${docs.comprometimento_real}` : '',
+    avaliacao.aderencia_tecnica_a_vaga ? `Aderência: ${avaliacao.aderencia_tecnica_a_vaga}` : ''
+  ].filter(Boolean).join(' | ');
+
+  return {
+    nivel_alemao_declarado: nivelAlemao,
+    nivel_ingles_declarado: rhStripPlaceholders(idiomas.nivel_ingles || ''),
+    outras_linguas: rhStripPlaceholders(idiomas.outras_linguas || ''),
+    certificado_idioma: rhStripPlaceholders(idiomas.comprovacao || ''),
+    teste_pratico_idioma: rhStripPlaceholders(idiomas.teste_pratico || ''),
+    disponibilidade_mudanca: rhStripPlaceholders(sit.disponibilidade_mudanca || ''),
+    status_migratorio_atual: rhStripPlaceholders(sit.status_migratorio || ''),
+    prazo_realista_saida: rhStripPlaceholders(sit.prazo_realista_saida || ''),
+    flexibilidade_geografica: rhStripPlaceholders(sit.flexibilidade_geografica || ''),
+    tipo_vaga_preferido: rhStripPlaceholders(pref.tipo_vaga_preferido || ''),
+    expectativa_salarial: rhStripPlaceholders(pref.remuneracao_expectativa || ''),
+    rede_apoio_europa: rhStripPlaceholders(integ.rede_apoio || ''),
+    mudanca_sozinho_ou_familia: rhStripPlaceholders(integ.mudanca_sozinho_ou_familia || ''),
+    experiencia_internacional_previa: rhStripPlaceholders(integ.experiencia_internacional_previa || ''),
+    adaptacao_cultural: rhStripPlaceholders(integ.adaptacao_cultural || ''),
+    autonomia_pratica: rhStripPlaceholders(integ.autonomia_pratica || ''),
+    documentos_prontos_status: rhStripPlaceholders(docs.documentos_prontos || ''),
+    reconhecimento_traducao_status: rhStripPlaceholders(docs.reconhecimento_ou_traducao || ''),
+    restricoes_objetivas: rhStripPlaceholders(docs.restricoes_objetivas || ''),
+    comprometimento_real: rhStripPlaceholders(docs.comprometimento_real || ''),
+    abertura_funcao_tecnica_manual: rhStripPlaceholders(pref.abertura_funcao_tecnica_manual || ''),
+    faixa_atuacao_aceitavel: rhStripPlaceholders(pref.faixa_atuacao_aceitavel || ''),
+    aceita_turnos_rotina: rhStripPlaceholders(pref.turnos_rotina || ''),
+    motivacao_real: avaliacao.motivacao_real_para_alemanha || rhStripPlaceholders(mot.motivacao_vaga_especifica || mot.porque_alemanha || ''),
+    coerencia_candidatura: rhStripPlaceholders(mot.coerencia_candidatura || ''),
+    readiness_internacional: levelReady ? (docsOk ? 'alto' : 'medio') : 'baixo',
+    pronto_para_employer: pronto,
+    aderencia_tecnica_avaliada: avaliacao.aderencia_tecnica_a_vaga || rhStripPlaceholders(exp.aderencia_tecnica_vaga || ''),
+    maturidade_profissional_avaliada: avaliacao.maturidade_profissional || '',
+    flexibilidade_adaptacao_avaliada: avaliacao.flexibilidade_e_adaptacao || '',
+    risco_desistencia: risco,
+    resumo_rh_curto: resumo,
+    decisao_operacional_rh: pronto === 'SIM' ? 'Apto para avanço operacional' : 'Revisar pendências antes de employer'
+  };
+}
+
+function rhBuildInterviewConflicts(parsed, cand) {
+  const conflicts = [];
+  if (!cand) return conflicts;
+  const compare = (label, current, incoming) => {
+    const a = rhStripPlaceholders(current || '');
+    const b = rhStripPlaceholders(incoming || '');
+    if (!a || !b) return;
+    if (rhNormLabel(a) !== rhNormLabel(b)) {
+      conflicts.push({ campo: label, valor_cadastro: a, valor_entrevista: b, acao: 'revisar' });
+    }
+  };
+  compare('cidade_atual', fv(cand, 'Cidade atual', 'cidade_atual'), parsed.derivados?.cidade_atual || '');
+  compare('nivel_alemao', fv(cand, 'Nível de alemão', 'nivel_alemao', 'nivel_alemao_declarado'), parsed.derivados?.nivel_alemao_declarado || '');
+  compare('email', fv(cand, 'E-mail', 'email'), parsed.derivados?.email || '');
+  compare('telefone', fv(cand, 'Telefone', 'telefone'), parsed.derivados?.telefone || '');
+  return conflicts;
+}
+
+function parseRhDocxHtml(html, cand) {
+  const text = rhDocRawTextFromHtml(html);
+  const meta = {
+    data_entrevista: rhCaptureBetween(text, 'Data da entrevista', 'Entrevistador(a)'),
+    entrevistador: rhCaptureBetween(text, 'Entrevistador(a)', 'Empresa / cliente'),
+    empresa_cliente: rhCaptureBetween(text, 'Empresa / cliente', 'Posição / vaga'),
+    posicao_vaga: rhCaptureBetween(text, 'Posição / vaga', 'Tipo de vaga'),
+    tipo_vaga: rhCaptureBetween(text, 'Tipo de vaga', 'Nível de alemão exigido'),
+    nivel_alemao_exigido: rhCaptureBetween(text, 'Nível de alemão exigido', 'Observação:'),
+    observacao_inicial: rhCaptureBetween(text, 'Observação:', '1. Dados básicos e identificação')
+  };
+
+  const respostas = {
+    dados_basicos_identificacao: {},
+    experiencia_profissional: {},
+    situacao_atual_disponibilidade: {},
+    idiomas: {},
+    motivacao_objetivo_profissional: {},
+    preferencias_profissionais: {},
+    integracao_familia_adaptacao: {},
+    documentacao_riscos_viabilidade: {},
+    mensagem_final: {}
+  };
+
+  RH_DOC_SECTION_SPECS.forEach((spec, idx) => {
+    const nextCode = RH_DOC_SECTION_SPECS[idx + 1]?.code || '';
+    const value = rhCaptureObservationBlock(text, spec.code, nextCode);
+    respostas[spec.group][spec.key] = value;
+  });
+
+  const avaliacao = rhParseAvaliacao(text);
+  const derivados = rhBuildDerivados(meta, respostas, avaliacao);
+
+  const contact = respostas.dados_basicos_identificacao?.contato_organizacao_pessoal || '';
+  const dadosBasicos = respostas.dados_basicos_identificacao?.nome_idade_cidade_atual || '';
+  derivados.email = rhParseEmail(contact);
+  derivados.telefone = rhParseTelefone(contact);
+  derivados.cidade_atual = rhParseCidadeAtual(dadosBasicos) || rhParseCidadeAtual(contact);
+
+  const conflitos_detectados = rhBuildInterviewConflicts({ meta, respostas, avaliacao, derivados }, cand);
+
+  return { meta, respostas, avaliacao, derivados, conflitos_detectados, meta_warnings: [] };
 }
 
 function rhFieldDisplayName(field) {
   return REV_MAP[field] || field.replaceAll('_', ' ');
 }
 
-function rhGetUiReadAliases(uiField) {
-  const snake = FIELD_MAP[uiField];
-  const aliases = new Set([uiField]);
-  if (snake && RH_CANONICAL_ALIASES[snake]) RH_CANONICAL_ALIASES[snake].forEach(alias => aliases.add(alias));
-  if (snake && REV_MAP_MULTI[snake]) REV_MAP_MULTI[snake].forEach(alias => aliases.add(alias));
-  return [...aliases];
-}
+function rhStageDraftIntoPending(parsed) {
+  const summary = {
+    applied: [],
+    skippedExisting: [],
+    invalidSelect: [],
+    missingField: [],
+    conflicts: parsed.conflitos_detectados || [],
+    warnings: parsed.meta_warnings || []
+  };
 
-function applyRhDocFields(parsed) {
-  const summary = { applied: [], skippedExisting: [], invalidSelect: [], missingField: [], conflicts: parsed.meta.conflicts || [], warnings: parsed.meta.warnings || [] };
-  for (const [field, value] of Object.entries(parsed.fields || {})) {
-    const cfg = RH_DOC_IMPORT_FIELDS[field];
-    if (!cfg) continue;
-    const el = document.querySelector(`[data-field="${CSS.escape(cfg.uiField)}"]`);
-    if (!el) {
-      summary.missingField.push(rhFieldDisplayName(field));
-      continue;
+  const AUTO_FIELDS = [
+    'nivel_alemao_declarado','nivel_ingles_declarado','outras_linguas','certificado_idioma','teste_pratico_idioma',
+    'disponibilidade_mudanca','status_migratorio_atual','prazo_realista_saida','flexibilidade_geografica',
+    'tipo_vaga_preferido','expectativa_salarial','rede_apoio_europa','mudanca_sozinho_ou_familia',
+    'experiencia_internacional_previa','adaptacao_cultural','autonomia_pratica','documentos_prontos_status',
+    'reconhecimento_traducao_status','restricoes_objetivas','comprometimento_real','abertura_funcao_tecnica_manual',
+    'faixa_atuacao_aceitavel','aceita_turnos_rotina','motivacao_real','coerencia_candidatura','readiness_internacional',
+    'pronto_para_employer','aderencia_tecnica_avaliada','maturidade_profissional_avaliada',
+    'flexibilidade_adaptacao_avaliada','risco_desistencia','resumo_rh_curto','decisao_operacional_rh'
+  ];
+  const AUTO_IF_EMPTY = ['cidade_atual','email','telefone'];
+
+  const current = S.currentCand || {};
+  const queue = (field, value, onlyIfEmpty=false) => {
+    const clean = rhStripPlaceholders(value || '');
+    if (!field || !clean) return;
+    const currentVal = rhCleanText(fv(current, field, field.replaceAll('_',' ')) || S.pendingEdits[field] || '');
+    if (onlyIfEmpty && currentVal) {
+      summary.skippedExisting.push(field);
+      return;
     }
-    const current = rhCleanText(el.value || fv(S.currentCand || {}, ...rhGetUiReadAliases(cfg.uiField)) || '');
-    if (cfg.overwriteIfEmptyOnly && current) {
-      summary.skippedExisting.push(rhFieldDisplayName(field));
-      continue;
-    }
-    const isSelectEl = String(el.tagName || '').toUpperCase() === 'SELECT';
-    if (isSelectEl || cfg.isSelect) {
-      if (!isSelectEl) {
-        el.value = value;
-      } else {
-        const opt = rhFindSelectOption(el, value);
-        if (!opt) {
-          summary.invalidSelect.push(`${rhFieldDisplayName(field)}: ${value}`);
-          continue;
-        }
-        el.value = opt.value;
-      }
-    } else {
-      el.value = value;
-    }
-    onEdit(el);
-    summary.applied.push(rhFieldDisplayName(field));
-  }
+    S.pendingEdits[field] = clean;
+    summary.applied.push(field);
+  };
+
+  AUTO_FIELDS.forEach(f => queue(f, parsed.derivados?.[f] || ''));
+  AUTO_IF_EMPTY.forEach(f => queue(f, parsed.derivados?.[f] || '', true));
+
+  // compatibilidade temporária com a UI antiga
+  const compat = {
+    'Data da Entrevista': parsed.meta?.data_entrevista || '',
+    'Análise do recrutador': parsed.derivados?.resumo_rh_curto || '',
+    'Pontos fortes': parsed.respostas?.experiencia_profissional?.pontos_tecnicos_fortes_fracos || '',
+    'Pontos de atenção': parsed.respostas?.documentacao_riscos_viabilidade?.restricoes_objetivas || '',
+    'Porque deseja ir para Alemanha, como surgiu o interesse?': parsed.respostas?.motivacao_objetivo_profissional?.porque_alemanha || '',
+    'Relato sobre a experiência profissional': parsed.respostas?.experiencia_profissional?.experiencias_principais || ''
+  };
+  Object.entries(compat).forEach(([k,v]) => { if (v) { S.pendingEdits[k] = v; summary.applied.push(k); } });
+
+  parsed.campos_sincronizados = summary.applied.slice();
+  S.rhInterviewDraft = { ...parsed };
   return summary;
 }
 
@@ -5530,17 +5636,20 @@ function renderRhImportStatus(summary, fileName) {
   if (!el) return;
   const parts = [];
   parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Documento</div><div class="ops-cell-val" title="${esc(fileName || '—')}">${esc(fileName || '—')}</div></div>`);
-  parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Aplicados</div><div class="ops-cell-val">${summary.applied.length}</div></div>`);
-  parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Ignorados por já existir</div><div class="ops-cell-val">${summary.skippedExisting.length}</div></div>`);
-  parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Inválidos em seleção</div><div class="ops-cell-val">${summary.invalidSelect.length}</div></div>`);
+  parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Campos preparados</div><div class="ops-cell-val">${summary.applied.length}</div></div>`);
+  parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Preservados</div><div class="ops-cell-val">${summary.skippedExisting.length}</div></div>`);
   parts.push(`<div class="ops-cell"><div class="ops-cell-lbl">Conflitos</div><div class="ops-cell-val">${summary.conflicts.length}</div></div>`);
   const details = [];
-  if (summary.invalidSelect.length) details.push(`<div><b>Seleções não aplicadas:</b> ${esc(summary.invalidSelect.slice(0,4).join(' | '))}${summary.invalidSelect.length > 4 ? '…' : ''}</div>`);
-  if (summary.conflicts.length) details.push(`<div><b>Conflitos:</b> ${esc(summary.conflicts.slice(0,3).join(' | '))}${summary.conflicts.length > 3 ? '…' : ''}</div>`);
-  if (summary.skippedExisting.length) details.push(`<div><b>Campos preservados:</b> ${esc(summary.skippedExisting.slice(0,4).join(' | '))}${summary.skippedExisting.length > 4 ? '…' : ''}</div>`);
-  if (summary.warnings.length) details.push(`<div><b>Avisos:</b> ${esc(summary.warnings.slice(0,3).join(' | '))}${summary.warnings.length > 3 ? '…' : ''}</div>`);
+  if (summary.conflicts.length) {
+    details.push(`<div><b>Conflitos detectados:</b> ${esc(summary.conflicts.slice(0,3).map(c => c.campo + ': ' + c.valor_cadastro + ' ↔ ' + c.valor_entrevista).join(' | '))}${summary.conflicts.length > 3 ? '…' : ''}</div>`);
+  }
+  if (summary.skippedExisting.length) {
+    details.push(`<div><b>Campos preservados:</b> ${esc(summary.skippedExisting.slice(0,6).join(' | '))}${summary.skippedExisting.length > 6 ? '…' : ''}</div>`);
+  }
+  const resumo = S.rhInterviewDraft?.derivados?.resumo_rh_curto || '';
+  if (resumo) details.push(`<div><b>Resumo operacional:</b> ${esc(resumo)}</div>`);
   el.style.display = 'grid';
-  el.innerHTML = parts.join('') + (details.length ? `<div class="ops-cell" style="grid-column:1/-1"><div class="ops-cell-lbl">Resumo da importação</div><div class="ops-cell-val" style="display:flex;flex-direction:column;gap:6px">${details.join('')}</div></div>` : '');
+  el.innerHTML = parts.join('') + (details.length ? `<div class="ops-cell" style="grid-column:1/-1"><div class="ops-cell-lbl">Importação da entrevista</div><div class="ops-cell-val" style="display:flex;flex-direction:column;gap:6px">${details.join('')}</div></div>` : '');
 }
 
 function triggerRhDocImport() {
@@ -5558,7 +5667,7 @@ async function handleRhDocxFile(input) {
   const file = input?.files?.[0];
   if (!file) return;
   if (!file.name.toLowerCase().endsWith('.docx')) {
-    toast('Selecione um arquivo DOCX do formulário RH.', 'warn');
+    toast('Selecione um arquivo DOCX da entrevista preliminar.', 'warn');
     input.value = '';
     return;
   }
@@ -5568,21 +5677,22 @@ async function handleRhDocxFile(input) {
     return;
   }
   try {
-    toast('⏳ Lendo formulário RH...', 'ok', 3000);
+    toast('⏳ Lendo entrevista preliminar...', 'ok', 3000);
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.convertToHtml({ arrayBuffer });
-    const parsed = parseRhDocxHtml(result.value || '');
-    if (!Object.keys(parsed.fields || {}).length) {
-      throw new Error('Nenhum campo utilizável foi encontrado no documento.');
+    const parsed = parseRhDocxHtml(result.value || '', S.currentCand || null);
+    parsed.fileName = file.name;
+    const hasRealContent = Object.values(parsed.respostas || {}).some(group => Object.values(group || {}).some(v => rhStripPlaceholders(v || '')));
+    if (!hasRealContent) {
+      throw new Error('Nenhum bloco preenchido foi encontrado no DOCX.');
     }
-    const summary = applyRhDocFields(parsed);
+    const summary = rhStageDraftIntoPending(parsed);
     renderRhImportStatus(summary, file.name);
-    const totalAplicados = summary.applied.length;
     const totalPend = Object.keys(S.pendingEdits || {}).length;
-    if (!totalAplicados && !summary.conflicts.length && !summary.invalidSelect.length) {
+    if (!summary.applied.length && !summary.conflicts.length) {
       toast('⚠ O documento foi lido, mas não trouxe novos valores aplicáveis.', 'warn', 5000);
     } else {
-      toast(`✅ Formulário RH lido. ${totalAplicados} campo(s) preparados para salvar.`, 'ok', 5000);
+      toast(`✅ Entrevista lida. ${summary.applied.length} campo(s) preparados para salvar.`, 'ok', 5000);
     }
     const btn = document.getElementById('cm-save');
     if (btn && totalPend) {
@@ -5591,10 +5701,69 @@ async function handleRhDocxFile(input) {
     }
   } catch (e) {
     console.error('[RH DOCX] erro:', e);
-    toast(`❌ Falha ao ler o formulário RH: ${e.message || e}`, 'err', 7000);
+    toast(`❌ Falha ao ler a entrevista: ${e.message || e}`, 'err', 7000);
   } finally {
     input.value = '';
   }
+}
+
+async function saveRhInterviewDraft(candidateId, actor) {
+  if (!S.rhInterviewDraft || !candidateId) return null;
+  const supa = await getSupa();
+  const draft = S.rhInterviewDraft;
+  const payload = {
+    candidate_id: candidateId,
+    template_code: 'entrevista_preliminar_docx_v1',
+    template_nome: 'Template de Entrevista Preliminar',
+    fonte_tipo: 'docx',
+    data_entrevista: draft.meta?.data_entrevista || null,
+    entrevistador: draft.meta?.entrevistador || null,
+    empresa_cliente: draft.meta?.empresa_cliente || null,
+    posicao_vaga: draft.meta?.posicao_vaga || null,
+    tipo_vaga: draft.meta?.tipo_vaga || null,
+    nivel_alemao_exigido: draft.meta?.nivel_alemao_exigido || null,
+    observacao_inicial: draft.meta?.observacao_inicial || null,
+    meta: draft.meta || {},
+    respostas: draft.respostas || {},
+    avaliacao: draft.avaliacao || {},
+    derivados: draft.derivados || {},
+    resumo_rh_curto: draft.derivados?.resumo_rh_curto || null,
+    decisao_operacional_rh: draft.derivados?.decisao_operacional_rh || null,
+    proxima_acao: draft.derivados?.proxima_acao || null,
+    observacao_interna_final: draft.derivados?.observacao_interna_final || null,
+    status_importacao: 'ok',
+    conflito_importacao: (draft.conflitos_detectados || []).length ? 'sim' : null,
+    warnings_importacao: (draft.meta_warnings || []).join(' | ') || null,
+    arquivo_origem_nome: draft.fileName || null,
+    conflitos_detectados: draft.conflitos_detectados || [],
+    campos_sincronizados: draft.campos_sincronizados || [],
+    ativo: true,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data: existing, error: selErr } = await supa
+    .from('entrevistas_preliminares')
+    .select('id')
+    .eq('candidate_id', candidateId)
+    .eq('ativo', true)
+    .limit(1);
+  if (selErr) throw new Error(`Falha ao consultar a entrevista preliminar no banco: ${selErr.message}`);
+
+  let interviewId = existing?.[0]?.id || null;
+  if (interviewId) {
+    const { error } = await supa.from('entrevistas_preliminares').update(payload).eq('id', interviewId);
+    if (error) throw new Error(`Falha ao atualizar entrevista preliminar: ${error.message}`);
+  } else {
+    const { data: inserted, error } = await supa.from('entrevistas_preliminares').insert(payload).select('id').single();
+    if (error) throw new Error(`Falha ao salvar entrevista preliminar: ${error.message}`);
+    interviewId = inserted?.id || null;
+  }
+
+  if (interviewId) {
+    const { error: linkErr } = await supa.from('candidatos').update({ entrevista_preliminar_id: interviewId }).eq('id', candidateId);
+    if (linkErr) throw new Error(`Entrevista salva, mas falhou ao vincular no candidato: ${linkErr.message}`);
+  }
+  return interviewId;
 }
 
 function onEdit(el) {
@@ -5732,6 +5901,17 @@ async function saveCandidate() {
       actor: sess?.nome || 'web'
     });
 
+    let interviewSaveWarning = '';
+    if (S.rhInterviewDraft) {
+      try {
+        const interviewId = await saveRhInterviewDraft(S.currentCand.ID, sess?.nome || 'web');
+        if (interviewId) fieldsToSave['entrevista_preliminar_id'] = interviewId;
+      } catch (e) {
+        interviewSaveWarning = e?.message || String(e || 'Erro ao salvar entrevista preliminar');
+        console.error('[RH DOCX] falha ao persistir entrevista_preliminar:', e);
+      }
+    }
+
     // ── Aplica localmente ────────────────────────────────
     Object.assign(S.currentCand, fieldsToSave);
     // Atualiza timestamp local imediatamente após salvar
@@ -5757,10 +5937,15 @@ async function saveCandidate() {
       const quant = nFields === 1 ? '1 campo salvo' : `${nFields} campos salvos`;
       btn.classList.add('btn-save-pulse');
       setTimeout(() => btn.classList.remove('btn-save-pulse'), 600);
-      toast(`✅ ${quant} com sucesso.`, 'ok');
+      if (interviewSaveWarning) {
+        toast(`⚠ ${quant}. Porém a entrevista preliminar estruturada não foi salva: ${interviewSaveWarning}`, 'warn', 7000);
+      } else {
+        toast(`✅ ${quant} com sucesso.`, 'ok');
+      }
     }
 
     S.pendingEdits = {};
+    S.rhInterviewDraft = null;
     btn.textContent = '💾 Salvar'; btn.disabled = false;
     btn.classList.remove('has-changes');
 
@@ -5811,7 +5996,7 @@ async function toggleActive() {
   } catch(e) { toast('❌ ' + e.message, 'err'); }
 }
 
-function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; }
+function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; }
 function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overlay')) closeCand(); }
 
 // ══════════════════════════════════════════════════════════════
