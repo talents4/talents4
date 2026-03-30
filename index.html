@@ -274,6 +274,10 @@ a{color:inherit;text-decoration:none}
 .data-tbl td.td-name{color:var(--txt);font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .data-tbl td.td-id{font-family:var(--mono);font-size:11px;color:var(--txt3)}
 .data-tbl td.td-center{text-align:center}
+.th-sort{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;padding:0}
+.th-sort .th-arrow{font-size:11px;color:var(--txt3)}
+.th-sort.active{color:var(--txt)}
+.th-sort.active .th-arrow{color:var(--accent2)}
 
 /* ══════════════════════════════════ BADGES ══════════════════════════════════ */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
@@ -1485,7 +1489,7 @@ a{color:inherit;text-decoration:none}
       </div>
       <button class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;font-size:14px;font-weight:700" onclick="doLogin()" id="li-btn">Entrar no Sistema</button>
       <div class="login-err" id="li-err">Usuário ou senha incorretos.</div>
-      <div class="login-footer">T4 Operations v8.0 · Supabase Edition · Deutschland<br><span style="color:var(--txt3)">Created by</span> <span style="color:var(--gold);font-weight:600">Jean Lopes</span></div>
+      <div class="login-footer">T4 Operations v8.0<br><span style="color:var(--txt3)">Plataforma operacional interna</span></div>
     </div>
   </div>
 </div>
@@ -1501,6 +1505,7 @@ a{color:inherit;text-decoration:none}
     <div class="nav-item active" onclick="nav('dashboard')" data-v="dashboard"><span class="ico">📊</span>Dashboard BI<span class="nav-badge" id="nb-total">—</span></div>
     <div class="nav-item" onclick="nav('kanban')" data-v="kanban"><span class="ico">🗂</span>Kanban Pipeline<span class="nav-badge" id="nb-ativos">—</span></div>
     <div class="nav-item" onclick="nav('candidates')" data-v="candidates"><span class="ico">👥</span>Candidatos<span class="nav-badge" id="nb-cands">—</span></div>
+    <div class="nav-item" onclick="nav('prioritarios')" data-v="prioritarios"><span class="ico">⭐</span>Talentos Prioritários<span class="nav-badge" id="nb-prioritarios">—</span></div>
     <div class="nav-sec">Pipeline</div>
     <div class="nav-item" onclick="nav('triagem')" data-v="triagem"><span class="ico">🔍</span>Triagem</div>
     <div class="nav-item" onclick="nav('entrevistas')" data-v="entrevistas"><span class="ico">🎙</span>Entrevistas</div>
@@ -2209,8 +2214,6 @@ function applySession(sess) {
   document.getElementById('user-role').textContent =
     sess.role === 'admin' ? 'Administrador' :
     sess.role === 'recrutador' ? 'Recrutador' : 'Visualizador';
-  // Atualiza saudação após login (nome está disponível agora)
-  setTimeout(initGermanGreeting, 50);
 }
 
 async function doLogout() {
@@ -2246,8 +2249,10 @@ const S = {
   currentCand: null,
   pendingEdits: {},
   rhInterviewDraft: null,
+  currentInterview: null,
   page: 1, pageSize: 80,
   filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null },
+  sort: { view:'', key:'', dir:'' },
   syncTimer: null,
   lastSync: null,
 };
@@ -2283,8 +2288,7 @@ const FIELD_MAP = {
   'Data da entrevista':'data_da_entrevista','Resultado entrevista':'resultado_entrevista',
   'Avaliador':'avaliador','Avaliador responsável':'avaliador',
   'Perfil':'perfil','Perfil do candidato':'perfil','Tipo de candidato':'tipo_de_candidato',
-  'Análise do recrutador':'analise_do_recrutador','Diferenciais do perfil':'diferenciais_do_perfil',
-  'Pontos fortes':'pontos_fortes','Pontos de atenção':'pontos_de_atencao',
+  
   'Perfil profissional para apresentação':'perfil_profissional_para_apresentacao',
   'Observações internas':'observacoes_internas','Observação':'observacao',
   'Número do Passaporte':'numero_do_passaporte','Diploma':'diploma','Histórico':'historico',
@@ -3087,9 +3091,11 @@ async function forceSync() {
 function updateBadges() {
   const tot = S.candidates.length;
   const act = S.candidates.filter(c => isActiveCand(c)).length;
+  const prioritarios = S.candidates.filter(c => isActiveCand(c) && _nivelRank(c) >= 3).length;
   const a=document.getElementById('nb-total'); if(a) a.textContent=tot;
   const b=document.getElementById('nb-ativos'); if(b) b.textContent=act;
   const c=document.getElementById('nb-cands'); if(c) c.textContent=tot;
+  const d=document.getElementById('nb-prioritarios'); if(d) d.textContent=prioritarios;
 }
 
 function setSyncStatus(state) {
@@ -3109,19 +3115,24 @@ function _navSetupUI(view) {
   document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.v === view));
   const titles = {
     dashboard:'Dashboard BI', kanban:'Kanban — Pipeline', candidates:'Candidatos',
+    prioritarios:'Talentos Prioritários',
     triagem:'Triagem & Novos Candidatos', entrevistas:'Entrevistas', analise:'Análise RH',
     alemao:'Curso de Alemão', documentacao:'Documentação', employer:'Employer / Matching',
     inativos:'Inativos & Não Qualificados', agenda:'Agenda / Entrevistas', settings:'Configurações'
   };
   document.getElementById('tb-title').textContent = titles[view] || view;
-  const showSearch = ['candidates','kanban','triagem','entrevistas','analise','alemao','documentacao','employer','inativos'].includes(view);
+  const showSearch = ['candidates','prioritarios','kanban','triagem','entrevistas','analise','alemao','documentacao','employer','inativos'].includes(view);
   document.getElementById('search-wrap').style.display = showSearch ? 'flex' : 'none';
   document.getElementById('nlp-search-wrap').style.display = showSearch ? 'flex' : 'none';
 }
 
+function clearSort() {
+  S.sort = { view:'', key:'', dir:'' };
+}
 function nav(view) {
   _navSetupUI(view);
   clearFilters();   // comportamento padrão: limpa filtros ao navegar normalmente
+  clearSort();
   renderView();
 }
 
@@ -3132,6 +3143,7 @@ function renderView() {
     case 'dashboard':    renderDashboard(el);               break;
     case 'kanban':       renderKanban(el);                  break;
     case 'candidates':   renderTable(el, null);             break;
+    case 'prioritarios': renderTable(el, '__prioritarios'); break;
     case 'triagem':      renderTable(el, '__triagem');       break;
     case 'entrevistas':  renderTable(el, '__entrevistas');   break;
     case 'analise':      renderTable(el, '__analise');        break;
@@ -3225,7 +3237,8 @@ function normalizeProfissao(p) {
 function isElegibleCalc(c) {
   const perfil   = fv(c,'Perfil')||'';
   const alemao   = fv(c,'Nível de alemão','Nível alemão')||'';
-  const analise  = fv(c,'Análise do recrutador','Análise recrutador')||'';
+  const resumoRh = fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh')||'';
+  const prontoEmployer = normalizeUpper(fv(c,'pronto_para_employer')||'');
   const profissao= fv(c,'Profissão principal','Profissão')||'';
   const pendencia= fv(c,'Pendência documental crítica')||'';
   const rankMap  = {'A0':0,'A1':1,'A2':2,'B1':3,'B2':4,'B2+':5,'C1':6,'C2':7,'Nenhum':0};
@@ -3233,7 +3246,7 @@ function isElegibleCalc(c) {
   return profissao &&
     ['Candidato forte','Candidato bom'].includes(perfil) &&
     rank >= 3 &&
-    analise &&
+    (resumoRh || prontoEmployer === 'SIM' || prontoEmployer === 'PARCIAL') &&
     !pendencia;
 }
 
@@ -3294,8 +3307,8 @@ function renderDashboard(el) {
   const b2plus        = ativos.filter(c => ['B2','B2+','C1','C2'].includes(fv(c,'Nível de alemão','Nível alemão'))).length;
   const semAlemao     = ativos.filter(c => { const a=fv(c,'Nível de alemão','Nível alemão'); return !a||['Nenhum','A0',''].includes(a); }).length;
   const triagem       = ativos.filter(c => ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE')));
-  const entrevistaData= cands.filter(c => (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() || (fv(c,'Data da Entrevista','Data da entrevista','data_da_entrevista')||'').trim());
-  const analiseData   = cands.filter(c => (fv(c,'Análise do recrutador','Análise recrutador')||'').trim() || (fv(c,'Pontos fortes')||'').trim());
+  const entrevistaData= cands.filter(c => (fv(c,'entrevista_preliminar_ativa_id','entrevista_preliminar_id')||'').trim() || (fv(c,'entrevista_preliminar_data','Data da Entrevista','data_da_entrevista')||'').trim());
+  const analiseData   = cands.filter(c => (fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh')||'').trim() || (fv(c,'decisao_operacional_rh','entrevista_preliminar_decisao_rh')||'').trim() || (fv(c,'risco_desistencia')||'').trim());
   const cursoAlemao   = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Curso de alemão');
   const docStage      = ativos.filter(c => fv(c,'STATUS PIPELINE') === 'Documentação');
   const employerS     = ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE')));
@@ -3979,9 +3992,11 @@ function renderEmployerHub(el) {
   const ops = current ? getOperationalSummary(current) : null;
   const readiness = current ? getReadiness(current) : null;
   const docLabel = current ? (isYes(fv(current,'Documentação completa','documentacao_completa')) ? 'Completa' : 'Pendente') : '—';
-  const pontosFortes = current ? (fv(current,'Pontos fortes') || fv(current,'Diferenciais do perfil','Diferenciais') || '—') : '—';
-  const pontosAtencao = current ? (fv(current,'Pontos de atenção') || '—') : '—';
-  const analise = current ? (fv(current,'Análise do recrutador','Análise recrutador') || '—') : '—';
+  const resumoRh = current ? (fv(current,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh') || '—') : '—';
+  const motivacaoRh = current ? (fv(current,'motivacao_real','Motivação real') || '—') : '—';
+  const restricoesRh = current ? (fv(current,'restricoes_objetivas','Restrições objetivas') || '—') : '—';
+  const readinessIntl = current ? (fv(current,'readiness_internacional','Readiness internacional') || '—') : '—';
+  const prontoEmployer = current ? (fv(current,'pronto_para_employer','Pronto para employer') || '—') : '—';
   const tabs = selectedGroup ? [
     { key:'todos', label:'Todos', count:selectedGroup.total },
     { key:'aguardando', label:'Aguardando retorno', count:selectedGroup.aguardando },
@@ -4114,9 +4129,13 @@ function renderEmployerHub(el) {
               <div class="emp-box"><div class="emp-box-lbl">Score</div><div class="emp-box-val">${esc(String(current._score||0))}</div></div>
             </div>
             <div class="emp-text"><div class="emp-text-lbl">Próxima ação</div><div class="emp-text-val">${esc(ops?.acao||'—')}</div></div>
-            <div class="emp-text"><div class="emp-text-lbl">Análise RH</div><div class="emp-text-val">${esc(analise)}</div></div>
-            <div class="emp-text"><div class="emp-text-lbl">Pontos fortes / diferenciais</div><div class="emp-text-val">${esc(pontosFortes)}</div></div>
-            <div class="emp-text"><div class="emp-text-lbl">Pontos de atenção</div><div class="emp-text-val">${esc(pontosAtencao)}</div></div>
+            <div class="emp-text"><div class="emp-text-lbl">Resumo RH</div><div class="emp-text-val">${esc(resumoRh)}</div></div>
+            <div class="emp-text"><div class="emp-text-lbl">Motivação real</div><div class="emp-text-val">${esc(motivacaoRh)}</div></div>
+            <div class="emp-text"><div class="emp-text-lbl">Restrições objetivas</div><div class="emp-text-val">${esc(restricoesRh)}</div></div>
+            <div class="emp-summary-grid" style="margin-top:12px">
+              <div class="emp-box"><div class="emp-box-lbl">Readiness internacional</div><div class="emp-box-val">${esc(readinessIntl)}</div></div>
+              <div class="emp-box"><div class="emp-box-lbl">Pronto para employer</div><div class="emp-box-val">${esc(prontoEmployer)}</div></div>
+            </div>
             <div class="emp-actions">
               <button type="button" class="emp-btn primary" data-emp-action="open-candidate" data-candidate-id="${esc(String(current.ID||current.id||''))}">Abrir ficha completa</button>
               <button type="button" class="emp-btn" data-emp-action="open-filtered" data-employer="${esc(getEmployerDisplay(current) ? getEmployerDisplay(current) : '__UNASSIGNED__')}">Ver todos deste grupo</button>
@@ -4135,212 +4154,117 @@ function renderTable(el, filterStatus) {
   let list;
 
   if (filterStatus === '__entrevistas') {
-    // Mostra todos que têm dados de entrevista preenchidos (independente do status atual)
-    list = S.candidates.filter(c =>
-      (fv(c,'Resultado entrevista','Resultado da entrevista')||'').trim() ||
-      (fv(c,'Data da Entrevista','Data da entrevista','data_da_entrevista')||'').trim() ||
-      (fv(c,'Avaliador')||'').trim()
-    );
-  } else if (filterStatus === '__analise') {
-    // Mostra todos que têm dados de Análise RH preenchidos
-    list = S.candidates.filter(c =>
-      (fv(c,'Análise do recrutador','Análise recrutador')||'').trim() ||
-      (fv(c,'Pontos fortes')||'').trim() ||
-      (fv(c,'Diferenciais do perfil','Diferenciais')||'').trim()
-    );
-  } else if (filterStatus === '__triagem') {
-    list = filterCands(S.candidates, false).filter(c =>
-      ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE'))
-    );
-  } else if (filterStatus === '__employer') {
-    list = filterCands(S.candidates, false).filter(c =>
-      ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE'))
-    );
-  } else if (filterStatus === '__documentacao') {
-    // Tracker transversal: mostra quem está em Documentação OU possui ciclo documental iniciado
-    list = filterCands(S.candidates, false).filter(c =>
-      fv(c,'STATUS PIPELINE') === 'Documentação' ||
-      ['passaporte','diploma','historico','registro'].some(k => normalizeUpper(getDocStatus(c, k)) !== 'NAO SOLICITADO') ||
-      (fv(c,'CPF')||'').trim() ||
-      (fv(c,'Carteira de vacinação','carteira_de_vacinacao')||'').trim() ||
-      (fv(c,'Contrato','contrato')||'').trim() ||
-      (fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim()
-    );
-  } else if (filterStatus) {
-    list = filterCands(S.candidates, false).filter(c =>
-      fv(c,'STATUS PIPELINE') === filterStatus
-    );
-  } else {
-    list = filterCands(S.candidates, false);
-  }
-
-  // Aplica filtros de coluna adicionais (alemão, perfil, etc.)
-  if (S.filter.perfil)    list = list.filter(c => fv(c,'Perfil') === S.filter.perfil);
-  if (S.filter.profissao) list = list.filter(c => fv(c,'Profissão principal','Profissão') === S.filter.profissao);
-  if (S.filter.alemao)    list = list.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
-  if (S.filter.empregador === '__filled__') list = list.filter(c => getEmployerDisplay(c).trim());
-  else if (S.filter.empregador) list = list.filter(c => getEmployerDisplay(c) === S.filter.empregador);
-  if (S.filter.status)     list = list.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
-  if (S.filter.substatus)  list = list.filter(c => fv(c,'Substatus','substatus') === S.filter.substatus);
-  if (S.filter.prioridade) list = list.filter(c => fv(c,'Prioridade comercial','prioridade_comercial') === S.filter.prioridade);
-  if (S.filter.q) {
-    const q = S.filter.q.toLowerCase();
-    list = list.filter(c =>
-      (fv(c,'Nome completo')||'').toLowerCase().includes(q) ||
-      (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
-      (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
-      (fv(c,'Cidade atual')||'').toLowerCase().includes(q) ||
-      (c.ID||'').toLowerCase().includes(q));
-  }
-
-  const total  = list.length;
-  const pages  = Math.ceil(total / S.pageSize);
-  const paged  = list.slice((S.page-1)*S.pageSize, S.page*S.pageSize);
-
-  const statusOpts = ['','Novo candidato','Triagem','Pré-seleção','Entrevista',
-    'Análise RH','Curso de alemão','Documentação','Jurídico',
-    'Matching Instituição','Employer / Matching','Aprovado / Pronto','Contratado',
-    'Não qualificado/ base de dados','Desistiu','Inativo / Arquivado'];
-  const alemaoOpts   = ['','Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
-  const perfilOpts   = ['','Candidato forte','Candidato bom','Candidato mediano','Candidato fraco','Candidato intermediário'];
-  const profissaoOpts= [''].concat([...new Set((S.enums['Profissão principal']||S.candidates.map(c=>fv(c,'Profissão principal','Profissão'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
-  const empregadorOpts=[''].concat([...new Set(S.candidates.map(c=>getEmployerDisplay(c)).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
-  // Substatus: lê do enums ou coleta dinamicamente da base
-  const substatusOpts = [''].concat([...new Set((S.enums['Substatus']||S.candidates.map(c=>fv(c,'Substatus','substatus'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
-  // Prioridade comercial: valores conhecidos + extras do enum
-  const prioridadeOpts = ['','Alta','Média','Baixa'].concat(
-    [...new Set((S.enums['Prioridade comercial']||[]).filter(p=>!['Alta','Média','Baixa'].includes(p)))]);
-
-  // ── Atalhos de filtro operacional (sprint 12.1) ──────────
-  const opChips = [
-    { label: 'Sem responsável',        fn: c => !fv(c,'Responsável interno','responsavel_interno') },
-    { label: 'Pendência crítica',      fn: c => !!(fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim() },
-    { label: 'Doc. incompleta',        fn: c => !isYes(fv(c,'Documentação completa','documentacao_completa')) },
-    { label: 'Idioma insuficiente',    fn: c => (_nivelRank(c) < 3) },
-    { label: 'Parado +30d',            fn: c => { const d = daysSince(fv(c,'Data entrada etapa atual','data_entrada_etapa_atual')); return d !== null && d > 30; } },
-    { label: 'Pronto para employer',   fn: c => isElegibleCalc(c) },
-    { label: 'Curso sem previsão',     fn: c => fv(c,'STATUS PIPELINE')==='Curso de alemão' && isYes(fv(c,'Em curso de alemão','em_curso_de_alemao')) && !fv(c,'Previsão de término','previsao_termino_alemao') },
-  ];
-  // Detecta se algum chip está ativo para marcar visualmente
-  const activeChipFn = S.filter._customFn ? S.filter._customFn.toString() : '';
-  const opChipHtml = `<div class="op-filters-bar">
-    ${opChips.map(ch => {
-      const active = S.filter._customFn && S.filter._customFn.toString() === ch.fn.toString();
-      return `<button class="op-chip${active?' active':''}" onclick="applyOpFilter(${opChips.indexOf(ch)})">${esc(ch.label)}</button>`;
-    }).join('')}
-    ${S.filter._customFn ? `<button class="op-chip" onclick="clearFilters();renderView()" style="color:var(--txt3)">✕ Limpar</button>` : ''}
-  </div>`;
-  // Armazena chips para uso no onclick
-  window._opChips = opChips;
-
-  const filterBar = `${opChipHtml}<div class="filters-bar">
-    <div style="font-size:12px;color:var(--txt3)">${total} candidatos</div>
-    ${S.filter._customFn ? `
-    <div style="display:flex;align-items:center;gap:5px;background:var(--accent-bg);border:1px solid var(--accent);border-radius:var(--r);padding:3px 9px;font-size:11.5px;color:var(--accent2)">
-      <span>Filtro ativo</span>
-      <button onclick="clearFilters();setFilter('status','')" style="font-size:13px;color:var(--accent2);line-height:1;background:none;border:none;cursor:pointer" title="Limpar filtro">✕</button>
-    </div>` : ''}
-    <div style="flex:1"></div>
-    <select class="filter-select" onchange="setFilter('status',this.value)">
-      ${statusOpts.map(s=>`<option value="${s}" ${S.filter.status===s?'selected':''}>${s||'Todos os status'}</option>`).join('')}
-    </select>
-    <select class="filter-select" onchange="setFilter('substatus',this.value)">
-      ${substatusOpts.map(s=>`<option value="${esc(s)}" ${S.filter.substatus===s?'selected':''}>${s||'Substatus (todos)'}</option>`).join('')}
-    </select>
-    <select class="filter-select" onchange="setFilter('empregador',this.value)">
-      <option value="" ${S.filter.empregador===''?'selected':''}>Employer (todos)</option>
-      <option value="__filled__" ${S.filter.empregador==='__filled__'?'selected':''}>Com employer</option>
-      ${empregadorOpts.map(e=>`<option value="${esc(e)}" ${S.filter.empregador===e?'selected':''}>${e}</option>`).join('')}
-    </select>
-    <select class="filter-select" onchange="setFilter('prioridade',this.value)">
-      ${prioridadeOpts.map(p=>`<option value="${esc(p)}" ${S.filter.prioridade===p?'selected':''}>${p||'Prioridade (todas)'}</option>`).join('')}
-    </select>
-    <select class="filter-select" onchange="setFilter('alemao',this.value)">
-      ${alemaoOpts.map(a=>`<option value="${a}" ${S.filter.alemao===a?'selected':''}>${a||'Alemão (todos)'}</option>`).join('')}
-    </select>
-    <select class="filter-select" onchange="setFilter('perfil',this.value)">
-      ${perfilOpts.map(p=>`<option value="${p}" ${S.filter.perfil===p?'selected':''}>${p||'Perfil (todos)'}</option>`).join('')}
-    </select>
-    <select class="filter-select" onchange="setFilter('profissao',this.value)">
-      ${profissaoOpts.map(p=>`<option value="${esc(p)}" ${S.filter.profissao===p?'selected':''}>${p||'Profissão (todas)'}</option>`).join('')}
-    </select>
-  </div>`;
-
-  // Colunas variam por aba
-  let thead, rows;
-
-  if (filterStatus === '__entrevistas') {
-    // ─── ABA ENTREVISTAS: colunas específicas de entrevista ───
+    const viewKey = getSortViewKey(filterStatus);
     thead = `<tr>
-      <th>Nome</th><th>Status Atual</th><th>Resultado</th><th>Data Entrevista</th>
-      <th>Avaliador responsável</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Score</th>
+      ${renderSortableTh('Nome','nome',viewKey)}
+      ${renderSortableTh('Status Atual','status',viewKey)}
+      ${renderSortableTh('Data Entrevista','data_entrevista',viewKey)}
+      ${renderSortableTh('Entrevistador','entrevistador',viewKey)}
+      ${renderSortableTh('Empresa / Cliente','empresa_cliente',viewKey)}
+      ${renderSortableTh('Vaga','vaga',viewKey)}
+      ${renderSortableTh('Alemão','alemao',viewKey)}
+      ${renderSortableTh('Score','score',viewKey)}
     </tr>`;
     rows = paged.map(c => {
       const st  = fv(c,'STATUS PIPELINE')||'';
       const sc  = STATUS_BADGE[st]||'b-inativo';
-      const res = fv(c,'Resultado entrevista','Resultado da entrevista')||'';
-      const resCls = res==='Classificado'?'color:var(--green)':res==='Não classificado'?'color:var(--red)':'color:var(--yellow)';
-      const pf  = fv(c,'Perfil')||'';
-      const pfc = PERFIL_BADGE[pf]||'';
       const al  = fv(c,'Nível de alemão','Nível alemão')||'';
       const alc = ALEMAO_COLORS[al]||'var(--txt3)';
-      const dt  = fv(c,'Data da Entrevista','Data da entrevista','data_da_entrevista')||'';
-      const dtFmt = dt ? dt.substring(0,10) : '—';
+      const dt  = fv(c,'entrevista_preliminar_data','Data da Entrevista','data_da_entrevista')||'';
+      const dtFmt = dt ? String(dt).substring(0,10) : '—';
+      const entrevistador = fv(c,'entrevista_preliminar_entrevistador','Avaliador')||'—';
+      const empresa = fv(c,'entrevista_preliminar_empresa_cliente')||'—';
+      const vaga = fv(c,'entrevista_preliminar_posicao_vaga','posicao_vaga')||'—';
       return `<tr onclick="openCand('${esc(c.ID)}')">
         <td class="td-name">${esc(c['Nome completo']||'—')}</td>
         <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
-        <td><span style="font-weight:600;font-size:12px;${resCls}">${esc(res)||'—'}</span></td>
         <td style="font-family:var(--mono);font-size:11px;color:var(--txt3)">${dtFmt}</td>
-        <td>${esc(fv(c,'Avaliador')||'—')}</td>
-        <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
+        <td>${esc(entrevistador)}</td>
+        <td style="font-size:11.5px">${esc(empresa)}</td>
+        <td style="font-size:11.5px">${esc(vaga)}</td>
         <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
-        <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
         <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
       </tr>`;
     }).join('');
 
   } else if (filterStatus === '__analise') {
-    // ─── ABA ANÁLISE RH: colunas específicas de análise ───
+    const viewKey = getSortViewKey(filterStatus);
     thead = `<tr>
-      <th>Nome</th><th>Status Atual</th><th>Perfil</th><th>Tipo</th>
-      <th>Avaliador responsável</th><th>Pontos Fortes</th><th>Pontos Atenção</th><th>Alemão</th><th>Score</th>
+      ${renderSortableTh('Nome','nome',viewKey)}
+      ${renderSortableTh('Status Atual','status',viewKey)}
+      ${renderSortableTh('Resumo RH','resumo_rh',viewKey)}
+      ${renderSortableTh('Risco','risco',viewKey)}
+      ${renderSortableTh('Pronto para employer','pronto_emp',viewKey)}
+      ${renderSortableTh('Readiness intl.','readiness',viewKey)}
+      ${renderSortableTh('Alemão','alemao',viewKey)}
+      ${renderSortableTh('Score','score',viewKey)}
     </tr>`;
     rows = paged.map(c => {
       const st   = fv(c,'STATUS PIPELINE')||'';
       const sc   = STATUS_BADGE[st]||'b-inativo';
-      const pf   = fv(c,'Perfil')||'';
-      const pfc  = PERFIL_BADGE[pf]||'';
-      const tipo = fv(c,'Tipo de candidato','Tipo candidato')||'—';
-      const av   = fv(c,'Avaliador')||'—';
+      const resumo = fv(c,'resumo_rh_curto','entrevista_preliminar_resumo_rh') || '—';
+      const risco = fv(c,'risco_desistencia') || '—';
+      const pronto = fv(c,'pronto_para_employer') || '—';
+      const readinessIntl = fv(c,'readiness_internacional') || '—';
       const al   = fv(c,'Nível de alemão','Nível alemão')||'';
       const alc  = ALEMAO_COLORS[al]||'var(--txt3)';
-      const fortes = fv(c,'Pontos fortes')||'—';
-      const atencao= fv(c,'Pontos de atenção')||'—';
       const truncate = (s,n) => s.length > n ? s.substring(0,n)+'…' : s;
       return `<tr onclick="openCand('${esc(c.ID)}')">
         <td class="td-name">${esc(c['Nome completo']||'—')}</td>
         <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
-        <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
-        <td style="font-size:11px;color:var(--txt3)">${esc(tipo)}</td>
-        <td>${esc(av)}</td>
-        <td style="font-size:11.5px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(truncate(fortes,60))}</td>
-        <td style="font-size:11.5px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--yellow)">${esc(truncate(atencao,50))}</td>
+        <td style="font-size:11.5px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(truncate(String(resumo),80))}</td>
+        <td><span class="badge ${normalizeUpper(risco).includes('ALTO')?'b-fraco':normalizeUpper(risco).includes('MEDIO')?'b-mediano':'b-bom'}">${esc(risco)}</span></td>
+        <td><span class="badge ${normalizeUpper(pronto).includes('SIM')?'b-aprovado':normalizeUpper(pronto).includes('PARCIAL')?'b-mediano':'b-fraco'}">${esc(pronto)}</span></td>
+        <td>${esc(readinessIntl)}</td>
         <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
+        <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
+      </tr>`;
+    }).join('');
+
+  } else if (filterStatus === '__prioritarios') {
+    const viewKey = getSortViewKey(filterStatus);
+    thead = `<tr>
+      ${renderSortableTh('Nome','nome',viewKey)}
+      ${renderSortableTh('Alemão','alemao',viewKey)}
+      ${renderSortableTh('Status Atual','status',viewKey)}
+      ${renderSortableTh('Pronto para employer','pronto_emp',viewKey)}
+      ${renderSortableTh('Employer','employer',viewKey)}
+      ${renderSortableTh('Profissão','profissao',viewKey)}
+      ${renderSortableTh('Cidade','cidade',viewKey)}
+      ${renderSortableTh('Disponibilidade','disponibilidade',viewKey)}
+      ${renderSortableTh('Score','score',viewKey)}
+    </tr>`;
+    rows = paged.map(c => {
+      const st  = fv(c,'STATUS PIPELINE')||'';
+      const sc  = STATUS_BADGE[st]||'b-inativo';
+      const al  = fv(c,'Nível de alemão','Nível alemão')||'';
+      const alc = ALEMAO_COLORS[al]||'var(--txt3)';
+      const pronto = fv(c,'pronto_para_employer') || '—';
+      return `<tr onclick="openCand('${esc(c.ID)}')">
+        <td class="td-name">${esc(c['Nome completo']||'—')}</td>
+        <td>${al?`<span style="font-weight:700;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
+        <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
+        <td><span class="badge ${normalizeUpper(pronto).includes('SIM')?'b-aprovado':normalizeUpper(pronto).includes('PARCIAL')?'b-mediano':'b-fraco'}">${esc(pronto)}</span></td>
+        <td>${esc(getEmployerDisplay(c)||'—')}</td>
+        <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
+        <td>${esc(fv(c,'Cidade atual')||'—')}</td>
+        <td>${esc(fv(c,'disponibilidade_mudanca')||'—')}</td>
         <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
       </tr>`;
     }).join('');
 
   } else if (filterStatus === 'Curso de alemão') {
     // ─── ABA CURSO DE ALEMÃO: painel educacional ───
+    const viewKey = getSortViewKey(filterStatus);
     thead = `<tr>
-      <th>Nome</th>
-      <th>Instituição</th>
+      ${renderSortableTh('Nome','nome',viewKey)}
+      ${renderSortableTh('Instituição','empresa_cliente',viewKey)}
       <th style="min-width:220px">Jornada de Nível</th>
-      <th>Início</th>
+      ${renderSortableTh('Início','data_entrevista',viewKey)}
       <th>Previsão Fim</th>
       <th>Bolsa</th>
       <th>Horário / Dias</th>
-      <th>Responsável</th>
+      ${renderSortableTh('Responsável','avaliador',viewKey)}
       <th>Última atualização</th>
     </tr>`;
 
@@ -4401,9 +4325,10 @@ function renderTable(el, filterStatus) {
 
   } else if (filterStatus === '__documentacao') {
     // ─── ABA DOCUMENTAÇÃO: Tracker documental estruturado ───
+    const viewKey = getSortViewKey(filterStatus);
     thead = `<tr>
-      <th>Nome</th>
-      <th>Status Atual</th>
+      ${renderSortableTh('Nome','nome',viewKey)}
+      ${renderSortableTh('Status Atual','status',viewKey)}
       <th>Passaporte</th>
       <th>Diploma</th>
       <th>Histórico</th>
@@ -4437,7 +4362,8 @@ function renderTable(el, filterStatus) {
     }).join('');
 
   } else {
-    thead = `<tr><th>Nome</th><th>Status Pipeline</th><th>Employer</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Cidade</th><th>Avaliador responsável</th><th>Score</th><th>ID</th></tr>`;
+    const viewKey = getSortViewKey(filterStatus);
+    thead = `<tr>${renderSortableTh('Nome','nome',viewKey)}${renderSortableTh('Status Pipeline','status',viewKey)}${renderSortableTh('Employer','employer',viewKey)}${renderSortableTh('Perfil','perfil',viewKey)}${renderSortableTh('Alemão','alemao',viewKey)}${renderSortableTh('Profissão','profissao',viewKey)}${renderSortableTh('Cidade','cidade',viewKey)}${renderSortableTh('Avaliador responsável','avaliador',viewKey)}${renderSortableTh('Score','score',viewKey)}${renderSortableTh('ID','id',viewKey)}</tr>`;
     rows = paged.map(c => {
       const st=c['STATUS PIPELINE']||'';
       const sc=STATUS_BADGE[st]||'b-inativo';
@@ -4462,7 +4388,7 @@ function renderTable(el, filterStatus) {
     }).join('');
   }
 
-  const colCount = filterStatus === '__entrevistas' ? 9 : filterStatus === '__analise' ? 9 : filterStatus === 'Curso de alemão' ? 9 : filterStatus === '__documentacao' ? 8 : 10;
+  const colCount = filterStatus === '__entrevistas' ? 8 : filterStatus === '__analise' ? 8 : filterStatus === '__prioritarios' ? 9 : filterStatus === 'Curso de alemão' ? 9 : filterStatus === '__documentacao' ? 8 : 10;
 
   const pg = pages > 1 ? `<div class="pagination">
     <button class="pg-btn" onclick="setPage(${S.page-1})" ${S.page===1?'disabled':''}>‹</button>
@@ -4505,6 +4431,7 @@ function renderInativo(el) {
   // ── Aplica filtro de motivo/status via S.filter.status ──────
   if (S.filter.status) list = list.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
 
+  list = sortCandidateList(list, '__inativos');
   const total = list.length;
   const rows = list.map(c => `
     <tr onclick="openCand('${esc(c.ID)}')">
@@ -4531,7 +4458,7 @@ function renderInativo(el) {
     </div>
     <div class="tbl-wrap">
       <table class="data-tbl">
-        <thead><tr><th>Nome</th><th>Status</th><th>Motivo</th><th>Etapa saída</th><th>Data</th><th>Reativável</th><th>Alemão</th><th>Perfil</th></tr></thead>
+        <thead><tr>${renderSortableTh('Nome','nome','__inativos')}${renderSortableTh('Status','status','__inativos')}${renderSortableTh('Motivo','motivo','__inativos')}${renderSortableTh('Etapa saída','status','__inativos')}${renderSortableTh('Data','data_saida','__inativos')}${renderSortableTh('Reativável','reativavel','__inativos')}${renderSortableTh('Alemão','alemao','__inativos')}${renderSortableTh('Perfil','perfil','__inativos')}</tr></thead>
         <tbody>${rows||'<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--txt3)">Nenhum resultado</td></tr>'}</tbody>
       </table>
     </div>`;
@@ -4543,12 +4470,19 @@ function renderInativo(el) {
 async function openCand(id) {
   S.pendingEdits = {};
   S.rhInterviewDraft = null;
+  S.currentInterview = null;
   let c = S.candidates.find(x => x.ID === id);
   if (!c) {
     try { const r = await apiGet({route:'candidate', id}); c = r.candidate; }
     catch(e) { toast('❌ ' + e.message, 'err'); return; }
   }
   S.currentCand = c;
+  try {
+    S.currentInterview = await loadCandidateInterview(c);
+  } catch (e) {
+    console.warn('[RH DOCX] não foi possível carregar entrevista estruturada:', e);
+    S.currentInterview = null;
+  }
   buildCandModal(c);
   document.getElementById('cand-overlay').classList.add('open');
 }
@@ -4645,6 +4579,80 @@ function _nivelRank(c) {
   return NIVEL_RANK[fv(c,'Nível de alemão','nivel_alemao','Nível alemão')] || 0;
 }
 
+
+function getSortViewKey(filterStatus) {
+  return filterStatus || S.view || 'candidates';
+}
+function renderSortableTh(label, key, viewKey, extra='') {
+  const active = S.sort && S.sort.view === viewKey && S.sort.key === key;
+  const arrow = active ? (S.sort.dir === 'asc' ? '↑' : '↓') : '↕';
+  return `<th ${extra}><button type="button" class="th-sort ${active?'active':''}" onclick="cycleSort('${viewKey}','${key}')"><span>${esc(label)}</span><span class="th-arrow">${arrow}</span></button></th>`;
+}
+function clearSortForView(viewKey) {
+  if (S.sort && S.sort.view === viewKey) clearSort();
+}
+function cycleSort(viewKey, key) {
+  const curr = S.sort || {};
+  if (curr.view !== viewKey || curr.key !== key) S.sort = { view:viewKey, key, dir:'asc' };
+  else if (curr.dir === 'asc') S.sort = { view:viewKey, key, dir:'desc' };
+  else S.sort = { view:'', key:'', dir:'' };
+  S.page = 1;
+  renderView();
+}
+function _sortRiskRank(v) {
+  const map = { baixo:1, medio:2, alto:3, nao:0, parcial:1, sim:2 };
+  return map[normalizeSearchToken(v)] || 0;
+}
+function getSortValue(c, key, filterStatus) {
+  switch (key) {
+    case 'nome': return fv(c,'Nome completo') || '';
+    case 'status': return fv(c,'STATUS PIPELINE') || '';
+    case 'resultado': return getEmployerLinkStatus(c) || fv(c,'Resultado entrevista','Resultado da entrevista') || '';
+    case 'data_entrevista': return fv(c,'entrevista_preliminar_data','Data da Entrevista','data_da_entrevista') || '';
+    case 'entrevistador': return fv(c,'entrevista_preliminar_entrevistador','Avaliador') || '';
+    case 'empresa_cliente': return fv(c,'entrevista_preliminar_empresa_cliente') || '';
+    case 'vaga': return fv(c,'entrevista_preliminar_posicao_vaga','posicao_vaga') || '';
+    case 'employer': return getEmployerDisplay(c) || '';
+    case 'perfil': return fv(c,'Perfil','perfil') || '';
+    case 'tipo': return fv(c,'tipo_vaga_preferido','Tipo de candidato','Tipo candidato') || '';
+    case 'alemao': return _nivelRank(c);
+    case 'profissao': return fv(c,'Profissão principal','Profissão') || '';
+    case 'cidade': return fv(c,'Cidade atual') || '';
+    case 'avaliador': return fv(c,'Avaliador','Responsável interno','responsavel_interno') || '';
+    case 'score': return Number(c._score || 0);
+    case 'id': return c.ID || c.id || '';
+    case 'resumo_rh': return fv(c,'resumo_rh_curto','entrevista_preliminar_resumo_rh') || '';
+    case 'risco': return _sortRiskRank(fv(c,'risco_desistencia') || '');
+    case 'pronto_emp': return _sortRiskRank(fv(c,'pronto_para_employer') || '');
+    case 'readiness': return _sortRiskRank(fv(c,'readiness_internacional') || '');
+    case 'disponibilidade': return fv(c,'disponibilidade_mudanca') || '';
+    case 'motivo': return fv(c,'Motivo inativação') || '';
+    case 'data_saida': return fv(c,'Data saída','Data de saída') || '';
+    case 'reativavel': return fv(c,'Reativável') || '';
+    default: return '';
+  }
+}
+function compareSortValues(a, b) {
+  const va = a == null ? '' : a;
+  const vb = b == null ? '' : b;
+  if (typeof va === 'number' || typeof vb === 'number') return Number(va || 0) - Number(vb || 0);
+  const sa = String(va).trim();
+  const sb = String(vb).trim();
+  const iso = /^\d{4}-\d{2}-\d{2}/;
+  if (iso.test(sa) || iso.test(sb)) return new Date(sa || '1900-01-01').getTime() - new Date(sb || '1900-01-01').getTime();
+  return sa.localeCompare(sb, 'pt-BR', { sensitivity:'base', numeric:true });
+}
+function sortCandidateList(list, filterStatus) {
+  const viewKey = getSortViewKey(filterStatus);
+  if (!S.sort || S.sort.view !== viewKey || !S.sort.key || !S.sort.dir) return list.slice();
+  const dir = S.sort.dir === 'asc' ? 1 : -1;
+  return list.slice().sort((a,b) => {
+    const cmp = compareSortValues(getSortValue(a, S.sort.key, filterStatus), getSortValue(b, S.sort.key, filterStatus));
+    if (cmp !== 0) return cmp * dir;
+    return compareSortValues(fv(a,'Nome completo') || '', fv(b,'Nome completo') || '');
+  });
+}
+
 // ── Prontidão derivada — lógica centralizada ─────────────────
 // Retorna { label, cls } — sem novo campo persistido.
 function getReadiness(c) {
@@ -4654,7 +4662,7 @@ function getReadiness(c) {
   const docOk   = isYes(fv(c,'Documentação completa','documentacao_completa'));
   const resp    = fv(c,'Responsável interno','responsavel_interno') || '';
   const perfil  = fv(c,'Perfil') || '';
-  const analise = fv(c,'Análise do recrutador','Análise recrutador') || '';
+  const analise = fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh') || '';
   const rank    = _nivelRank(c);
   const profissao = fv(c,'Profissão principal','profissao_principal') || '';
   const elegivel  = isYes(fv(c,'Elegível para employer','elegivel_para_employer')) || isElegibleCalc(c);
@@ -4712,7 +4720,7 @@ function getOperationalSummary(c) {
   const pend    = fv(c,'Pendência documental crítica','pendencia_documental_critica') || '';
   const docOk   = isYes(fv(c,'Documentação completa','documentacao_completa'));
   const resp    = fv(c,'Responsável interno','responsavel_interno') || '';
-  const analise = fv(c,'Análise do recrutador','Análise recrutador') || '';
+  const analise = fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh') || '';
   const rank    = _nivelRank(c);
   const stIdx   = PIPELINE_STAGES.indexOf(status);
   const diasParado = daysSince(fv(c,'Data entrada etapa atual','data_entrada_etapa_atual'));
@@ -4873,6 +4881,90 @@ function buildCandModal(c) {
   }
 }
 
+
+function getActiveInterviewRecord() {
+  return S.rhInterviewDraft || S.currentInterview || null;
+}
+
+async function loadCandidateInterview(c) {
+  try {
+    const candidateId = c?.ID || c?.id || null;
+    if (!candidateId) return null;
+    const supa = await getSupa();
+    const linkedId = fv(c, 'entrevista_preliminar_id') || '';
+    if (linkedId) {
+      const { data, error } = await supa
+        .from('entrevistas_preliminares')
+        .select('*')
+        .eq('id', linkedId)
+        .maybeSingle();
+      if (error) throw error;
+      return data || null;
+    }
+    const { data, error } = await supa
+      .from('entrevistas_preliminares')
+      .select('*')
+      .eq('candidate_id', candidateId)
+      .eq('ativo', true)
+      .order('updated_at', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return data?.[0] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function rhDeepGet(obj, path, fallback='') {
+  if (!obj || !path) return fallback;
+  const parts = path.split('.');
+  let cur = obj;
+  for (const p of parts) {
+    if (cur == null || typeof cur !== 'object' || !(p in cur)) return fallback;
+    cur = cur[p];
+  }
+  return cur == null ? fallback : cur;
+}
+
+function rhStaticField(label, value, full=false) {
+  const cls = full ? 'field-group fg-full' : 'field-group';
+  const v = String(value || '').trim();
+  return `<div class="${cls}">
+    <label class="field-lbl">${label}</label>
+    <div style="min-height:44px;padding:10px 12px;border:1px solid var(--border2);border-radius:12px;background:rgba(255,255,255,.03);color:${v ? 'var(--txt)' : 'var(--txt3)'};white-space:pre-wrap;line-height:1.45">${v ? esc(v) : 'Não preenchido'}</div>
+  </div>`;
+}
+
+function rhSectionCard(title, body, subtitle='') {
+  return `<div style="border:1px solid var(--border);border-radius:16px;padding:14px;background:rgba(255,255,255,.02);margin-bottom:14px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:var(--txt)">${title}</div>
+        ${subtitle ? `<div style="font-size:11px;color:var(--txt3);margin-top:4px">${subtitle}</div>` : ''}
+      </div>
+    </div>
+    ${body}
+  </div>`;
+}
+
+function rhScaleBadge(v) {
+  const n = String(v || '').trim().toLowerCase();
+  const label = n || 'não preenchido';
+  let bg = 'rgba(148,163,184,.14)', bd = 'rgba(148,163,184,.22)', fg = 'var(--txt2)';
+  if (n === 'alto' || n === 'alta') { bg = 'rgba(34,197,94,.16)'; bd = 'rgba(34,197,94,.24)'; fg = 'var(--green)'; }
+  else if (n === 'medio' || n === 'médio' || n === 'media' || n === 'média') { bg = 'rgba(245,158,11,.16)'; bd = 'rgba(245,158,11,.24)'; fg = 'var(--yellow)'; }
+  else if (n === 'baixo' || n === 'baixa') { bg = 'rgba(239,68,68,.16)'; bd = 'rgba(239,68,68,.24)'; fg = 'var(--red)'; }
+  return `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:92px;padding:8px 10px;border-radius:999px;background:${bg};border:1px solid ${bd};color:${fg};font-size:12px;font-weight:800;text-transform:capitalize">${esc(label)}</span>`;
+}
+
+function refreshInterviewPanels() {
+  if (!S.currentCand) return;
+  const ids = ['t-entrevista','t-analise'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = buildPanel(id, S.currentCand);
+  });
+}
 function buildPanel(tabId, c) {
   const enums = S.enums;
   function fld(field, label, type='text', opts=null, fullWidth=false) {
@@ -4956,36 +5048,190 @@ function buildPanel(tabId, c) {
       <div class="section-hdr">Resumo</div>
       <div class="field-grid g1">${fld('Resumo profissional','Resumo profissional','textarea',null,true)}</div>
     </div>`;
-    case 't-entrevista': return `<div>
-      <div class="section-hdr">Dados da Entrevista</div>
-      <div class="field-grid">
-        ${fld('Data da Entrevista','Data da entrevista')}${fld('Resultado entrevista','Resultado','select')}
-        ${fld('Avaliador','Avaliador responsável','select')}<div></div>
-      </div>
-      <div class="section-hdr">Respostas da Entrevista</div>
-      <div class="field-grid g1">
-        ${fld('Quem é você?','Quem é você?','textarea',null,true)}
-        ${fld('Porque deseja ir para Alemanha, como surgiu o interesse?','Por que Alemanha?','textarea',null,true)}
-        ${fld('Relato sobre a experiência profissional','Relato exp. profissional','textarea',null,true)}
-        ${fld('Como é sua organização financeira? Tem reserva? Como será o preparo para Alemanha?','Organização financeira','textarea',null,true)}
-      </div>
-    </div>`;
-    case 't-analise': return `<div>
-      <div class="section-hdr">Classificação & Avaliação</div>
-      <div class="field-grid">
-        ${fld('Perfil','Perfil do candidato','select')}${fld('Tipo de candidato','Tipo de candidato','select')}
-        <div></div><div></div>
-      </div>
-      <div class="section-hdr">Análise Completa</div>
-      <div class="field-grid g1">
-        ${fld('Análise do recrutador','Análise do recrutador','textarea',null,true)}
-        ${fld('Diferenciais do perfil','Diferenciais do perfil','textarea',null,true)}
-        ${fld('Pontos fortes','Pontos fortes','textarea',null,true)}
-        ${fld('Pontos de atenção','Pontos de atenção','textarea',null,true)}
-        ${fld('Perfil profissional para apresentação','Perfil para apresentação','textarea',null,true)}
-        ${fld('Observações internas','Observações internas','textarea',null,true)}
-      </div>
-    </div>`;
+    case 't-entrevista': {
+      const iv = getActiveInterviewRecord();
+      if (!iv) {
+        return `<div>
+          <div class="section-hdr">Entrevista preliminar</div>
+          <div style="border:1px dashed var(--border2);border-radius:16px;padding:16px;background:rgba(255,255,255,.02);color:var(--txt2);line-height:1.55">
+            Nenhuma entrevista estruturada foi vinculada a este candidato ainda. Use o botão <b>Formulário RH</b> para importar o DOCX preenchido.
+          </div>
+          <div class="section-hdr" style="margin-top:14px">Metadados básicos</div>
+          <div class="field-grid">
+            ${fld('Data da Entrevista','Data da entrevista')}
+            ${fld('Avaliador','Avaliador responsável','select')}
+            ${fld('empresa_cliente','Empresa / cliente')}
+            ${fld('posicao_vaga','Posição / vaga')}
+            ${fld('tipo_vaga','Tipo de vaga')}
+            ${fld('nivel_alemao_exigido','Nível de alemão exigido')}
+          </div>
+        </div>`;
+      }
+      const m = iv.meta || {};
+      const r = iv.respostas || {};
+      return `<div>
+        <div class="section-hdr">Entrevista preliminar</div>
+        <div style="margin-bottom:14px;color:var(--txt3);font-size:12px;line-height:1.55">
+          Esta aba mostra o conteúdo documental do formulário importado. Aqui deve aparecer o que foi respondido, sem misturar com julgamento interno do RH.
+        </div>
+
+        ${rhSectionCard('Cabeçalho da entrevista', `
+          <div class="field-grid">
+            ${rhStaticField('Data da entrevista', m.data_entrevista)}
+            ${rhStaticField('Entrevistador(a)', m.entrevistador)}
+            ${rhStaticField('Empresa / cliente', m.empresa_cliente)}
+            ${rhStaticField('Posição / vaga', m.posicao_vaga)}
+            ${rhStaticField('Tipo de vaga', m.tipo_vaga)}
+            ${rhStaticField('Nível de alemão exigido', m.nivel_alemao_exigido)}
+            ${rhStaticField('Observação inicial', m.observacao_inicial, true)}
+          </div>
+        `)}
+
+        ${rhSectionCard('1. Dados básicos e identificação', `
+          <div class="field-grid">
+            ${rhStaticField('Nome, idade e cidade atual', rhDeepGet(r,'dados_basicos_identificacao.nome_idade_cidade_atual'), true)}
+            ${rhStaticField('Formação acadêmica e técnica', rhDeepGet(r,'dados_basicos_identificacao.formacao_academica_tecnica'), true)}
+            ${rhStaticField('Certificados ou diplomas disponíveis', rhDeepGet(r,'dados_basicos_identificacao.certificados_diplomas_disponiveis'), true)}
+            ${rhStaticField('Documento e nacionalidade', rhDeepGet(r,'dados_basicos_identificacao.documento_nacionalidade'))}
+            ${rhStaticField('Contato e organização pessoal', rhDeepGet(r,'dados_basicos_identificacao.contato_organizacao_pessoal'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('2. Experiência profissional', `
+          <div class="field-grid">
+            ${rhStaticField('Tempo total de experiência', rhDeepGet(r,'experiencia_profissional.tempo_total_experiencia'))}
+            ${rhStaticField('Experiências principais', rhDeepGet(r,'experiencia_profissional.experiencias_principais'), true)}
+            ${rhStaticField('Projeto ou experiência preferida', rhDeepGet(r,'experiencia_profissional.projeto_ou_experiencia_preferida'), true)}
+            ${rhStaticField('Aderência técnica à vaga', rhDeepGet(r,'experiencia_profissional.aderencia_tecnica_vaga'))}
+            ${rhStaticField('Pontos técnicos fortes e fracos', rhDeepGet(r,'experiencia_profissional.pontos_tecnicos_fortes_fracos'), true)}
+          </div>
+        `)}
+
+        ${rhSectionCard('3. Situação atual e disponibilidade', `
+          <div class="field-grid">
+            ${rhStaticField('Trabalho atual', rhDeepGet(r,'situacao_atual_disponibilidade.trabalho_atual'), true)}
+            ${rhStaticField('Disponibilidade para mudança', rhDeepGet(r,'situacao_atual_disponibilidade.disponibilidade_mudanca'))}
+            ${rhStaticField('Status migratório', rhDeepGet(r,'situacao_atual_disponibilidade.status_migratorio'))}
+            ${rhStaticField('Prazo realista de saída', rhDeepGet(r,'situacao_atual_disponibilidade.prazo_realista_saida'))}
+            ${rhStaticField('Flexibilidade geográfica', rhDeepGet(r,'situacao_atual_disponibilidade.flexibilidade_geografica'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('4. Idiomas', `
+          <div class="field-grid">
+            ${rhStaticField('Nível de alemão', rhDeepGet(r,'idiomas.nivel_alemao'))}
+            ${rhStaticField('Nível de inglês', rhDeepGet(r,'idiomas.nivel_ingles'))}
+            ${rhStaticField('Outras línguas', rhDeepGet(r,'idiomas.outras_linguas'))}
+            ${rhStaticField('Comprovação', rhDeepGet(r,'idiomas.comprovacao'))}
+            ${rhStaticField('Teste prático', rhDeepGet(r,'idiomas.teste_pratico'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('5. Motivação e objetivo profissional', `
+          <div class="field-grid">
+            ${rhStaticField('Por que Alemanha', rhDeepGet(r,'motivacao_objetivo_profissional.porque_alemanha'), true)}
+            ${rhStaticField('Motivação para a vaga específica', rhDeepGet(r,'motivacao_objetivo_profissional.motivacao_vaga_especifica'), true)}
+            ${rhStaticField('Plano de carreira', rhDeepGet(r,'motivacao_objetivo_profissional.plano_carreira'))}
+            ${rhStaticField('Coerência da candidatura', rhDeepGet(r,'motivacao_objetivo_profissional.coerencia_candidatura'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('6. Preferências profissionais', `
+          <div class="field-grid">
+            ${rhStaticField('Tipo de vaga preferido', rhDeepGet(r,'preferencias_profissionais.tipo_vaga_preferido'))}
+            ${rhStaticField('Abertura para função técnica ou manual', rhDeepGet(r,'preferencias_profissionais.abertura_funcao_tecnica_manual'))}
+            ${rhStaticField('Faixa de atuação aceitável', rhDeepGet(r,'preferencias_profissionais.faixa_atuacao_aceitavel'), true)}
+            ${rhStaticField('Turnos e rotina', rhDeepGet(r,'preferencias_profissionais.turnos_rotina'))}
+            ${rhStaticField('Remuneração e expectativa', rhDeepGet(r,'preferencias_profissionais.remuneracao_expectativa'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('7. Integração, família e adaptação', `
+          <div class="field-grid">
+            ${rhStaticField('Rede de apoio', rhDeepGet(r,'integracao_familia_adaptacao.rede_apoio'))}
+            ${rhStaticField('Mudança sozinho ou com família', rhDeepGet(r,'integracao_familia_adaptacao.mudanca_sozinho_ou_familia'))}
+            ${rhStaticField('Experiência internacional prévia', rhDeepGet(r,'integracao_familia_adaptacao.experiencia_internacional_previa'))}
+            ${rhStaticField('Adaptação cultural', rhDeepGet(r,'integracao_familia_adaptacao.adaptacao_cultural'), true)}
+            ${rhStaticField('Autonomia prática', rhDeepGet(r,'integracao_familia_adaptacao.autonomia_pratica'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('8. Documentação, riscos e viabilidade', `
+          <div class="field-grid">
+            ${rhStaticField('Documentos prontos', rhDeepGet(r,'documentacao_riscos_viabilidade.documentos_prontos'))}
+            ${rhStaticField('Reconhecimento ou tradução', rhDeepGet(r,'documentacao_riscos_viabilidade.reconhecimento_ou_traducao'))}
+            ${rhStaticField('Restrições objetivas', rhDeepGet(r,'documentacao_riscos_viabilidade.restricoes_objetivas'), true)}
+            ${rhStaticField('Comprometimento real', rhDeepGet(r,'documentacao_riscos_viabilidade.comprometimento_real'))}
+          </div>
+        `)}
+
+        ${rhSectionCard('9. Mensagem final do candidato', `
+          <div class="field-grid g1">
+            ${rhStaticField('Mensagem final', rhDeepGet(r,'mensagem_final.mensagem_final_candidato'), true)}
+          </div>
+        `)}
+      </div>`;
+    }
+    case 't-analise': {
+      const iv = getActiveInterviewRecord();
+      const av = iv?.avaliacao || {};
+      const scaleOpts = ['baixo','medio','alto'];
+      const readinessOpts = ['baixo','medio','alto'];
+      return `<div>
+        <div class="section-hdr">Análise RH</div>
+        <div style="margin-bottom:14px;color:var(--txt3);font-size:12px;line-height:1.55">
+          Esta aba concentra a leitura interna do recrutador e os campos operacionais que alimentam filtros, score e employer matching.
+        </div>
+
+        ${rhSectionCard('Avaliação interna estruturada', `
+          <div class="field-grid">
+            <div class="field-group"><label class="field-lbl">Clareza na comunicação</label><div>${rhScaleBadge(av.clareza_na_comunicacao)}</div></div>
+            <div class="field-group"><label class="field-lbl">Nível de alemão percebido</label><div>${rhScaleBadge(av.nivel_alemao_percebido)}</div></div>
+            <div class="field-group"><label class="field-lbl">Aderência técnica à vaga</label><div>${rhScaleBadge(av.aderencia_tecnica_a_vaga)}</div></div>
+            <div class="field-group"><label class="field-lbl">Maturidade profissional</label><div>${rhScaleBadge(av.maturidade_profissional)}</div></div>
+            <div class="field-group"><label class="field-lbl">Motivação real para a Alemanha</label><div>${rhScaleBadge(av.motivacao_real_para_alemanha)}</div></div>
+            <div class="field-group"><label class="field-lbl">Flexibilidade e adaptação</label><div>${rhScaleBadge(av.flexibilidade_e_adaptacao)}</div></div>
+            <div class="field-group"><label class="field-lbl">Risco de desistência</label><div>${rhScaleBadge(av.risco_de_desistencia)}</div></div>
+          </div>
+        `, iv ? 'Escalas lidas do DOCX importado.' : 'Nenhuma entrevista estruturada vinculada ainda.')}
+
+        ${rhSectionCard('Resumo operacional RH', `
+          <div class="field-grid">
+            ${fld('resumo_rh_curto','Resumo RH curto','textarea',null,true)}
+            ${fld('decisao_operacional_rh','Decisão operacional RH','textarea',null,true)}
+            ${fld('motivacao_real','Motivação real','textarea',null,true)}
+            ${fld('coerencia_candidatura','Coerência da candidatura','textarea',null,true)}
+          </div>
+        `)}
+
+        ${rhSectionCard('Campos derivados que impactam o CRM', `
+          <div class="field-grid">
+            ${fld('aderencia_tecnica_avaliada','Aderência técnica avaliada','select',scaleOpts)}
+            ${fld('maturidade_profissional_avaliada','Maturidade profissional avaliada','select',scaleOpts)}
+            ${fld('flexibilidade_adaptacao_avaliada','Flexibilidade e adaptação','select',scaleOpts)}
+            ${fld('risco_desistencia','Risco de desistência','select',scaleOpts)}
+            ${fld('readiness_internacional','Readiness internacional','select',readinessOpts)}
+            ${fld('pronto_para_employer','Pronto para employer','select',['nao','parcial','sim'])}
+            ${fld('abertura_funcao_tecnica_manual','Abertura para função técnica/manual')}
+            ${fld('faixa_atuacao_aceitavel','Faixa de atuação aceitável')}
+            ${fld('aceita_turnos_rotina','Aceita turnos e rotina')}
+            ${fld('tipo_vaga_preferido','Tipo de vaga preferido')}
+            ${fld('documentos_prontos_status','Documentos prontos status')}
+            ${fld('comprometimento_real','Comprometimento real')}
+          </div>
+        `)}
+
+        ${rhSectionCard('Rastreabilidade da importação', `
+          <div class="field-grid">
+            ${rhStaticField('Conflitos detectados', (() => {
+              const arr = (iv?.conflitos_detectados || []);
+              return arr.length ? arr.map(x => `${x.campo}: ${x.valor_cadastro} ↔ ${x.valor_entrevista}`).join('\n') : '';
+            })(), true)}
+            ${rhStaticField('Campos sincronizados', (iv?.campos_sincronizados || []).join('\n'), true)}
+          </div>
+        `, 'Esses blocos ajudam a entender o que foi aplicado e o que ficou para revisão humana.')}
+      </div>`;
+    }
     case 't-idioma': {
       const NIVEL_OPT = ['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
       const NIVEL_ALVO_OPT = ['B1','B2','B2+','C1','C2'];
@@ -5615,17 +5861,7 @@ function rhStageDraftIntoPending(parsed) {
   AUTO_FIELDS.forEach(f => queue(f, parsed.derivados?.[f] || ''));
   AUTO_IF_EMPTY.forEach(f => queue(f, parsed.derivados?.[f] || '', true));
 
-  // compatibilidade temporária com a UI antiga
-  const compat = {
-    'Data da Entrevista': parsed.meta?.data_entrevista || '',
-    'Análise do recrutador': parsed.derivados?.resumo_rh_curto || '',
-    'Pontos fortes': parsed.respostas?.experiencia_profissional?.pontos_tecnicos_fortes_fracos || '',
-    'Pontos de atenção': parsed.respostas?.documentacao_riscos_viabilidade?.restricoes_objetivas || '',
-    'Porque deseja ir para Alemanha, como surgiu o interesse?': parsed.respostas?.motivacao_objetivo_profissional?.porque_alemanha || '',
-    'Relato sobre a experiência profissional': parsed.respostas?.experiencia_profissional?.experiencias_principais || ''
-  };
-  Object.entries(compat).forEach(([k,v]) => { if (v) { S.pendingEdits[k] = v; summary.applied.push(k); } });
-
+  // Não espelha mais campos legados de RH no núcleo do candidato.
   parsed.campos_sincronizados = summary.applied.slice();
   S.rhInterviewDraft = { ...parsed };
   return summary;
@@ -5688,6 +5924,7 @@ async function handleRhDocxFile(input) {
     }
     const summary = rhStageDraftIntoPending(parsed);
     renderRhImportStatus(summary, file.name);
+    refreshInterviewPanels();
     const totalPend = Object.keys(S.pendingEdits || {}).length;
     if (!summary.applied.length && !summary.conflicts.length) {
       toast('⚠ O documento foi lido, mas não trouxe novos valores aplicáveis.', 'warn', 5000);
@@ -5905,7 +6142,10 @@ async function saveCandidate() {
     if (S.rhInterviewDraft) {
       try {
         const interviewId = await saveRhInterviewDraft(S.currentCand.ID, sess?.nome || 'web');
-        if (interviewId) fieldsToSave['entrevista_preliminar_id'] = interviewId;
+        if (interviewId) {
+          fieldsToSave['entrevista_preliminar_id'] = interviewId;
+          S.currentInterview = { id: interviewId, ...S.rhInterviewDraft };
+        }
       } catch (e) {
         interviewSaveWarning = e?.message || String(e || 'Erro ao salvar entrevista preliminar');
         console.error('[RH DOCX] falha ao persistir entrevista_preliminar:', e);
@@ -6455,7 +6695,7 @@ function renderSettings(el) {
               <div>Enums carregados: <strong style="color:var(--txt)">${Object.keys(S.enums).length} campos</strong></div>
               <div>Usuários: <strong style="color:var(--txt)">${getUsers().length}</strong></div>
               <div>Versão frontend: <strong style="color:var(--gold)">v9.1 Deutschland Edition — Supabase Auth</strong></div>
-              <div>Created by: <strong style="color:var(--gold)">Jean Lopes</strong></div>
+              <div>Plataforma operacional interna</div>
             </div>
           </div>
         </div>
@@ -6950,35 +7190,17 @@ function clearFilters() {
 // ── Saudação dinâmica baseada no horário da Alemanha ─────────
 function initGermanGreeting() {
   const el = document.getElementById('de-greeting');
-  if (!el) return;
-  function update() {
-    // Obtém hora em Berlin (CET/CEST)
-    const berlinTime = new Date().toLocaleString('de-DE', { timeZone: 'Europe/Berlin', hour: 'numeric', hour12: false });
-    const hour = parseInt(berlinTime.split(':')[0] || berlinTime, 10);
-    let gruss;
-    if (hour >= 5  && hour < 12) gruss = 'Guten Morgen';
-    else if (hour >= 12 && hour < 18) gruss = 'Guten Tag';
-    else gruss = 'Guten Abend';
-    const sess = getSession();
-    const nome = sess?.nome ? `, <strong>${sess.nome.split(' ')[0]}</strong>` : '';
-    el.innerHTML = `${gruss}${nome}`;
-  }
-  update();
-  setInterval(update, 60000); // atualiza a cada minuto
+  if (el) el.innerHTML = '';
 }
 
 // ── Wunderbar! — Celebração ao contratar ─────────────────────
 function fireWunderbar() {
-  // Toast especial
   const el = document.getElementById('toast');
-  document.getElementById('t-ico').textContent = '🎉';
-  document.getElementById('t-msg').textContent = 'Wunderbar! Mais um talento na Alemanha!';
-  el.className = 'toast show tok toast-wunderbar';
+  document.getElementById('t-ico').textContent = '✅';
+  document.getElementById('t-msg').textContent = 'Candidato contratado com sucesso.';
+  el.className = 'toast show tok';
   clearTimeout(_toastTimer);
-  _toastTimer = setTimeout(() => el.classList.remove('show'), 5000);
-
-  // Confetti discreto: preto, vermelho, dourado
-  launchConfetti();
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
 }
 
 function launchConfetti() {
