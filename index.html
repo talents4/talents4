@@ -419,7 +419,7 @@ a{color:inherit;text-decoration:none}
 /* ── Resumo Operacional (sprint 1 + 12.1) ── */
 .ops-summary {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5ª célula = Prontidão */
+  grid-template-columns: repeat(6, 1fr); /* 6ª célula = Prontidão */
   gap: 0;
   margin: 10px 22px 0;
   border: 1px solid var(--border);
@@ -2203,6 +2203,7 @@ const FIELD_MAP = {
   'CV Drive File Name':'cv_drive_file_name','CV Drive Upload At':'cv_drive_upload_at',
   'Resumo profissional':'resumo_profissional','STATUS PIPELINE':'status_pipeline',
   'Substatus':'substatus','Status Final':'status_final',
+  'Employer atual':'employer_atual_exibicao','Employer nome':'employer_nome','Status vínculo employer':'status_vinculo',
   'Data entrada etapa atual':'data_entrada_etapa_atual',
   'Responsável interno':'responsavel_interno','Prioridade comercial':'prioridade_comercial',
   'Nível de risco':'nivel_de_risco','Nível alemão':'nivel_alemao',
@@ -2329,6 +2330,9 @@ function toFrontend(row) {
   if (!out['Previsão de término'] && row.previsao_termino_alemao) out['Previsão de término'] = row.previsao_termino_alemao;
   if (!out['Horário e Dias de Aula'] && row.horario_dias_aula) out['Horário e Dias de Aula'] = row.horario_dias_aula;
   if (!out['Log de Acompanhamento'] && row.log_acompanhamento_alemao) out['Log de Acompanhamento'] = row.log_acompanhamento_alemao;
+  if (!out['Employer atual'] && row.employer_atual_exibicao) out['Employer atual'] = row.employer_atual_exibicao;
+  if (!out['Employer nome'] && row.employer_nome) out['Employer nome'] = row.employer_nome;
+  if (!out['Status vínculo employer'] && row.status_vinculo) out['Status vínculo employer'] = row.status_vinculo;
   applyRhCanonicalAliases(out, row);
   out._score = row._score || 0;
   out._eligivelCalculado = row._elegivel_calculado || false;
@@ -2390,14 +2394,14 @@ async function apiGet(params) {
   const route = params.route;
 
   if (route === 'candidates') {
-    const { data, error } = await supa.from('candidatos').select('*').order('nome_completo');
+    const { data, error } = await supa.from('v_candidatos_full_employer').select('*').order('nome_completo');
     if (error) throw new Error(error.message);
     const cands = (data || []).map(toFrontend);
     return { ok:true, candidates: cands, total: cands.length };
   }
 
   if (route === 'candidate') {
-    const { data, error } = await supa.from('candidatos').select('*').eq('id', params.id).single();
+    const { data, error } = await supa.from('v_candidatos_full_employer').select('*').eq('id', params.id).single();
     if (error) throw new Error(error.message);
     return { ok:true, candidate: toFrontend(data) };
   }
@@ -3240,7 +3244,7 @@ function renderDashboard(el) {
   const pendCritica        = ativos.filter(c => (fv(c,'Pendência documental crítica')||'').trim()).length;
   const semCursoMarcado    = cursoAlemao.filter(c => !isYes(fv(c,'Em curso de alemão'))).length;
   const prontosSemMarcacao = ativos.filter(c => isElegibleCalc(c) && !isYes(fv(c,'Elegível para employer'))).length;
-  const empSemVinculo      = employerS.filter(c => !(fv(c,'Hospital alvo','Empresa / Empregador')||'').trim()).length;
+  const empSemVinculo      = employerS.filter(c => !getEmployerDisplay(c).trim()).length;
   const inconsistencias    = cands.filter(c => {
     const ativo=isYes(fv(c,'Ativo')), status=fv(c,'STATUS PIPELINE'), inativo=INACTIVE_STATUSES.includes(status);
     return (ativo&&inativo)||(!ativo&&!inativo&&status!=='');
@@ -3720,6 +3724,13 @@ function kanbanCard(c) {
 // ══════════════════════════════════════════════════════════════
 // TABLE VIEW
 // ══════════════════════════════════════════════════════════════
+function getEmployerDisplay(c) {
+  return fv(c,'Employer atual','employer_atual_exibicao','Employer nome','employer_nome','Hospital alvo','Empresa / Empregador') || '';
+}
+function getEmployerLinkStatus(c) {
+  return fv(c,'Status vínculo employer','status_vinculo','Status employer','status_employer') || '';
+}
+
 function renderTable(el, filterStatus) {
   // Para Entrevistas e Análise RH: filtra por dado preenchido, não por status atual
   // (candidatos avançam de etapa mas seus dados históricos devem ser visíveis)
@@ -3769,8 +3780,8 @@ function renderTable(el, filterStatus) {
   if (S.filter.perfil)    list = list.filter(c => fv(c,'Perfil') === S.filter.perfil);
   if (S.filter.profissao) list = list.filter(c => fv(c,'Profissão principal','Profissão') === S.filter.profissao);
   if (S.filter.alemao)    list = list.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
-  if (S.filter.empregador === '__filled__') list = list.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim());
-  else if (S.filter.empregador) list = list.filter(c => fv(c,'Hospital alvo','Empresa / Empregador') === S.filter.empregador);
+  if (S.filter.empregador === '__filled__') list = list.filter(c => getEmployerDisplay(c).trim());
+  else if (S.filter.empregador) list = list.filter(c => getEmployerDisplay(c) === S.filter.empregador);
   if (S.filter.status)     list = list.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
   if (S.filter.substatus)  list = list.filter(c => fv(c,'Substatus','substatus') === S.filter.substatus);
   if (S.filter.prioridade) list = list.filter(c => fv(c,'Prioridade comercial','prioridade_comercial') === S.filter.prioridade);
@@ -3795,7 +3806,7 @@ function renderTable(el, filterStatus) {
   const alemaoOpts   = ['','Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
   const perfilOpts   = ['','Candidato forte','Candidato bom','Candidato mediano','Candidato fraco','Candidato intermediário'];
   const profissaoOpts= [''].concat([...new Set((S.enums['Profissão principal']||S.candidates.map(c=>fv(c,'Profissão principal','Profissão'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
-  const empregadorOpts=[''].concat([...new Set((S.enums['Hospital alvo']||S.candidates.map(c=>fv(c,'Hospital alvo','Empresa / Empregador'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
+  const empregadorOpts=[''].concat([...new Set(S.candidates.map(c=>getEmployerDisplay(c)).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
   // Substatus: lê do enums ou coleta dinamicamente da base
   const substatusOpts = [''].concat([...new Set((S.enums['Substatus']||S.candidates.map(c=>fv(c,'Substatus','substatus'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
   // Prioridade comercial: valores conhecidos + extras do enum
@@ -3837,6 +3848,11 @@ function renderTable(el, filterStatus) {
     </select>
     <select class="filter-select" onchange="setFilter('substatus',this.value)">
       ${substatusOpts.map(s=>`<option value="${esc(s)}" ${S.filter.substatus===s?'selected':''}>${s||'Substatus (todos)'}</option>`).join('')}
+    </select>
+    <select class="filter-select" onchange="setFilter('empregador',this.value)">
+      <option value="" ${S.filter.empregador===''?'selected':''}>Employer (todos)</option>
+      <option value="__filled__" ${S.filter.empregador==='__filled__'?'selected':''}>Com employer</option>
+      ${empregadorOpts.map(e=>`<option value="${esc(e)}" ${S.filter.empregador===e?'selected':''}>${e}</option>`).join('')}
     </select>
     <select class="filter-select" onchange="setFilter('prioridade',this.value)">
       ${prioridadeOpts.map(p=>`<option value="${esc(p)}" ${S.filter.prioridade===p?'selected':''}>${p||'Prioridade (todas)'}</option>`).join('')}
@@ -4023,10 +4039,12 @@ function renderTable(el, filterStatus) {
     }).join('');
 
   } else {
-    thead = `<tr><th>Nome</th><th>Status Pipeline</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Cidade</th><th>Avaliador responsável</th><th>Score</th><th>ID</th></tr>`;
+    thead = `<tr><th>Nome</th><th>Status Pipeline</th><th>Employer</th><th>Perfil</th><th>Alemão</th><th>Profissão</th><th>Cidade</th><th>Avaliador responsável</th><th>Score</th><th>ID</th></tr>`;
     rows = paged.map(c => {
       const st=c['STATUS PIPELINE']||'';
       const sc=STATUS_BADGE[st]||'b-inativo';
+      const emp=getEmployerDisplay(c);
+      const empStatus=getEmployerLinkStatus(c);
       const pf=fv(c,'Perfil','Perfil do candidato','perfil')||'';
       const pfc=PERFIL_BADGE[pf]||'';
       const al=fv(c,'Nível de alemão','Nível alemão')||'';
@@ -4034,6 +4052,7 @@ function renderTable(el, filterStatus) {
       return `<tr onclick="openCand('${esc(c.ID)}')">
         <td class="td-name">${esc(c['Nome completo']||'—')}</td>
         <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
+        <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11.5px;color:var(--txt)">${esc(emp||'—')}</span>${empStatus?`<span style="font-size:10px;color:var(--txt3)">${esc(empStatus)}</span>`:''}</div></td>
         <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
         <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
         <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
@@ -4045,7 +4064,7 @@ function renderTable(el, filterStatus) {
     }).join('');
   }
 
-  const colCount = filterStatus === '__entrevistas' ? 9 : filterStatus === '__analise' ? 9 : 9;
+  const colCount = filterStatus === '__entrevistas' ? 9 : filterStatus === '__analise' ? 9 : filterStatus === 'Curso de alemão' ? 9 : filterStatus === '__documentacao' ? 8 : 10;
 
   const pg = pages > 1 ? `<div class="pagination">
     <button class="pg-btn" onclick="setPage(${S.page-1})" ${S.page===1?'disabled':''}>‹</button>
@@ -4420,6 +4439,10 @@ function buildCandModal(c) {
       <div class="ops-cell">
         <div class="ops-cell-lbl">Idioma</div>
         <div class="ops-cell-val ${ops.idiomaCls}">${esc(ops.idiomaVal)}</div>
+      </div>
+      <div class="ops-cell">
+        <div class="ops-cell-lbl">Employer</div>
+        <div class="ops-cell-val ${getEmployerDisplay(c)?'ok':'dim'}" title="${esc(getEmployerDisplay(c) || 'Sem employer vinculado')}">${esc(getEmployerDisplay(c) || '—')}</div>
       </div>
       <div class="ops-cell">
         <div class="ops-cell-lbl">Documentação</div>
@@ -4839,7 +4862,12 @@ function buildPanel(tabId, c) {
       </div>`;
     }
     case 't-employer': return `<div>
-      <div class="section-hdr">Elegibilidade & Matching</div>
+      <div class="section-hdr">Employer atual</div>
+      <div class="field-grid">
+        <div class="field-group"><label class="field-lbl">Employer vinculado</label><div class="field-input" style="display:flex;align-items:center">${esc(getEmployerDisplay(c)||'—')}</div></div>
+        <div class="field-group"><label class="field-lbl">Status do vínculo</label><div class="field-input" style="display:flex;align-items:center">${esc(getEmployerLinkStatus(c)||'—')}</div></div>
+      </div>
+      <div class="section-hdr">Legado / Compatibilidade</div>
       <div class="field-grid">
         ${fld('Elegível para employer','Elegível para employer?','select')}
         ${fld('Hospital alvo','Empresa / Empregador','select')}
@@ -6180,8 +6208,8 @@ function filterCands(list, includeInactive=false) {
   if (S.filter._nlpIdadeMin !== null && S.filter._nlpIdadeMin !== undefined) {
     r = r.filter(c => { const id = parseInt(fv(c,'Idade','idade')||'0',10); return id >= S.filter._nlpIdadeMin; });
   }
-  if (S.filter.empregador === '__filled__') r = r.filter(c => (fv(c,'Hospital alvo','Empresa / Empregador')||'').trim());
-  else if (S.filter.empregador)             r = r.filter(c => fv(c,'Hospital alvo','Empresa / Empregador') === S.filter.empregador);
+  if (S.filter.empregador === '__filled__') r = r.filter(c => getEmployerDisplay(c).trim());
+  else if (S.filter.empregador)             r = r.filter(c => getEmployerDisplay(c) === S.filter.empregador);
   if (S.filter.alemao)   r = r.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
   if (S.filter.substatus)  r = r.filter(c => fv(c,'Substatus','substatus') === S.filter.substatus);
   if (S.filter.prioridade) r = r.filter(c => fv(c,'Prioridade comercial','prioridade_comercial') === S.filter.prioridade);
@@ -6193,7 +6221,7 @@ function filterCands(list, includeInactive=false) {
       (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
       (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
       (fv(c,'Cidade atual')||'').toLowerCase().includes(q) ||
-      (fv(c,'Hospital alvo','Empresa / Empregador')||'').toLowerCase().includes(q) ||
+      (getEmployerDisplay(c)||'').toLowerCase().includes(q) ||
       (c.ID||'').toLowerCase().includes(q));
   }
   return r;
