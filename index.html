@@ -1924,6 +1924,7 @@ details.bi-secondary {
 
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
@@ -2029,6 +2030,9 @@ details.bi-secondary {
       </div>
       <button class="btn btn-sm btn-ghost" id="cm-rh-btn" onclick="triggerRhDocImport()" title="Preencher entrevista e análise RH a partir do formulário DOCX" style="gap:5px">
         📄 Formulário RH
+      </button>
+      <button class="btn btn-sm btn-ghost" id="cm-pdf-btn" onclick="downloadCandidatePdf()" title="Baixar dossiê do candidato em PDF" style="gap:5px">
+        🧾 PDF
       </button>
       <input type="file" id="cm-rh-docx-input" accept=".docx" style="display:none" onchange="handleRhDocxFile(this)">
       <button class="modal-close" onclick="closeCand()">✕</button>
@@ -5922,7 +5926,7 @@ function renderTable(el, filterStatus) {
         <td>${esc(getEmployerDisplay(c)||'—')}</td>
         <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
         <td>${esc(fv(c,'Cidade atual')||'—')}</td>
-        <td>${esc(fv(c,'disponibilidade_mudanca')||'—')}</td>
+        <td title="${esc(String(fv(c,'disponibilidade_mudanca')||'—'))}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(String(fv(c,'disponibilidade_mudanca')||'—').length > 80 ? String(fv(c,'disponibilidade_mudanca')||'—').slice(0,80) + '…' : String(fv(c,'disponibilidade_mudanca')||'—'))}</td>
         <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
       </tr>`;
     }).join('');
@@ -7299,15 +7303,17 @@ function rhNormLabel(s) {
 // ────────────────────────────────────────────────────────────────────────────────
 
 function rhDocRawTextFromHtml(html) {
-  return rhCleanText(
-    String(html || '')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/(p|div|tr|li|h\d)>/gi, '\n')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&amp;/gi, '&')
-      .replace(/&quot;/gi, '"')
-  );
+  const holder = document.createElement('div');
+  holder.innerHTML = String(html || '');
+  const txt = String(holder.innerText || holder.textContent || '')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r/g, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  return txt;
 }
 
 function rhEscapeRegex(s) {
@@ -7340,11 +7346,30 @@ function rhNormalizePgDate(raw) {
   return null;
 }
 
+function rhSliceSection(text, code, nextCode) {
+  const source = String(text || '');
+  const start = new RegExp('(?:^|\\n)\\s*' + rhEscapeRegex(code) + '(?:\\s|$)', 'i');
+  const startMatch = start.exec(source);
+  if (!startMatch) return '';
+  const from = startMatch.index;
+  let to = source.length;
+  const tailSource = source.slice(from + startMatch[0].length);
+  if (nextCode) {
+    const next = new RegExp('(?:^|\\n)\\s*' + rhEscapeRegex(nextCode) + '(?:\\s|$)', 'i');
+    const rel = next.exec(tailSource);
+    if (rel) to = from + startMatch[0].length + rel.index;
+  } else {
+    const tail = /(?:^|\n)\s*10\.\s*Avalia/i.exec(tailSource);
+    if (tail) to = from + startMatch[0].length + tail.index;
+  }
+  return source.slice(from, to).trim();
+}
+
 function rhCaptureObservationBlock(text, code, nextCode) {
-  const tail = nextCode ? '(?=\\n\\s*' + rhEscapeRegex(nextCode) + '|\\n\\s*10\\.\\s*Avalia|$)' : '(?=\\n\\s*10\\.\\s*Avalia|$)';
-  const re = new RegExp('\\n?\\s*' + rhEscapeRegex(code) + '[\\s\\S]*?Observa(?:ç|c)ões?:\\s*([\\s\\S]*?)' + tail, 'i');
-  const m = text.match(re);
-  return rhStripPlaceholders(m?.[1] || '');
+  const chunk = rhSliceSection(text, code, nextCode);
+  if (!chunk) return '';
+  const m = chunk.match(/Observa(?:ç|c)ões?:\s*([\s\S]*?)$/i);
+  return rhStripPlaceholders((m?.[1] || '').replace(/\n{3,}/g, '\n\n'));
 }
 
 function rhParseNivelIdioma(raw) {
@@ -7966,6 +7991,284 @@ async function toggleActive() {
     renderView();
     toast(isActive ? '🚫 Candidato inativado.' : '✅ Candidato reativado.', 'ok');
   } catch(e) { toast('❌ ' + e.message, 'err'); }
+}
+
+function pdfFormatDate(v) {
+  if (!v) return '—';
+  const s = String(v).trim();
+  const iso = rhNormalizePgDate(s);
+  if (iso) {
+    const [y,m,d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  const dt = new Date(s);
+  return Number.isNaN(dt.getTime()) ? s : dt.toLocaleDateString('pt-BR');
+}
+
+function pdfBadge(label, tone='blue') {
+  const tones = {
+    blue:  ['rgba(37,99,235,.10)','rgba(37,99,235,.22)','#1d4ed8'],
+    green: ['rgba(22,163,74,.10)','rgba(22,163,74,.22)','#15803d'],
+    yellow:['rgba(217,119,6,.10)','rgba(217,119,6,.22)','#b45309'],
+    red:   ['rgba(220,38,38,.10)','rgba(220,38,38,.22)','#b91c1c'],
+    gray:  ['rgba(100,116,139,.10)','rgba(100,116,139,.22)','#475569'],
+    purple:['rgba(124,58,237,.10)','rgba(124,58,237,.22)','#7c3aed']
+  };
+  const [bg,bd,fg] = tones[tone] || tones.blue;
+  return `<span style="display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:${bg};border:1px solid ${bd};color:${fg};font-size:11px;font-weight:800;line-height:1">${esc(label || '—')}</span>`;
+}
+
+function pdfField(label, value) {
+  const v = String(value || '').trim();
+  return `<div style="padding:10px 12px;border:1px solid #dbe4f0;border-radius:12px;background:#fff">
+    <div style="font-size:11px;font-weight:800;color:#5b6b84;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px">${esc(label)}</div>
+    <div style="font-size:12.5px;line-height:1.55;color:#122033;white-space:pre-wrap">${v ? esc(v) : '—'}</div>
+  </div>`;
+}
+
+function pdfSection(title, body, subtitle='') {
+  return `<section style="margin-top:16px;page-break-inside:avoid">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:8px">
+      <div>
+        <div style="font-size:16px;font-weight:900;color:#0f172a">${esc(title)}</div>
+        ${subtitle ? `<div style="font-size:11px;color:#64748b;margin-top:3px">${esc(subtitle)}</div>` : ''}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${body}</div>
+  </section>`;
+}
+
+function shouldIncludeCandidatePdfField(key, value, usedSet) {
+  if (value == null) return false;
+  if (typeof value === 'object') return false;
+  const k = String(key || '').trim();
+  if (!k) return false;
+  const norm = rhNormLabel(k);
+  if (!String(value).trim()) return false;
+  if (usedSet && usedSet.has(norm)) return false;
+  if (/^(id|_score|_rowkey|_idx|_dirty|active|ativo|entrevista_preliminar_id|historico_operacional|created_at|updated_at|ultima_atualizacao|atualizado por|folder_id|file_id|webviewlink|drive_|pdf_|arquivo_origem|campos_sincronizados|conflitos_detectados)$/i.test(k)) return false;
+  if (/^(meta|respostas|avaliacao|derivados)$/i.test(k)) return false;
+  return true;
+}
+
+function buildCandidatePdfHtml(c, interview) {
+  const name = fv(c,'Nome completo') || 'Candidato';
+  const status = fv(c,'STATUS PIPELINE') || '—';
+  const perfil = fv(c,'Perfil','perfil') || '—';
+  const profissao = fv(c,'Profissão principal','Profissão') || '—';
+  const cidade = fv(c,'Cidade atual') || '—';
+  const alemao = fv(c,'Nível de alemão','Nível alemão','nivel_alemao_declarado') || '—';
+  const ingles = fv(c,'Nível de inglês','nivel_ingles_declarado') || '—';
+  const docs = isYes(fv(c,'Documentação completa','documentacao_completa')) ? 'Completa' : 'Pendente';
+  const ops = getOperationalSummary(c) || {};
+  const readiness = getReadiness(c) || {};
+  const resumoRh = fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh') || '';
+  const prontidao = fv(c,'pronto_para_employer','Pronto para employer') || readiness.label || '—';
+  const responsavel = fv(c,'Avaliador','Responsável interno','responsavel_interno') || '—';
+  const score = String(c._score || 0);
+  const disponibilidade = fv(c,'disponibilidade_mudanca','Disponibilidade para mudança') || '';
+  const expectativa = fv(c,'expectativa_salarial','remuneracao_expectativa') || '';
+  const statusMigr = fv(c,'status_migratorio_atual','status_migratorio') || '';
+  const workCurrent = fv(c,'trabalho_atual','Trabalho atual') || '';
+  const restricoes = fv(c,'restricoes_objetivas','Restrições objetivas') || '';
+  const motivacao = fv(c,'motivacao_real','Motivação real','motivacao_vaga_especifica','porque_alemanha') || '';
+  const aderencia = fv(c,'aderencia_tecnica_avaliada','Aderência técnica avaliada','aderencia_tecnica_vaga') || '';
+  const expIntl = fv(c,'experiencia_internacional_previa','Experiência internacional prévia') || '';
+  const redeApoio = fv(c,'rede_apoio_europa','Rede de apoio','rede_apoio') || '';
+  const mudancaFamilia = fv(c,'mudanca_sozinho_ou_familia','Mudança sozinho ou com família') || '';
+  const tags = [];
+  tags.push(pdfBadge(status, 'blue'));
+  if (perfil && perfil !== '—') tags.push(pdfBadge(perfil.replace('Candidato ','') || perfil, /forte/i.test(perfil) ? 'green' : /m[eé]dio/i.test(perfil) ? 'yellow' : 'red'));
+  if (prontidao && prontidao !== '—') tags.push(pdfBadge(prontidao, /sim|alto|pronto/i.test(prontidao) ? 'green' : /nao|não|baixo/i.test(prontidao) ? 'red' : 'yellow'));
+  if (alemao && alemao !== '—') tags.push(pdfBadge(`Alemão ${alemao}`, 'purple'));
+
+  const matches = getMatchesForCandidate(String(c.ID || c.id || ''));
+  const employerTags = matches.length
+    ? matches.map(m => {
+        const nome = m.employers?.nome || m.empregador_id || '—';
+        const extra = [m.status_vinculo, m.match_strength].filter(Boolean).join(' · ');
+        return `<div style="padding:10px 12px;border:1px solid #dbe4f0;border-radius:12px;background:#fff">
+          <div style="font-size:12px;font-weight:900;color:#0f172a">${esc(nome)}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:4px">${esc(extra || 'Vínculo ativo')}</div>
+        </div>`;
+      }).join('')
+    : `<div style="padding:10px 12px;border:1px dashed #cbd5e1;border-radius:12px;background:#fff;color:#64748b;font-size:12px">Nenhum employer N:N vinculado.</div>`;
+
+  const interviewMeta = interview?.meta || {};
+  const interviewRes = interview?.respostas || {};
+  const interviewAva = interview?.avaliacao || {};
+  const interviewFields = [
+    ['Data da entrevista', interviewMeta.data_entrevista || fv(c,'entrevista_preliminar_data','Data da Entrevista')],
+    ['Entrevistador(a)', interviewMeta.entrevistador || fv(c,'entrevista_preliminar_entrevistador','Avaliador')],
+    ['Empresa / cliente', interviewMeta.empresa_cliente || fv(c,'empresa_cliente','Empresa / Cliente')],
+    ['Posição / vaga', interviewMeta.posicao_vaga || fv(c,'posicao_vaga','Posição / Vaga')],
+    ['Estado civil / filhos', interviewMeta.estado_civil_filhos_docx || fv(c,'estado_civil','Estado civil')],
+    ['Tipo de vaga', interviewMeta.tipo_vaga || fv(c,'tipo_vaga_preferido','Tipo de candidato')],
+    ['Diploma', interviewMeta.diploma_docx || fv(c,'diploma','Curso de Graduação')],
+    ['Nível de alemão', interviewMeta.nivel_alemao_exigido || fv(c,'nivel_alemao_declarado','Nível de alemão')],
+    ['Observação inicial', interviewMeta.observacao_inicial || fv(c,'Observação','observacoes_internas')],
+    ['Conclusão da entrevista', interviewMeta.conclusao_entrevista_docx || fv(c,'resultado_entrevista')]
+  ];
+
+  const detailedSections = [];
+  if (interviewRes && typeof interviewRes === 'object') {
+    const sectionMap = {
+      dados_basicos_identificacao: 'Dados básicos e identificação',
+      experiencia_profissional: 'Experiência profissional',
+      situacao_atual_disponibilidade: 'Situação atual e disponibilidade',
+      idiomas: 'Idiomas',
+      motivacao_objetivo_profissional: 'Motivação e objetivo profissional',
+      preferencias_profissionais: 'Preferências profissionais',
+      integracao_familia_adaptacao: 'Integração cultural, familiar e adaptação',
+      documentacao_riscos_viabilidade: 'Documentação, riscos e viabilidade',
+      mensagem_final: 'Mensagem final'
+    };
+    Object.entries(sectionMap).forEach(([groupKey, label]) => {
+      const group = interviewRes[groupKey];
+      if (!group || typeof group !== 'object') return;
+      const cards = Object.entries(group)
+        .filter(([,v]) => String(v || '').trim())
+        .map(([k,v]) => pdfField(rhFieldDisplayName(k), v))
+        .join('');
+      if (cards) detailedSections.push(pdfSection(label, cards));
+    });
+  }
+
+  const avaliacaoCards = Object.entries({
+    'Clareza na comunicação': interviewAva.clareza_na_comunicacao,
+    'Nível de alemão percebido': interviewAva.nivel_alemao_percebido,
+    'Aderência técnica à vaga': interviewAva.aderencia_tecnica_a_vaga,
+    'Maturidade profissional': interviewAva.maturidade_profissional,
+    'Motivação real para a Alemanha': interviewAva.motivacao_real_para_alemanha,
+    'Flexibilidade e adaptação': interviewAva.flexibilidade_e_adaptacao,
+    'Risco de desistência': interviewAva.risco_de_desistencia
+  }).filter(([,v]) => String(v || '').trim()).map(([k,v]) => pdfField(k, v)).join('');
+
+  const used = new Set([
+    'nome completo','status pipeline','perfil','profissao principal','profissão','cidade atual','nível de alemão','nível alemão','nível de inglês',
+    'documentação completa','resumo rh curto','responsável interno','avaliador','expectativa salarial','status migratório','status migratorio atual',
+    'disponibilidade para mudança','restrições objetivas','motivação real','aderência técnica avaliada','experiência internacional prévia',
+    'rede de apoio','mudança sozinho ou com família','pronto para employer'
+  ].map(rhNormLabel));
+
+  const extraRows = Object.entries(c || {})
+    .filter(([k,v]) => shouldIncludeCandidatePdfField(k, v, used))
+    .sort((a,b) => String(a[0]).localeCompare(String(b[0]), 'pt-BR'))
+    .map(([k,v]) => pdfField(rhFieldDisplayName(k), Array.isArray(v) ? v.join(', ') : String(v)))
+    .join('');
+
+  return `
+  <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#0f172a;padding:20px">
+    <div style="background:linear-gradient(135deg,#08111f 0%,#10233f 100%);border-radius:18px;padding:24px;color:#fff">
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start">
+        <div>
+          <div style="font-size:28px;font-weight:900;line-height:1.1">${esc(name)}</div>
+          <div style="font-size:14px;color:#d7e2f5;margin-top:8px">${esc(profissao)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">${tags.join('')}</div>
+        </div>
+        <div style="min-width:180px;text-align:right">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#a8bddf">Dossiê operacional</div>
+          <div style="font-size:12px;color:#d7e2f5;margin-top:6px">Gerado em ${esc(new Date().toLocaleString('pt-BR'))}</div>
+          <div style="font-size:12px;color:#d7e2f5;margin-top:4px">Score ${esc(score)}</div>
+        </div>
+      </div>
+    </div>
+
+    ${pdfSection('Resumo executivo', [
+      pdfField('Cidade atual', cidade),
+      pdfField('Alemão', alemao),
+      pdfField('Inglês', ingles),
+      pdfField('Documentação', docs),
+      pdfField('Prontidão', prontidao),
+      pdfField('Responsável interno', responsavel),
+      pdfField('Próxima ação', ops?.acao || ''),
+      pdfField('Resumo RH', resumoRh || '')
+    ].join(''))}
+
+    ${pdfSection('Disponibilidade, mobilidade e viabilidade', [
+      pdfField('Disponibilidade para mudança', disponibilidade),
+      pdfField('Trabalho atual', workCurrent),
+      pdfField('Status migratório', statusMigr),
+      pdfField('Expectativa salarial', expectativa),
+      pdfField('Rede de apoio', redeApoio),
+      pdfField('Mudança sozinho ou com família', mudancaFamilia),
+      pdfField('Experiência internacional prévia', expIntl),
+      pdfField('Restrições objetivas', restricoes)
+    ].join(''))}
+
+    ${pdfSection('Fit técnico e motivação', [
+      pdfField('Aderência técnica', aderencia),
+      pdfField('Motivação', motivacao),
+      pdfField('Readiness internacional', fv(c,'readiness_internacional') || ''),
+      pdfField('Risco de desistência', fv(c,'risco_desistencia') || ''),
+      pdfField('Maturidade profissional', fv(c,'maturidade_profissional_avaliada') || ''),
+      pdfField('Flexibilidade e adaptação', fv(c,'flexibilidade_adaptacao_avaliada') || ''),
+      pdfField('Autonomia prática', fv(c,'autonomia_pratica') || ''),
+      pdfField('Faixa de atuação aceitável', fv(c,'faixa_atuacao_aceitavel') || '')
+    ].join(''))}
+
+    ${pdfSection('Employers vinculados', employerTags, 'Vínculos N:N e empregador principal, quando existirem.')}
+
+    ${pdfSection('Entrevista estruturada — cabeçalho', interviewFields.filter(([,v]) => String(v || '').trim()).map(([k,v]) => pdfField(k, v)).join('') || pdfField('Entrevista', 'Nenhum registro estruturado encontrado.'))}
+
+    ${detailedSections.join('')}
+
+    ${avaliacaoCards ? pdfSection('Avaliação interna do entrevistador', avaliacaoCards) : ''}
+
+    ${extraRows ? pdfSection('Outros campos do cadastro', extraRows, 'Lista automática de campos não vazios existentes no cadastro do candidato.') : ''}
+  </div>`;
+}
+
+async function downloadCandidatePdf() {
+  if (!S.currentCand) {
+    toast('Abra um candidato antes de gerar o PDF.', 'warn');
+    return;
+  }
+  if (typeof html2pdf === 'undefined') {
+    toast('Biblioteca de PDF não carregada. Recarregue a página.', 'err');
+    return;
+  }
+  const btn = document.getElementById('cm-pdf-btn');
+  const prev = btn ? btn.innerHTML : '';
+  let wrapper = null;
+  try {
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Gerando PDF'; }
+    let interview = getActiveInterviewRecord();
+    if (!interview) {
+      interview = await loadCandidateInterview(S.currentCand);
+      if (interview) S.currentInterview = interview;
+    }
+    wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '-100000px';
+    wrapper.style.top = '0';
+    wrapper.style.width = '980px';
+    wrapper.innerHTML = buildCandidatePdfHtml(S.currentCand, interview);
+    document.body.appendChild(wrapper);
+
+    const safeName = String(fv(S.currentCand,'Nome completo') || 'candidato')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-zA-Z0-9]+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .toLowerCase() || 'candidato';
+
+    await html2pdf().set({
+      margin: [8, 8, 8, 8],
+      filename: `${safeName}_dossie.pdf`,
+      image: { type: 'jpeg', quality: 0.96 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#f4f7fb' },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] }
+    }).from(wrapper.firstElementChild).save();
+
+    toast('PDF do candidato gerado com sucesso.', 'ok');
+  } catch (e) {
+    console.error('[PDF] erro ao gerar dossiê do candidato:', e);
+    toast(`Falha ao gerar PDF: ${e?.message || e}`, 'err', 7000);
+  } finally {
+    if (wrapper?.remove) wrapper.remove();
+    if (btn) { btn.disabled = false; btn.innerHTML = prev || '🧾 PDF'; }
+  }
 }
 
 function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; }
