@@ -1837,6 +1837,7 @@ details.bi-secondary {
 .emp-item.warn.active{border-color:rgba(245,158,11,.62);box-shadow:0 0 0 1px rgba(245,158,11,.18) inset}
 .emp-item-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .emp-item-name{font-size:13.5px;font-weight:800;color:#f4f7ff;line-height:1.35}
+.emp-item-sub{font-size:10.5px;color:#8fa1bf;line-height:1.45}
 .emp-count{font-size:11px;font-weight:800;color:#f5f8ff;background:#111b31;border:1px solid rgba(103,126,170,.18);border-radius:999px;padding:2px 8px}
 .emp-mini{display:flex;flex-wrap:wrap;gap:6px}
 .emp-mini span{font-size:10.5px;color:#c4d0e8;background:#10192d;border:1px solid rgba(103,126,170,.16);border-radius:999px;padding:2px 7px}
@@ -1845,6 +1846,16 @@ details.bi-secondary {
 .emp-main-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .emp-main-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .emp-stat{padding:11px 12px;border-radius:14px;background:#0f172a;border:1px solid rgba(103,126,170,.16)}
+.emp-employer-brief{padding:12px 13px;border-radius:14px;background:linear-gradient(180deg,#0f172a,#0d1526);border:1px solid rgba(103,126,170,.18);display:flex;flex-direction:column;gap:10px}
+.emp-employer-brief-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.emp-employer-brief-title{font-size:12px;font-weight:900;color:#eef4ff}
+.emp-employer-brief-sub{font-size:10.5px;color:#8fa1bf;margin-top:3px;line-height:1.45}
+.emp-employer-chips{display:flex;flex-wrap:wrap;gap:6px}
+.emp-employer-chip{font-size:10.5px;color:#d1dcf2;padding:3px 8px;border-radius:999px;background:#10192d;border:1px solid rgba(103,126,170,.16)}
+.emp-employer-brief-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.emp-employer-mini{padding:10px 11px;border-radius:12px;background:#10192d;border:1px solid rgba(103,126,170,.14)}
+.emp-employer-mini-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#90a3c6}
+.emp-employer-mini-val{font-size:12px;color:#eef4ff;font-weight:700;margin-top:5px;line-height:1.5;white-space:pre-wrap}
 .emp-stat-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#92a3c2}
 .emp-stat-val{font-size:20px;font-weight:900;color:#f4f7ff;margin-top:4px}
 .emp-tabs{display:flex;gap:8px;flex-wrap:wrap}
@@ -1880,7 +1891,8 @@ details.bi-secondary {
 .emp-section-note{font-size:11px;color:#8fa1bf}
 .emp-create{white-space:nowrap}
 @media (max-width: 1480px){.emp-hub{grid-template-columns:280px minmax(360px,1fr) 360px}}
-@media (max-width: 1120px){.emp-hub{grid-template-columns:1fr}.emp-pane{min-height:auto}.emp-scroll{max-height:none}.emp-main-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width: 1120px){.emp-hub{grid-template-columns:1fr}.emp-pane{min-height:auto}.emp-scroll{max-height:none}.emp-main-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.emp-employer-brief-grid{grid-template-columns:1fr 1fr}}
+@media (max-width: 720px){.emp-employer-brief-grid{grid-template-columns:1fr}}
 
 /* ───────── Employer Modal ───────── */
 .emp-modal-overlay{position:fixed;inset:0;background:rgba(4,6,14,.82);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
@@ -5448,6 +5460,34 @@ function renderEmployerHub(el) {
     ? `<button type="button" class="emp-link" data-emp-action="edit-employer" data-employer-id="${esc(selectedGroup.employerId || '')}" data-employer-name="${esc(selectedGroup.name)}" title="Editar este empregador">✏️ Editar</button>`
     : '';
 
+  const selectedEmployer = selectedGroup?.employerObj || null;
+  const employerBrief = selectedEmployer ? (() => {
+    const chips = [
+      selectedEmployer.tipo ? `Tipo: ${selectedEmployer.tipo}` : '',
+      selectedEmployer.status ? `Status: ${selectedEmployer.status}` : '',
+      selectedEmployer.area_atuacao ? `Área: ${selectedEmployer.area_atuacao}` : '',
+      selectedEmployer.cidade ? `Cidade: ${selectedEmployer.cidade}` : '',
+      selectedEmployer.nivel_alemao_minimo ? `Alemão mín.: ${selectedEmployer.nivel_alemao_minimo}` : '',
+      Number.isFinite(Number(selectedEmployer.vagas_abertas)) ? `Vagas: ${Number(selectedEmployer.vagas_abertas)}` : ''
+    ].filter(Boolean);
+    const mini = (lbl, val) => `<div class="emp-employer-mini"><div class="emp-employer-mini-lbl">${esc(lbl)}</div><div class="emp-employer-mini-val">${esc(String(val || '—'))}</div></div>`;
+    return `<div class="emp-employer-brief">
+      <div class="emp-employer-brief-top">
+        <div>
+          <div class="emp-employer-brief-title">Resumo rápido do empregador</div>
+          <div class="emp-employer-brief-sub">Principais dados operacionais visíveis sem abrir a edição.</div>
+        </div>
+        ${selectedEmployer.contato_principal || selectedEmployer.email_principal ? `<div class="emp-employer-brief-sub" style="text-align:right">${esc([selectedEmployer.contato_principal, selectedEmployer.email_principal].filter(Boolean).join(' · '))}</div>` : ''}
+      </div>
+      ${chips.length ? `<div class="emp-employer-chips">${chips.map(c => `<span class="emp-employer-chip">${esc(c)}</span>`).join('')}</div>` : ''}
+      <div class="emp-employer-brief-grid">
+        ${mini('Perfis buscados', selectedEmployer.perfis_buscados || selectedEmployer.descricao_resumida || '—')}
+        ${mini('Requisitos principais', selectedEmployer.requisitos_principais || selectedEmployer.subsetor || '—')}
+        ${mini('Descrição / observação', selectedEmployer.descricao_operacional || selectedEmployer.observacoes_internas || '—')}
+      </div>
+    </div>`;
+  })() : '';
+
   el.innerHTML = `
     <div class="emp-hub">
 
@@ -5477,6 +5517,7 @@ function renderEmployerHub(el) {
                 <div class="emp-item-name">${esc(g.name)}</div>
                 <span class="emp-count">${g.total}</span>
               </div>
+              ${((g.employerType || g.employerObj?.cidade || g.employerObj?.status) && g.kind !== 'unassigned') ? `<div class="emp-item-sub">${esc([g.employerType, g.employerObj?.cidade, g.employerObj?.status].filter(Boolean).join(' · '))}</div>` : ''}
               <div class="emp-mini">
                 <span>${g.aguardando} aguardando</span>
                 <span>${g.aprovados} aprovados</span>
@@ -5508,6 +5549,7 @@ function renderEmployerHub(el) {
             <div class="emp-stat"><div class="emp-stat-lbl">Aprovados</div><div class="emp-stat-val">${selectedGroup.aprovados}</div></div>
             <div class="emp-stat"><div class="emp-stat-lbl">Contratados</div><div class="emp-stat-val">${selectedGroup.contratados}</div></div>
           </div>` : ''}
+          ${employerBrief}
           <div class="emp-toolbar">
             <input class="emp-search" data-emp-input="candidates" placeholder="Pesquisar candidato, profissão, cidade..." value="${esc(S.employerHub?.candidateSearch || '')}">
             <select class="emp-select" data-emp-select="quickFilter">
@@ -8018,11 +8060,19 @@ function pdfBadge(label, tone='blue') {
   return `<span style="display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:${bg};border:1px solid ${bd};color:${fg};font-size:11px;font-weight:800;line-height:1">${esc(label || '—')}</span>`;
 }
 
+function pdfTrimValue(value, maxLen=1400) {
+  const raw = Array.isArray(value) ? value.join(', ') : String(value || '').trim();
+  if (!raw) return '';
+  const normalized = raw.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  if (normalized.length <= maxLen) return normalized;
+  return normalized.slice(0, maxLen).trim() + '…';
+}
+
 function pdfField(label, value) {
-  const v = String(value || '').trim();
+  const v = pdfTrimValue(value);
   return `<div style="padding:10px 12px;border:1px solid #dbe4f0;border-radius:12px;background:#fff">
     <div style="font-size:11px;font-weight:800;color:#5b6b84;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px">${esc(label)}</div>
-    <div style="font-size:12.5px;line-height:1.55;color:#122033;white-space:pre-wrap">${v ? esc(v) : '—'}</div>
+    <div style="font-size:12.5px;line-height:1.55;color:#122033;white-space:pre-wrap;word-break:break-word">${v ? esc(v) : '—'}</div>
   </div>`;
 }
 
@@ -8043,11 +8093,16 @@ function shouldIncludeCandidatePdfField(key, value, usedSet) {
   if (typeof value === 'object') return false;
   const k = String(key || '').trim();
   if (!k) return false;
+  const display = rhFieldDisplayName(k);
   const norm = rhNormLabel(k);
-  if (!String(value).trim()) return false;
-  if (usedSet && usedSet.has(norm)) return false;
-  if (/^(id|_score|_rowkey|_idx|_dirty|active|ativo|entrevista_preliminar_id|historico_operacional|created_at|updated_at|ultima_atualizacao|atualizado por|folder_id|file_id|webviewlink|drive_|pdf_|arquivo_origem|campos_sincronizados|conflitos_detectados)$/i.test(k)) return false;
+  const displayNorm = rhNormLabel(display);
+  const trimmed = pdfTrimValue(value, 1600);
+  if (!trimmed) return false;
+  if (usedSet && (usedSet.has(norm) || usedSet.has(displayNorm))) return false;
+  if (/^(id|_score|_rowkey|_idx|_dirty|active|ativo|entrevista_preliminar_id|historico_operacional|created_at|updated_at|ultima_atualizacao|atualizado por|folder_id|file_id|webviewlink|drive_|pdf_|arquivo_origem|campos_sincronizados|conflitos_detectados|raw_html|raw_text|html|json)$/i.test(k)) return false;
   if (/^(meta|respostas|avaliacao|derivados)$/i.test(k)) return false;
+  if (/(^|_)(texto|raw|html|json|payload|snapshot|original|importado|debug)(_|$)/i.test(k)) return false;
+  if (/^(entrevista_preliminar_|rh_|dados_basicos_|experiencia_profissional_|situacao_atual_|idiomas_|motivacao_|preferencias_|integracao_|documentacao_|mensagem_final_)/i.test(k)) return false;
   return true;
 }
 
@@ -8148,13 +8203,55 @@ function buildCandidatePdfHtml(c, interview) {
     'nome completo','status pipeline','perfil','profissao principal','profissão','cidade atual','nível de alemão','nível alemão','nível de inglês',
     'documentação completa','resumo rh curto','responsável interno','avaliador','expectativa salarial','status migratório','status migratorio atual',
     'disponibilidade para mudança','restrições objetivas','motivação real','aderência técnica avaliada','experiência internacional prévia',
-    'rede de apoio','mudança sozinho ou com família','pronto para employer'
+    'rede de apoio','mudança sozinho ou com família','pronto para employer','trabalho atual','readiness internacional',
+    'risco de desistência','maturidade profissional','flexibilidade e adaptação','autonomia prática','faixa de atuação aceitável',
+    'data da entrevista','entrevistador(a)','empresa / cliente','posição / vaga','estado civil / filhos','tipo de vaga','diploma','observação inicial','conclusão da entrevista'
   ].map(rhNormLabel));
 
+  const complementaryFields = [
+    ['Telefone', fv(c,'Telefone','telefone')],
+    ['E-mail', fv(c,'E-mail','email')],
+    ['Idade', fv(c,'Idade','idade')],
+    ['País de origem', fv(c,'País de origem','pais_origem')],
+    ['Formação principal', fv(c,'Curso de Graduação','Diploma','diploma')],
+    ['Curso / pós-graduação', fv(c,'Curso','Pós-graduação','pos_graduacao')],
+    ['Universidade', fv(c,'Universidade','universidade')],
+    ['Idiomas adicionais', fv(c,'Língua Estrangeira','idiomas_adicionais','idiomas')],
+    ['Passaporte', fv(c,'Número do passaporte','numero_passaporte')],
+    ['Documento profissional', fv(c,'Documento profissional (COREN, CRM, CREA, outro)','documento_profissional')],
+    ['Pendência documental crítica', fv(c,'Pendência documental crítica','pendencia_documental_critica')],
+    ['Resumo profissional', fv(c,'Resumo profissional','resumo_profissional')],
+    ['Referência', fv(c,'Referência','referencia')],
+    ['Arquivo / Fonte interna', fv(c,'CV/ Arquivo DOC','Arquivo / Fonte interna','cv_arquivo_doc')]
+  ];
+  const complementarySeen = new Set();
+  const complementaryCards = complementaryFields
+    .filter(([label, value]) => {
+      const val = pdfTrimValue(value, 900);
+      if (!val) return false;
+      const norm = rhNormLabel(label);
+      if (complementarySeen.has(norm)) return false;
+      complementarySeen.add(norm);
+      used.add(norm);
+      return true;
+    })
+    .map(([label, value]) => pdfField(label, value))
+    .join('');
+
+  const extraSeen = new Set();
   const extraRows = Object.entries(c || {})
     .filter(([k,v]) => shouldIncludeCandidatePdfField(k, v, used))
     .sort((a,b) => String(a[0]).localeCompare(String(b[0]), 'pt-BR'))
-    .map(([k,v]) => pdfField(rhFieldDisplayName(k), Array.isArray(v) ? v.join(', ') : String(v)))
+    .filter(([k,v]) => {
+      const displayNorm = rhNormLabel(rhFieldDisplayName(k));
+      const trimmed = pdfTrimValue(v, 900);
+      if (!trimmed || extraSeen.has(displayNorm)) return false;
+      extraSeen.add(displayNorm);
+      used.add(displayNorm);
+      return true;
+    })
+    .slice(0, 16)
+    .map(([k,v]) => pdfField(rhFieldDisplayName(k), v))
     .join('');
 
   return `
@@ -8215,7 +8312,9 @@ function buildCandidatePdfHtml(c, interview) {
 
     ${avaliacaoCards ? pdfSection('Avaliação interna do entrevistador', avaliacaoCards) : ''}
 
-    ${extraRows ? pdfSection('Outros campos do cadastro', extraRows, 'Lista automática de campos não vazios existentes no cadastro do candidato.') : ''}
+    ${complementaryCards ? pdfSection('Informações complementares do cadastro', complementaryCards, 'Campos relevantes do cadastro principal, sem repetição desnecessária.') : ''}
+
+    ${extraRows ? pdfSection('Campos adicionais relevantes', extraRows, 'Seleção automática e deduplicada de campos extras não vazios.') : ''}
   </div>`;
 }
 
