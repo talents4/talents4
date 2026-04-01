@@ -5063,7 +5063,7 @@ async function exportEmployerXLSX() {
   if (btn) { btn.textContent = '⏳ Gerando...'; btn.disabled = true; }
   try {
     // Biblioteca usada no frontend:
-    // <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    // Biblioteca XLSX via CDN já deve estar carregada no HTML principal.
     // Se você mover este export para outro HTML, copie essa linha também.
     if (typeof XLSX === 'undefined') {
       toast('❌ Biblioteca XLSX não carregada. Recarregue a página.', 'err');
