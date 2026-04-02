@@ -5652,6 +5652,7 @@ function renderEmployerHub(el) {
 
       <!-- ── COLUNA 2: Candidatos do empregador ── -->
       <section class="emp-pane">
+        <div class="emp-scroll">
         <div class="emp-main-top">
           <div class="emp-main-head">
             <div>
@@ -5684,7 +5685,7 @@ function renderEmployerHub(el) {
             ${tabs.map(t => `<button type="button" class="emp-tab ${tab===t.key?'active':''}" data-emp-action="set-tab" data-tab="${esc(t.key)}">${esc(t.label)} · ${t.count}</button>`).join('')}
           </div>
         </div>
-        <div class="emp-scroll"><div class="emp-cands">
+        <div class="emp-cands">
           ${(filteredEntries && filteredEntries.length) ? filteredEntries.map(entry => {
             const c = entry.candidate;
             const match = entry.match;
