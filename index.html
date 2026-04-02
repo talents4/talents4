@@ -2737,6 +2737,7 @@ const S = {
   currentCand: null,
   pendingEdits: {},
   rhInterviewDraft: null,
+  rhInterviewDirty: false,
   currentInterview: null,
   page: 1, pageSize: 80,
   filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null },
@@ -2942,6 +2943,7 @@ const INTERVIEW_META_EDIT_MAP = {
 function splitInterviewMetaEdits(fields) {
   const candidateFields = { ...(fields || {}) };
   const interviewMeta = {};
+  delete candidateFields.__rh_dirty__;
   Object.entries(INTERVIEW_META_EDIT_MAP).forEach(([fieldName, metaKey]) => {
     if (!Object.prototype.hasOwnProperty.call(candidateFields, fieldName)) return;
     const raw = candidateFields[fieldName];
@@ -5522,10 +5524,13 @@ function renderEmployerHub(el) {
     const s = String(val || '').trim();
     const baseCls = kind === 'box' ? `emp-box-val ${cls || ''}`.trim() : 'emp-text-val';
     if (!s) return `<div class="${baseCls}" style="color:var(--txt3)">—</div>`;
-    const limit = kind === 'box' ? 120 : 220;
-    const lines = kind === 'box' ? 4 : 5;
-    if (s.length <= limit) return `<div class="${baseCls}">${esc(s)}</div>`;
-    const preview = empPreview(s, limit);
+    const normalized = s.replace(/\s+/g,' ').trim();
+    const lineBreaks = (s.match(/\n/g) || []).length;
+    const limit = kind === 'box' ? 80 : 180;
+    const lines = kind === 'box' ? 3 : 4;
+    const shouldCollapse = normalized.length > limit || lineBreaks > (kind === 'box' ? 1 : 2);
+    if (!shouldCollapse) return `<div class="${baseCls}">${esc(s)}</div>`;
+    const preview = empPreview(normalized, limit);
     return `<details class="emp-mini-expand">
       <summary>
         <div class="emp-mini-preview ${kind === 'box' ? cls : ''}" style="-webkit-line-clamp:${lines}">${esc(preview)}</div>
@@ -5673,6 +5678,7 @@ function renderEmployerHub(el) {
                     <span>${esc(prof)}</span>
                     <span>${esc(al)}</span>
                     <span>${esc(pf)}</span>
+                    ${entTipo?`<span>${esc(entTipo)}</span>`:''}
                     ${candMatchCount > 1 ? `<span style="color:var(--teal)">+${candMatchCount} employers</span>` : ''}
                   </div>
                 </div>
@@ -5734,6 +5740,7 @@ function renderEmployerHub(el) {
                 ${box('Pronto para employer', prontoEmp)}
                 ${box('Profissão / Área-alvo', fv(current,'Profissão principal','Profissão'))}
                 ${box('Cidade atual', fv(current,'Cidade atual'))}
+                ${box('Tipo de vaga', entTipo || fv(current,'tipo_vaga_preferido'))}
                 ${box('Responsável interno', fv(current,'Avaliador','Responsável interno','responsavel_interno'))}
                 ${box('Score', String(current._score||0))}
               </div>
@@ -6739,6 +6746,34 @@ function rhPreviewText(raw, maxChars=180) {
   return cut.replace(/\s+\S*$/, '').trim() + '…';
 }
 
+function rhSetDeep(target, path, value) {
+  if (!target || !path) return;
+  const parts = String(path).split('.').filter(Boolean);
+  let cur = target;
+  for (let i = 0; i < parts.length - 1; i++) {
+    const p = parts[i];
+    if (!cur[p] || typeof cur[p] !== 'object') cur[p] = {};
+    cur = cur[p];
+  }
+  cur[parts[parts.length - 1]] = value;
+}
+
+function rhEditableField(label, value, path, full=false, mode='respostas') {
+  const cls = full ? 'field-group fg-full' : 'field-group';
+  const v = String(value || '').trim();
+  const longText = full || v.length > 120 || (v.match(/\n/g) || []).length >= 2;
+  if (longText) {
+    return `<div class="${cls}">
+      <label class="field-lbl">${label}</label>
+      <textarea class="field-textarea" ${mode === 'meta' ? `data-rh-meta="${esc(path)}"` : `data-rh-path="${esc(path)}"`} oninput="onEdit(this)">${esc(v)}</textarea>
+    </div>`;
+  }
+  return `<div class="${cls}">
+    <label class="field-lbl">${label}</label>
+    <input class="field-input" type="text" ${mode === 'meta' ? `data-rh-meta="${esc(path)}"` : `data-rh-path="${esc(path)}"`} value="${esc(v)}" oninput="onEdit(this)">
+  </div>`;
+}
+
 function rhStaticField(label, value, full=false) {
   const cls = full ? 'field-group fg-full' : 'field-group';
   const v = String(value || '').trim();
@@ -6958,97 +6993,97 @@ function buildPanel(tabId, c) {
 
         ${rhSectionCard('Cabeçalho da entrevista', `
           <div class="field-grid">
-            ${rhStaticField('Data da entrevista', m.data_entrevista)}
-            ${rhStaticField('Entrevistador(a)', m.entrevistador)}
-            ${rhStaticField('Empresa / cliente', m.empresa_cliente)}
-            ${rhStaticField('Posição / vaga', m.posicao_vaga)}
-            ${rhStaticField('Tipo de vaga', m.tipo_vaga)}
-            ${rhStaticField('Nível de alemão exigido', m.nivel_alemao_exigido)}
-            ${rhStaticField('Observação inicial', m.observacao_inicial, true)}
+            ${rhEditableField('Data da entrevista', m.data_entrevista, 'data_entrevista', false, 'meta')}
+            ${rhEditableField('Entrevistador(a)', m.entrevistador, 'entrevistador', false, 'meta')}
+            ${rhEditableField('Empresa / cliente', m.empresa_cliente, 'empresa_cliente', false, 'meta')}
+            ${rhEditableField('Posição / vaga', m.posicao_vaga, 'posicao_vaga', true, 'meta')}
+            ${rhEditableField('Tipo de vaga', m.tipo_vaga, 'tipo_vaga', false, 'meta')}
+            ${rhEditableField('Nível de alemão exigido', m.nivel_alemao_exigido, 'nivel_alemao_exigido', false, 'meta')}
+            ${rhEditableField('Observação inicial', m.observacao_inicial, 'observacao_inicial', true, 'meta')}
           </div>
         `)}
 
         ${rhSectionCard('1. Dados básicos e identificação', `
           <div class="field-grid">
-            ${rhStaticField('Nome, idade e cidade atual', rhDeepGet(r,'dados_basicos_identificacao.nome_idade_cidade_atual'), true)}
-            ${rhStaticField('Formação acadêmica e técnica', rhDeepGet(r,'dados_basicos_identificacao.formacao_academica_tecnica'), true)}
-            ${rhStaticField('Certificados ou diplomas disponíveis', rhDeepGet(r,'dados_basicos_identificacao.certificados_diplomas_disponiveis'), true)}
-            ${rhStaticField('Documento e nacionalidade', rhDeepGet(r,'dados_basicos_identificacao.documento_nacionalidade'))}
-            ${rhStaticField('Contato e organização pessoal', rhDeepGet(r,'dados_basicos_identificacao.contato_organizacao_pessoal'))}
+            ${rhEditableField('Nome, idade e cidade atual', rhDeepGet(r,'dados_basicos_identificacao.nome_idade_cidade_atual'), 'dados_basicos_identificacao.nome_idade_cidade_atual', true)}
+            ${rhEditableField('Formação acadêmica e técnica', rhDeepGet(r,'dados_basicos_identificacao.formacao_academica_tecnica'), 'dados_basicos_identificacao.formacao_academica_tecnica', true)}
+            ${rhEditableField('Certificados ou diplomas disponíveis', rhDeepGet(r,'dados_basicos_identificacao.certificados_diplomas_disponiveis'), 'dados_basicos_identificacao.certificados_diplomas_disponiveis', true)}
+            ${rhEditableField('Documento e nacionalidade', rhDeepGet(r,'dados_basicos_identificacao.documento_nacionalidade'), 'dados_basicos_identificacao.documento_nacionalidade', true)}
+            ${rhEditableField('Contato e organização pessoal', rhDeepGet(r,'dados_basicos_identificacao.contato_organizacao_pessoal'), 'dados_basicos_identificacao.contato_organizacao_pessoal', true)}
           </div>
         `)}
 
         ${rhSectionCard('2. Experiência profissional', `
           <div class="field-grid">
-            ${rhStaticField('Tempo total de experiência', rhDeepGet(r,'experiencia_profissional.tempo_total_experiencia'))}
-            ${rhStaticField('Experiências principais', rhDeepGet(r,'experiencia_profissional.experiencias_principais'), true)}
-            ${rhStaticField('Projeto ou experiência preferida', rhDeepGet(r,'experiencia_profissional.projeto_ou_experiencia_preferida'), true)}
-            ${rhStaticField('Aderência técnica à vaga', rhDeepGet(r,'experiencia_profissional.aderencia_tecnica_vaga'))}
-            ${rhStaticField('Pontos técnicos fortes e fracos', rhDeepGet(r,'experiencia_profissional.pontos_tecnicos_fortes_fracos'), true)}
+            ${rhEditableField('Tempo total de experiência', rhDeepGet(r,'experiencia_profissional.tempo_total_experiencia'), 'experiencia_profissional.tempo_total_experiencia')}
+            ${rhEditableField('Experiências principais', rhDeepGet(r,'experiencia_profissional.experiencias_principais'), 'experiencia_profissional.experiencias_principais', true)}
+            ${rhEditableField('Projeto ou experiência preferida', rhDeepGet(r,'experiencia_profissional.projeto_ou_experiencia_preferida'), 'experiencia_profissional.projeto_ou_experiencia_preferida', true)}
+            ${rhEditableField('Aderência técnica à vaga', rhDeepGet(r,'experiencia_profissional.aderencia_tecnica_vaga'), 'experiencia_profissional.aderencia_tecnica_vaga', true)}
+            ${rhEditableField('Pontos técnicos fortes e fracos', rhDeepGet(r,'experiencia_profissional.pontos_tecnicos_fortes_fracos'), 'experiencia_profissional.pontos_tecnicos_fortes_fracos', true)}
           </div>
         `)}
 
         ${rhSectionCard('3. Situação atual e disponibilidade', `
           <div class="field-grid">
-            ${rhStaticField('Trabalho atual', rhDeepGet(r,'situacao_atual_disponibilidade.trabalho_atual'), true)}
-            ${rhStaticField('Disponibilidade para mudança', rhDeepGet(r,'situacao_atual_disponibilidade.disponibilidade_mudanca'))}
-            ${rhStaticField('Status migratório', rhDeepGet(r,'situacao_atual_disponibilidade.status_migratorio'))}
-            ${rhStaticField('Prazo realista de saída', rhDeepGet(r,'situacao_atual_disponibilidade.prazo_realista_saida'))}
-            ${rhStaticField('Flexibilidade geográfica', rhDeepGet(r,'situacao_atual_disponibilidade.flexibilidade_geografica'))}
+            ${rhEditableField('Trabalho atual', rhDeepGet(r,'situacao_atual_disponibilidade.trabalho_atual'), 'situacao_atual_disponibilidade.trabalho_atual', true)}
+            ${rhEditableField('Disponibilidade para mudança', rhDeepGet(r,'situacao_atual_disponibilidade.disponibilidade_mudanca'), 'situacao_atual_disponibilidade.disponibilidade_mudanca', true)}
+            ${rhEditableField('Status migratório', rhDeepGet(r,'situacao_atual_disponibilidade.status_migratorio'), 'situacao_atual_disponibilidade.status_migratorio', true)}
+            ${rhEditableField('Prazo realista de saída', rhDeepGet(r,'situacao_atual_disponibilidade.prazo_realista_saida'), 'situacao_atual_disponibilidade.prazo_realista_saida', true)}
+            ${rhEditableField('Flexibilidade geográfica', rhDeepGet(r,'situacao_atual_disponibilidade.flexibilidade_geografica'), 'situacao_atual_disponibilidade.flexibilidade_geografica', true)}
           </div>
         `)}
 
         ${rhSectionCard('4. Idiomas', `
           <div class="field-grid">
-            ${rhStaticField('Nível de alemão', rhDeepGet(r,'idiomas.nivel_alemao'))}
-            ${rhStaticField('Nível de inglês', rhDeepGet(r,'idiomas.nivel_ingles'))}
-            ${rhStaticField('Outras línguas', rhDeepGet(r,'idiomas.outras_linguas'))}
-            ${rhStaticField('Comprovação', rhDeepGet(r,'idiomas.comprovacao'))}
-            ${rhStaticField('Teste prático', rhDeepGet(r,'idiomas.teste_pratico'))}
+            ${rhEditableField('Nível de alemão', rhDeepGet(r,'idiomas.nivel_alemao'), 'idiomas.nivel_alemao')}
+            ${rhEditableField('Nível de inglês', rhDeepGet(r,'idiomas.nivel_ingles'), 'idiomas.nivel_ingles')}
+            ${rhEditableField('Outras línguas', rhDeepGet(r,'idiomas.outras_linguas'), 'idiomas.outras_linguas')}
+            ${rhEditableField('Comprovação', rhDeepGet(r,'idiomas.comprovacao'), 'idiomas.comprovacao', true)}
+            ${rhEditableField('Teste prático', rhDeepGet(r,'idiomas.teste_pratico'), 'idiomas.teste_pratico', true)}
           </div>
         `)}
 
         ${rhSectionCard('5. Motivação e objetivo profissional', `
           <div class="field-grid">
-            ${rhStaticField('Por que Alemanha', rhDeepGet(r,'motivacao_objetivo_profissional.porque_alemanha'), true)}
-            ${rhStaticField('Motivação para a vaga específica', rhDeepGet(r,'motivacao_objetivo_profissional.motivacao_vaga_especifica'), true)}
-            ${rhStaticField('Plano de carreira', rhDeepGet(r,'motivacao_objetivo_profissional.plano_carreira'))}
-            ${rhStaticField('Coerência da candidatura', rhDeepGet(r,'motivacao_objetivo_profissional.coerencia_candidatura'))}
+            ${rhEditableField('Por que Alemanha', rhDeepGet(r,'motivacao_objetivo_profissional.porque_alemanha'), 'motivacao_objetivo_profissional.porque_alemanha', true)}
+            ${rhEditableField('Motivação para a vaga específica', rhDeepGet(r,'motivacao_objetivo_profissional.motivacao_vaga_especifica'), 'motivacao_objetivo_profissional.motivacao_vaga_especifica', true)}
+            ${rhEditableField('Plano de carreira', rhDeepGet(r,'motivacao_objetivo_profissional.plano_carreira'), 'motivacao_objetivo_profissional.plano_carreira', true)}
+            ${rhEditableField('Coerência da candidatura', rhDeepGet(r,'motivacao_objetivo_profissional.coerencia_candidatura'), 'motivacao_objetivo_profissional.coerencia_candidatura', true)}
           </div>
         `)}
 
         ${rhSectionCard('6. Preferências profissionais', `
           <div class="field-grid">
-            ${rhStaticField('Tipo de vaga preferido', rhDeepGet(r,'preferencias_profissionais.tipo_vaga_preferido'))}
-            ${rhStaticField('Abertura para função técnica ou manual', rhDeepGet(r,'preferencias_profissionais.abertura_funcao_tecnica_manual'))}
-            ${rhStaticField('Faixa de atuação aceitável', rhDeepGet(r,'preferencias_profissionais.faixa_atuacao_aceitavel'), true)}
-            ${rhStaticField('Turnos e rotina', rhDeepGet(r,'preferencias_profissionais.turnos_rotina'))}
-            ${rhStaticField('Remuneração e expectativa', rhDeepGet(r,'preferencias_profissionais.remuneracao_expectativa'))}
+            ${rhEditableField('Tipo de vaga preferido', rhDeepGet(r,'preferencias_profissionais.tipo_vaga_preferido'), 'preferencias_profissionais.tipo_vaga_preferido')}
+            ${rhEditableField('Abertura para função técnica ou manual', rhDeepGet(r,'preferencias_profissionais.abertura_funcao_tecnica_manual'), 'preferencias_profissionais.abertura_funcao_tecnica_manual', true)}
+            ${rhEditableField('Faixa de atuação aceitável', rhDeepGet(r,'preferencias_profissionais.faixa_atuacao_aceitavel'), 'preferencias_profissionais.faixa_atuacao_aceitavel', true)}
+            ${rhEditableField('Turnos e rotina', rhDeepGet(r,'preferencias_profissionais.turnos_rotina'), 'preferencias_profissionais.turnos_rotina', true)}
+            ${rhEditableField('Remuneração e expectativa', rhDeepGet(r,'preferencias_profissionais.remuneracao_expectativa'), 'preferencias_profissionais.remuneracao_expectativa', true)}
           </div>
         `)}
 
         ${rhSectionCard('7. Integração, família e adaptação', `
           <div class="field-grid">
-            ${rhStaticField('Rede de apoio', rhDeepGet(r,'integracao_familia_adaptacao.rede_apoio'))}
-            ${rhStaticField('Mudança sozinho ou com família', rhDeepGet(r,'integracao_familia_adaptacao.mudanca_sozinho_ou_familia'))}
-            ${rhStaticField('Experiência internacional prévia', rhDeepGet(r,'integracao_familia_adaptacao.experiencia_internacional_previa'))}
-            ${rhStaticField('Adaptação cultural', rhDeepGet(r,'integracao_familia_adaptacao.adaptacao_cultural'), true)}
-            ${rhStaticField('Autonomia prática', rhDeepGet(r,'integracao_familia_adaptacao.autonomia_pratica'))}
+            ${rhEditableField('Rede de apoio', rhDeepGet(r,'integracao_familia_adaptacao.rede_apoio'), 'integracao_familia_adaptacao.rede_apoio')}
+            ${rhEditableField('Mudança sozinho ou com família', rhDeepGet(r,'integracao_familia_adaptacao.mudanca_sozinho_ou_familia'), 'integracao_familia_adaptacao.mudanca_sozinho_ou_familia')}
+            ${rhEditableField('Experiência internacional prévia', rhDeepGet(r,'integracao_familia_adaptacao.experiencia_internacional_previa'), 'integracao_familia_adaptacao.experiencia_internacional_previa', true)}
+            ${rhEditableField('Adaptação cultural', rhDeepGet(r,'integracao_familia_adaptacao.adaptacao_cultural'), 'integracao_familia_adaptacao.adaptacao_cultural', true)}
+            ${rhEditableField('Autonomia prática', rhDeepGet(r,'integracao_familia_adaptacao.autonomia_pratica'), 'integracao_familia_adaptacao.autonomia_pratica', true)}
           </div>
         `)}
 
         ${rhSectionCard('8. Documentação, riscos e viabilidade', `
           <div class="field-grid">
-            ${rhStaticField('Documentos prontos', rhDeepGet(r,'documentacao_riscos_viabilidade.documentos_prontos'))}
-            ${rhStaticField('Reconhecimento ou tradução', rhDeepGet(r,'documentacao_riscos_viabilidade.reconhecimento_ou_traducao'))}
-            ${rhStaticField('Restrições objetivas', rhDeepGet(r,'documentacao_riscos_viabilidade.restricoes_objetivas'), true)}
-            ${rhStaticField('Comprometimento real', rhDeepGet(r,'documentacao_riscos_viabilidade.comprometimento_real'))}
+            ${rhEditableField('Documentos prontos', rhDeepGet(r,'documentacao_riscos_viabilidade.documentos_prontos'), 'documentacao_riscos_viabilidade.documentos_prontos')}
+            ${rhEditableField('Reconhecimento ou tradução', rhDeepGet(r,'documentacao_riscos_viabilidade.reconhecimento_ou_traducao'), 'documentacao_riscos_viabilidade.reconhecimento_ou_traducao', true)}
+            ${rhEditableField('Restrições objetivas', rhDeepGet(r,'documentacao_riscos_viabilidade.restricoes_objetivas'), 'documentacao_riscos_viabilidade.restricoes_objetivas', true)}
+            ${rhEditableField('Comprometimento real', rhDeepGet(r,'documentacao_riscos_viabilidade.comprometimento_real'), 'documentacao_riscos_viabilidade.comprometimento_real', true)}
           </div>
         `)}
 
         ${rhSectionCard('9. Mensagem final do candidato', `
           <div class="field-grid g1">
-            ${rhStaticField('Mensagem final', rhDeepGet(r,'mensagem_final.mensagem_final_candidato'), true)}
+            ${rhEditableField('Mensagem final', rhDeepGet(r,'mensagem_final.mensagem_final_candidato'), 'mensagem_final.mensagem_final_candidato', true)}
           </div>
         `)}
       </div>`;
@@ -7757,8 +7792,6 @@ function rhParseDocxTablesHtml(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(String(html || ''), 'text/html');
   const body = doc.body;
-  const specByCode = Object.fromEntries(RH_DOC_SECTION_SPECS.map(spec => [spec.code, spec]));
-  const specByLabel = Object.fromEntries(RH_DOC_SECTION_SPECS.map(spec => [rhNormalizeDocKey(spec.label), spec]));
   const meta = {
     data_entrevista:'',
     entrevistador:'',
@@ -7784,7 +7817,8 @@ function rhParseDocxTablesHtml(html) {
     mensagem_final: {}
   };
   const avaliacao = {};
-  let currentSpec = null;
+  const specQueue = [...RH_DOC_SECTION_SPECS];
+  const tables = Array.from(body.querySelectorAll('table'));
 
   const assignMeta = (label, value) => {
     const k = rhNormalizeDocKey(label);
@@ -7801,12 +7835,6 @@ function rhParseDocxTablesHtml(html) {
     else if (k.includes('nivel de alemao') || k.includes('nível de alemão')) meta.nivel_alemao_exigido = v;
     else if (k.startsWith('observacao') || k.startsWith('observação')) meta.observacao_inicial = v;
     else if (k.includes('conclusao da entrevista') || k.includes('conclusão da entrevista')) meta.conclusao_entrevista_docx = v;
-  };
-
-  const assignObservationToCurrent = (value) => {
-    const clean = rhStripPlaceholders(String(value || '').replace(/^Observa(?:ç|c)ões?:\s*/i, ''));
-    if (!clean || !currentSpec) return;
-    respostas[currentSpec.group][currentSpec.key] = clean;
   };
 
   const parseEvaluationTable = rows => {
@@ -7833,52 +7861,35 @@ function rhParseDocxTablesHtml(html) {
     });
   };
 
-  Array.from(body.children || []).forEach(el => {
-    const tag = (el.tagName || '').toUpperCase();
-    if (tag === 'P') {
-      const raw = rhCellText(el);
-      const strong = rhCellText(el.querySelector('strong')) || raw;
-      const codeMatch = strong.match(/^(\d+\.\d+\.)/);
-      if (codeMatch) {
-        currentSpec = specByCode[codeMatch[1]] || specByLabel[rhNormalizeDocKey(strong)] || null;
-      }
-      return;
-    }
-
-    if (tag !== 'TABLE') return;
-
-    const rows = Array.from(el.querySelectorAll('tr')).map(tr =>
+  for (const table of tables) {
+    const rows = Array.from(table.querySelectorAll('tr')).map(tr =>
       Array.from(tr.children || []).map(cell => rhCellText(cell))
     ).filter(r => r.some(Boolean));
-
-    if (!rows.length) return;
+    if (!rows.length) continue;
     const colCount = Math.max(...rows.map(r => r.length));
 
     if (colCount >= 2 && rows.some(r => /data da entrevista/i.test(r[0] || ''))) {
       rows.forEach(r => assignMeta(r[0], r.slice(1).join('\n')));
-      return;
+      continue;
     }
 
     if (colCount >= 4 && /crit[eé]rio/i.test(rows[0][0] || '')) {
       parseEvaluationTable(rows);
-      return;
+      continue;
     }
 
-    if (colCount === 1) {
-      const cell = rows.map(r => r[0]).join('\n').trim();
-      if (/^\d+\.\d+\./.test(cell)) {
-        const code = (cell.match(/^(\d+\.\d+\.)/) || [])[1] || '';
-        currentSpec = specByCode[code] || specByLabel[rhNormalizeDocKey(cell)] || null;
-        return;
-      }
-      if (/^\d+\./.test(cell)) {
-        return;
-      }
-      if (/^Observa(?:ç|c)ões?:/i.test(cell)) {
-        assignObservationToCurrent(cell);
-      }
-    }
-  });
+    if (colCount !== 1) continue;
+
+    const cell = rows.map(r => r[0]).join('\n').trim();
+    if (!cell) continue;
+    if (/^\d+\.\s/.test(cell)) continue; // cabeçalho de seção
+    if (!/^Observa(?:ç|c)ões?:/i.test(cell)) continue;
+
+    const spec = specQueue.shift();
+    if (!spec) continue;
+    const clean = rhStripPlaceholders(cell.replace(/^Observa(?:ç|c)ões?:\s*/i, ''));
+    respostas[spec.group][spec.key] = clean;
+  }
 
   return { meta, respostas, avaliacao };
 }
@@ -7955,6 +7966,7 @@ function rhStageDraftIntoPending(parsed) {
   // Não espelha mais campos legados de RH no núcleo do candidato.
   parsed.campos_sincronizados = summary.applied.slice();
   S.rhInterviewDraft = { ...parsed };
+  S.rhInterviewDirty = false;
   return summary;
 }
 
@@ -8096,18 +8108,33 @@ async function saveRhInterviewDraft(candidateId, actor) {
 }
 
 function onEdit(el) {
-  // Block viewers from editing
   const sess = getSession();
   if (sess?.role === 'viewer') {
-    el.value = S.currentCand ? (fv(S.currentCand, el.dataset.field, FIELD_MAP[el.dataset.field], ...((REV_MAP_MULTI[FIELD_MAP[el.dataset.field]] || []).filter(a => a !== el.dataset.field))) || '') : '';
+    if (el.dataset.field) {
+      el.value = S.currentCand ? (fv(S.currentCand, el.dataset.field, FIELD_MAP[el.dataset.field], ...((REV_MAP_MULTI[FIELD_MAP[el.dataset.field]] || []).filter(a => a !== el.dataset.field))) || '') : '';
+    }
     toast('🔒 Visualizadores não podem editar.', 'warn', 2000);
     return;
   }
-  S.pendingEdits[el.dataset.field] = el.value;
-  if (el.matches('select[data-field$="status" i], select[data-field="Passaporte status"], select[data-field="Diploma status"], select[data-field="Histórico status"], select[data-field="Registro status"]')) {
-    el.style.cssText = docStatusStyle(el.value);
+
+  if (el.dataset.rhMeta) {
+    const draft = ensureRhInterviewDraftShell();
+    draft.meta = draft.meta || {};
+    draft.meta[el.dataset.rhMeta] = el.value;
+    S.rhInterviewDirty = true;
+  } else if (el.dataset.rhPath) {
+    const draft = ensureRhInterviewDraftShell();
+    draft.respostas = draft.respostas || {};
+    rhSetDeep(draft.respostas, el.dataset.rhPath, el.value);
+    S.rhInterviewDirty = true;
+  } else {
+    S.pendingEdits[el.dataset.field] = el.value;
+    if (el.matches('select[data-field$="status" i], select[data-field="Passaporte status"], select[data-field="Diploma status"], select[data-field="Histórico status"], select[data-field="Registro status"]')) {
+      el.style.cssText = docStatusStyle(el.value);
+    }
   }
-  const n = Object.keys(S.pendingEdits).length;
+
+  const n = Object.keys(S.pendingEdits).length + (S.rhInterviewDirty ? 1 : 0);
   const btn = document.getElementById('cm-save');
   if (btn) {
     btn.textContent = `💾 Salvar (${n})`;
@@ -8201,7 +8228,7 @@ async function saveCandidate() {
   if (!S.currentCand) return;
   const sess = getSession();
   if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar candidatos.', 'warn'); return; }
-  if (!Object.keys(S.pendingEdits).length) { toast('Nenhuma alteração detectada.', 'warn'); return; }
+  if (!Object.keys(S.pendingEdits).length && !S.rhInterviewDirty) { toast('Nenhuma alteração detectada.', 'warn'); return; }
 
   const btn = document.getElementById('cm-save');
   btn.textContent = '⏳ Salvando...'; btn.disabled = true;
@@ -8214,7 +8241,7 @@ async function saveCandidate() {
       'Pendência documental crítica': S.pendingEdits['Pendência documental crítica'] ?? calcPendenciaDocumentalCritica(merged)
     };
     const fieldsToSave = { ...S.pendingEdits, ...autoFields };
-    const nFields = Object.keys(S.pendingEdits).length;
+    const nFields = Object.keys(S.pendingEdits).length + (S.rhInterviewDirty ? 1 : 0);
     const { candidateFields: candidateFieldsToSave, interviewMeta: interviewMetaEdits } = splitInterviewMetaEdits(fieldsToSave);
     if (Object.keys(interviewMetaEdits).length) {
       const draft = ensureRhInterviewDraftShell();
@@ -8292,6 +8319,7 @@ async function saveCandidate() {
 
     S.pendingEdits = {};
     S.rhInterviewDraft = null;
+    S.rhInterviewDirty = false;
     btn.textContent = '💾 Salvar'; btn.disabled = false;
     btn.classList.remove('has-changes');
 
@@ -8635,7 +8663,7 @@ async function downloadCandidatePdf() {
   }
 }
 
-function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; }
+function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; S.rhInterviewDirty=false; }
 function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overlay')) closeCand(); }
 
 // ══════════════════════════════════════════════════════════════
@@ -10424,7 +10452,57 @@ function agNav(dir) {
     'Pendências críticas':'Kritische offene Punkte',
     'RH readiness':'HR-Bereitschaft',
     'Cobertura de employers':'Arbeitgeberabdeckung',
-    'Atualizado às':'Aktualisiert um'
+    'Atualizado às':'Aktualisiert um',
+    'Cabeçalho da entrevista':'Interviewkopf',
+    'Entrevista preliminar':'Vorläufiges Interview',
+    'Esta aba mostra o conteúdo documental do formulário importado. A pré-entrevista acima serve como filtro rápido e o conteúdo abaixo preserva a entrevista estruturada completa.':'Dieser Bereich zeigt den dokumentierten Inhalt des importierten Formulars. Die Kurzvorprüfung oben dient als Schnellfilter, und der Inhalt darunter bewahrt das strukturierte Interview vollständig.',
+    'Dados básicos e identificação':'Grunddaten und Identifikation',
+    'Experiência profissional':'Berufserfahrung',
+    'Situação atual e disponibilidade':'Aktuelle Situation und Verfügbarkeit',
+    'Idiomas':'Sprachen',
+    'Motivação e objetivo profissional':'Motivation und berufliches Ziel',
+    'Preferências profissionais':'Berufliche Präferenzen',
+    'Integração, família e adaptação':'Integration, Familie und Anpassung',
+    'Documentação, riscos e viabilidade':'Unterlagen, Risiken und Machbarkeit',
+    'Mensagem final do candidato':'Abschlussbotschaft des Bewerbers',
+    'Avaliação interna estruturada':'Strukturierte interne Bewertung',
+    'Resumo operacional RH':'Operative HR-Zusammenfassung',
+    'Campos derivados que impactam o CRM':'Abgeleitete Felder mit CRM-Wirkung',
+    'Rastreabilidade da importação':'Nachvollziehbarkeit des Imports',
+    'Escalas lidas do DOCX importado.':'Skalen aus dem importierten DOCX gelesen.',
+    'Nenhuma entrevista estruturada vinculada ainda.':'Noch kein strukturiertes Interview verknüpft.',
+    'Qualidade do supply, idioma e concentração por profissão.':'Qualität des Talentpools, Sprachstand und Konzentration nach Beruf.',
+    'Curso de Alemão como supply pipeline':'Deutschkurs als Talentpipeline',
+    'Evolução do pool e proximidade de B1/B2.':'Entwicklung des Pools und Nähe zu B1/B2.',
+    'Talentos sem employer':'Talente ohne Arbeitgeber',
+    'já prontos para abordagem':'bereits bereit für die Ansprache',
+    'Risco alto':'Hohes Risiko',
+    'com travas documentais ou críticas':'mit kritischen oder dokumentarischen Blockern',
+    'talentos priorizados por profissão':'priorisierte Talente nach Beruf',
+    'Próximos a B1':'Kurz vor B1',
+    'Próximos a B2':'Kurz vor B2',
+    'Base A2 prestes a virar talento':'A2-Basis kurz vor Talentstatus',
+    'Base B1 em evolução':'B1-Basis in Entwicklung',
+    'Sem previsão':'Ohne Prognose',
+    'Necessita governança de cronograma':'Benötigt Steuerung des Zeitplans',
+    'Talento já qualificado':'Talent bereits qualifiziert',
+    'Em curso e já B1+':'Im Kurs und bereits B1+',
+    'Atualizado em':'Aktualisiert am',
+    'Clique para expandir':'Zum Erweitern klicken',
+    'Clique para recolher':'Zum Einklappen klicken',
+    'Resumo operacional':'Operative Zusammenfassung',
+    'Clique em um candidato para visualizar.':'Klicken Sie auf einen Bewerber, um die Übersicht zu sehen.',
+    'Dados da entrevista':'Interviewdaten',
+    'Empresa / Cliente':'Unternehmen / Kunde',
+    'Posição / Vaga':'Position / Stelle',
+    'Tipo de vaga':'Stellenart',
+    'Candidato em Documentação sem número de passaporte registrado.':'Bewerber in der Unterlagenphase ohne registrierte Passnummer.',
+    'Resumo rápido do empregador':'Schnellübersicht Arbeitgeber',
+    'Principais dados operacionais visíveis sem abrir a edição.':'Wichtigste operative Daten sichtbar, ohne die Bearbeitung zu öffnen.',
+    'Disponibilidade e mobilidade':'Verfügbarkeit und Mobilität',
+    'Dados do candidato':'Bewerberdaten',
+    'Employers vinculados':'Verknüpfte Arbeitgeber',
+    'Matching — vínculo em foco':'Matching – Fokusverknüpfung'
   };
 
   const placeholderMap = {
