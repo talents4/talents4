@@ -2905,6 +2905,52 @@ function toSnake(fields) {
 const API_EDIT_ACTIONS = new Set(['updateCandidate','createCandidate','setActive','addInterview','advanceStage']);
 const API_ADMIN_ACTIONS = new Set(['deleteUser','upsertEnum','removeEnum']);
 const PROTECTED_CANDIDATE_WRITE_KEYS = new Set(['id','criado_em','ultima_atualizacao','atualizado_por']);
+const INTERVIEW_ONLY_CANDIDATE_KEYS = new Set([
+  'data_da_entrevista','avaliador','empresa_cliente','posicao_vaga','tipo_vaga','nivel_alemao_exigido',
+  'observacao_inicial','estado_civil_filhos','diploma','conclusao_da_entrevista'
+]);
+const INTERVIEW_META_EDIT_MAP = {
+  'Data da entrevista': 'data_entrevista',
+  'Avaliador': 'entrevistador',
+  'empresa_cliente': 'empresa_cliente',
+  'posicao_vaga': 'posicao_vaga',
+  'tipo_vaga': 'tipo_vaga',
+  'nivel_alemao_exigido': 'nivel_alemao_exigido',
+  'observacao_inicial': 'observacao_inicial',
+  'estado_civil_filhos': 'estado_civil_filhos',
+  'diploma': 'diploma',
+  'conclusao_da_entrevista': 'conclusao_da_entrevista'
+};
+
+function splitInterviewMetaEdits(fields) {
+  const candidateFields = { ...(fields || {}) };
+  const interviewMeta = {};
+  Object.entries(INTERVIEW_META_EDIT_MAP).forEach(([fieldName, metaKey]) => {
+    if (!Object.prototype.hasOwnProperty.call(candidateFields, fieldName)) return;
+    const raw = candidateFields[fieldName];
+    const val = raw == null ? '' : String(raw).trim();
+    interviewMeta[metaKey] = val || null;
+    delete candidateFields[fieldName];
+  });
+  return { candidateFields, interviewMeta };
+}
+
+function ensureRhInterviewDraftShell() {
+  if (S.rhInterviewDraft) return S.rhInterviewDraft;
+  const base = S.currentInterview || {};
+  S.rhInterviewDraft = {
+    id: base.id || null,
+    fileName: base.arquivo_origem_nome || base.fileName || null,
+    meta: { ...(base.meta || {}) },
+    respostas: base.respostas ? JSON.parse(JSON.stringify(base.respostas)) : {},
+    avaliacao: base.avaliacao ? JSON.parse(JSON.stringify(base.avaliacao)) : {},
+    derivados: base.derivados ? JSON.parse(JSON.stringify(base.derivados)) : {},
+    conflitos_detectados: Array.isArray(base.conflitos_detectados) ? [...base.conflitos_detectados] : [],
+    campos_sincronizados: Array.isArray(base.campos_sincronizados) ? [...base.campos_sincronizados] : [],
+    meta_warnings: Array.isArray(base.meta_warnings) ? [...base.meta_warnings] : [],
+  };
+  return S.rhInterviewDraft;
+}
 
 function assertAuthorizedAction(action) {
   if (API_ADMIN_ACTIONS.has(action) && !canAdmin()) {
@@ -2921,6 +2967,7 @@ function sanitizeCandidateWritePayload(snakeFields, mode='update') {
     if (mode === 'create' && k === 'id') return;
     delete out[k];
   });
+  INTERVIEW_ONLY_CANDIDATE_KEYS.forEach(k => delete out[k]);
   return out;
 }
 
@@ -7922,18 +7969,23 @@ async function saveCandidate() {
     };
     const fieldsToSave = { ...S.pendingEdits, ...autoFields };
     const nFields = Object.keys(S.pendingEdits).length;
+    const { candidateFields: candidateFieldsToSave, interviewMeta: interviewMetaEdits } = splitInterviewMetaEdits(fieldsToSave);
+    if (Object.keys(interviewMetaEdits).length) {
+      const draft = ensureRhInterviewDraftShell();
+      draft.meta = { ...(draft.meta || {}), ...interviewMetaEdits };
+    }
 
     // ── Rastreabilidade: detecta mudanças em campos críticos ─
-    const histEntries = histBuildEntries(fieldsToSave, S.currentCand, sess?.nome || 'web');
+    const histEntries = histBuildEntries(candidateFieldsToSave, S.currentCand, sess?.nome || 'web');
     if (histEntries.length) {
       const existing = histRead(S.currentCand);
-      fieldsToSave['historico_operacional'] = histSerialize(existing, histEntries);
+      candidateFieldsToSave['historico_operacional'] = histSerialize(existing, histEntries);
     }
 
     const result = await apiPost({
       action: 'updateCandidate',
       id: S.currentCand.ID,
-      fields: fieldsToSave,
+      fields: candidateFieldsToSave,
       actor: sess?.nome || 'web'
     });
 
@@ -7942,7 +7994,12 @@ async function saveCandidate() {
       try {
         const interviewId = await saveRhInterviewDraft(S.currentCand.ID, sess?.nome || 'web');
         if (interviewId) {
-          fieldsToSave['entrevista_preliminar_id'] = interviewId;
+          candidateFieldsToSave['entrevista_preliminar_id'] = interviewId;
+          try {
+            await apiPost({ action:'updateCandidate', id:S.currentCand.ID, fields:{ entrevista_preliminar_id: interviewId }, actor:sess?.nome || 'web' });
+          } catch (linkErr) {
+            console.warn('[RH DOCX] Não foi possível gravar entrevista_preliminar_id no candidato:', linkErr);
+          }
           S.currentInterview = { id: interviewId, ...S.rhInterviewDraft };
         }
       } catch (e) {
@@ -7952,7 +8009,11 @@ async function saveCandidate() {
     }
 
     // ── Aplica localmente ────────────────────────────────
-    Object.assign(S.currentCand, fieldsToSave);
+    Object.assign(S.currentCand, candidateFieldsToSave);
+    if (Object.keys(interviewMetaEdits).length) {
+      const active = ensureRhInterviewDraftShell();
+      S.currentInterview = { ...(S.currentInterview || {}), ...(active || {}), meta: { ...((S.currentInterview || {}).meta || {}), ...(active.meta || {}) } };
+    }
     // Atualiza timestamp local imediatamente após salvar
     S.currentCand['Última atualização'] = new Date().toISOString();
     S.currentCand['Atualizado Por']     = sess?.nome || 'web';
@@ -7961,7 +8022,7 @@ async function saveCandidate() {
 
     // ── Feedback de salvamento ───────────────────────────
     const skipped = result?.skipped || [];
-    const newStatus = fieldsToSave['STATUS PIPELINE'];
+    const newStatus = candidateFieldsToSave['STATUS PIPELINE'];
 
     if (skipped.length) {
       // Salvo parcialmente — honesto, não mascara como sucesso total
