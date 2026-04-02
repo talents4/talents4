@@ -1881,6 +1881,15 @@ details.bi-secondary {
 .emp-text{padding:12px 13px;border-radius:14px;background:#0f172a;border:1px solid rgba(103,126,170,.16)}
 .emp-text-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#92a3c2;margin-bottom:6px}
 .emp-text-val{font-size:12.5px;color:#d9e4f6;line-height:1.6;white-space:pre-wrap}
+.emp-mini-expand{margin-top:2px}
+.emp-mini-expand>summary{list-style:none;cursor:pointer;outline:none}
+.emp-mini-expand>summary::-webkit-details-marker{display:none}
+.emp-mini-preview{font-size:12.5px;color:#d9e4f6;line-height:1.55;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.emp-mini-expand[open] .emp-mini-preview{display:none}
+.emp-mini-full{font-size:12.5px;color:#d9e4f6;line-height:1.6;white-space:pre-wrap;margin-top:4px}
+.emp-mini-toggle{margin-top:7px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#7eb5ff}
+.emp-box .emp-mini-preview,.emp-box .emp-mini-full{font-size:13px;font-weight:800;color:#f1f6ff}
+.emp-box .emp-mini-toggle{margin-top:6px}
 .emp-actions{display:flex;gap:8px;flex-wrap:wrap}
 .emp-btn{padding:10px 12px;border-radius:12px;border:1px solid rgba(103,126,170,.18);background:#10192d;color:#eef4ff;font-size:12px;font-weight:800;cursor:pointer}
 .emp-btn:hover{border-color:rgba(116,165,255,.34);background:#14203a}
@@ -5503,12 +5512,33 @@ function renderEmployerHub(el) {
   ] : [];
 
   // ── Helpers ───────────────────────────────────────────────
-  const box = (lbl, val, cls='') => val
-    ? `<div class="emp-box"><div class="emp-box-lbl">${lbl}</div><div class="emp-box-val ${cls}">${esc(String(val))}</div></div>`
-    : `<div class="emp-box"><div class="emp-box-lbl">${lbl}</div><div class="emp-box-val" style="color:var(--txt3)">—</div></div>`;
+  const empPreview = (val, max=160) => {
+    const s = String(val || '').trim();
+    if (!s) return '';
+    return s.length > max ? s.slice(0, max).replace(/\s+\S*$/, '').trim() + '…' : s;
+  };
+
+  const empExpandableValue = (val, kind='text', cls='') => {
+    const s = String(val || '').trim();
+    const baseCls = kind === 'box' ? `emp-box-val ${cls || ''}`.trim() : 'emp-text-val';
+    if (!s) return `<div class="${baseCls}" style="color:var(--txt3)">—</div>`;
+    const limit = kind === 'box' ? 120 : 220;
+    const lines = kind === 'box' ? 4 : 5;
+    if (s.length <= limit) return `<div class="${baseCls}">${esc(s)}</div>`;
+    const preview = empPreview(s, limit);
+    return `<details class="emp-mini-expand">
+      <summary>
+        <div class="emp-mini-preview ${kind === 'box' ? cls : ''}" style="-webkit-line-clamp:${lines}">${esc(preview)}</div>
+        <div class="emp-mini-toggle">Clique para expandir</div>
+      </summary>
+      <div class="emp-mini-full ${kind === 'box' ? cls : ''}">${esc(s)}</div>
+    </details>`;
+  };
+
+  const box = (lbl, val, cls='') => `<div class="emp-box"><div class="emp-box-lbl">${lbl}</div>${empExpandableValue(val, 'box', cls)}</div>`;
 
   const txt = (lbl, val) => val
-    ? `<div class="emp-text"><div class="emp-text-lbl">${lbl}</div><div class="emp-text-val">${esc(String(val))}</div></div>`
+    ? `<div class="emp-text"><div class="emp-text-lbl">${lbl}</div>${empExpandableValue(val, 'text')}</div>`
     : '';
 
   const editEmpBtn = selectedGroup && selectedGroup.kind !== 'unassigned'
@@ -7710,31 +7740,38 @@ function rhBuildInterviewConflicts(parsed, cand) {
   return conflicts;
 }
 
-function parseRhDocxHtml(html, cand) {
-  const text = rhDocRawTextFromHtml(html);
-  const meta = {
-    data_entrevista: rhCaptureFirst(text, [
-      ['Data da entrevista', 'Entrevistador(a)'],
-      ['Data da Entrevista', 'Entrevistador(a)']
-    ]),
-    entrevistador: rhCaptureFirst(text, [
-      ['Entrevistador(a)', 'Empresa / cliente'],
-      ['Entrevistador(a)', 'Empresa / Cliente']
-    ]),
-    empresa_cliente: rhCaptureFirst(text, [
-      ['Empresa / cliente', 'Posição / vaga'],
-      ['Empresa / Cliente', 'Posição / vaga']
-    ]),
-    posicao_vaga: rhCaptureBetween(text, 'Posição / vaga', 'Candidato') || rhCaptureBetween(text, 'Posição / vaga', 'Tipo de vaga'),
-    candidato_nome_docx: rhCaptureBetween(text, 'Candidato', 'Estado Civil / Filhos'),
-    estado_civil_filhos_docx: rhCaptureBetween(text, 'Estado Civil / Filhos', 'Tipo de vaga'),
-    tipo_vaga: rhCaptureBetween(text, 'Tipo de vaga', 'Diploma') || rhCaptureBetween(text, 'Tipo de vaga', 'Nível de alemão exigido'),
-    diploma_docx: rhCaptureBetween(text, 'Diploma', 'Nível de alemão') || rhCaptureBetween(text, 'Diploma', 'Observação:'),
-    nivel_alemao_exigido: rhCaptureBetween(text, 'Nível de alemão', 'Observação:') || rhCaptureBetween(text, 'Nível de alemão exigido', 'Observação:'),
-    observacao_inicial: rhCaptureBetween(text, 'Observação:', 'Conclusão da entrevista') || rhCaptureBetween(text, 'Observação:', '1. Dados básicos e identificação'),
-    conclusao_entrevista_docx: rhCaptureBetween(text, 'Conclusão da entrevista', '1. Dados básicos e identificação')
-  };
+function rhNormalizeDocKey(s) {
+  return rhNormLabel(String(s || '')
+    .replace(/^\d+\.\d+\.\s*/, '')
+    .replace(/^\d+\.\s*/, '')
+    .replace(/^pergunta:\s*/i, '')
+    .replace(/^observa(?:ç|c)ões?:\s*/i, '')
+    .trim());
+}
 
+function rhCellText(cell) {
+  return rhCleanText(String((cell?.innerText || cell?.textContent || '')).replace(/\u00a0/g, ' '));
+}
+
+function rhParseDocxTablesHtml(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(String(html || ''), 'text/html');
+  const body = doc.body;
+  const specByCode = Object.fromEntries(RH_DOC_SECTION_SPECS.map(spec => [spec.code, spec]));
+  const specByLabel = Object.fromEntries(RH_DOC_SECTION_SPECS.map(spec => [rhNormalizeDocKey(spec.label), spec]));
+  const meta = {
+    data_entrevista:'',
+    entrevistador:'',
+    empresa_cliente:'',
+    posicao_vaga:'',
+    candidato_nome_docx:'',
+    estado_civil_filhos_docx:'',
+    tipo_vaga:'',
+    diploma_docx:'',
+    nivel_alemao_exigido:'',
+    observacao_inicial:'',
+    conclusao_entrevista_docx:''
+  };
   const respostas = {
     dados_basicos_identificacao: {},
     experiencia_profissional: {},
@@ -7746,14 +7783,121 @@ function parseRhDocxHtml(html, cand) {
     documentacao_riscos_viabilidade: {},
     mensagem_final: {}
   };
+  const avaliacao = {};
+  let currentSpec = null;
 
-  RH_DOC_SECTION_SPECS.forEach((spec, idx) => {
-    const nextCode = RH_DOC_SECTION_SPECS[idx + 1]?.code || '';
-    const value = rhCaptureObservationBlock(text, spec.code, nextCode);
-    respostas[spec.group][spec.key] = value;
+  const assignMeta = (label, value) => {
+    const k = rhNormalizeDocKey(label);
+    const v = rhStripPlaceholders(value || '');
+    if (!k || !v) return;
+    if (k.includes('data da entrevista')) meta.data_entrevista = v;
+    else if (k.includes('entrevistador')) meta.entrevistador = v;
+    else if (k.includes('empresa / cliente') || k.includes('empresa/cliente')) meta.empresa_cliente = v;
+    else if (k.includes('posicao / vaga') || k.includes('posição / vaga')) meta.posicao_vaga = v;
+    else if (k === 'candidato') meta.candidato_nome_docx = v;
+    else if (k.includes('estado civil / filhos')) meta.estado_civil_filhos_docx = v;
+    else if (k.includes('tipo de vaga')) meta.tipo_vaga = v;
+    else if (k === 'diploma') meta.diploma_docx = v;
+    else if (k.includes('nivel de alemao') || k.includes('nível de alemão')) meta.nivel_alemao_exigido = v;
+    else if (k.startsWith('observacao') || k.startsWith('observação')) meta.observacao_inicial = v;
+    else if (k.includes('conclusao da entrevista') || k.includes('conclusão da entrevista')) meta.conclusao_entrevista_docx = v;
+  };
+
+  const assignObservationToCurrent = (value) => {
+    const clean = rhStripPlaceholders(String(value || '').replace(/^Observa(?:ç|c)ões?:\s*/i, ''));
+    if (!clean || !currentSpec) return;
+    respostas[currentSpec.group][currentSpec.key] = clean;
+  };
+
+  const parseEvaluationTable = rows => {
+    rows.slice(1).forEach(row => {
+      const label = rhNormalizeDocKey(row[0] || '');
+      if (!label) return;
+      const matches = {
+        [rhNormalizeDocKey('Clareza na comunicação')]: 'clareza_na_comunicacao',
+        [rhNormalizeDocKey('Nível de alemão percebido')]: 'nivel_alemao_percebido',
+        [rhNormalizeDocKey('Aderência técnica à vaga')]: 'aderencia_tecnica_a_vaga',
+        [rhNormalizeDocKey('Maturidade profissional')]: 'maturidade_profissional',
+        [rhNormalizeDocKey('Motivação real para a Alemanha')]: 'motivacao_real_para_alemanha',
+        [rhNormalizeDocKey('Flexibilidade e adaptação')]: 'flexibilidade_e_adaptacao',
+        [rhNormalizeDocKey('Risco de desistência')]: 'risco_de_desistencia'
+      };
+      const key = matches[label];
+      if (!key) return;
+      const low = String(row[1] || '');
+      const med = String(row[2] || '');
+      const high = String(row[3] || '');
+      if (/\[\s*[xX✓✔]\s*\]|☒|■/.test(low)) avaliacao[key] = 'baixo';
+      else if (/\[\s*[xX✓✔]\s*\]|☒|■/.test(med)) avaliacao[key] = 'medio';
+      else if (/\[\s*[xX✓✔]\s*\]|☒|■/.test(high)) avaliacao[key] = 'alto';
+    });
+  };
+
+  Array.from(body.children || []).forEach(el => {
+    const tag = (el.tagName || '').toUpperCase();
+    if (tag === 'P') {
+      const raw = rhCellText(el);
+      const strong = rhCellText(el.querySelector('strong')) || raw;
+      const codeMatch = strong.match(/^(\d+\.\d+\.)/);
+      if (codeMatch) {
+        currentSpec = specByCode[codeMatch[1]] || specByLabel[rhNormalizeDocKey(strong)] || null;
+      }
+      return;
+    }
+
+    if (tag !== 'TABLE') return;
+
+    const rows = Array.from(el.querySelectorAll('tr')).map(tr =>
+      Array.from(tr.children || []).map(cell => rhCellText(cell))
+    ).filter(r => r.some(Boolean));
+
+    if (!rows.length) return;
+    const colCount = Math.max(...rows.map(r => r.length));
+
+    if (colCount >= 2 && rows.some(r => /data da entrevista/i.test(r[0] || ''))) {
+      rows.forEach(r => assignMeta(r[0], r.slice(1).join('\n')));
+      return;
+    }
+
+    if (colCount >= 4 && /crit[eé]rio/i.test(rows[0][0] || '')) {
+      parseEvaluationTable(rows);
+      return;
+    }
+
+    if (colCount === 1) {
+      const cell = rows.map(r => r[0]).join('\n').trim();
+      if (/^\d+\.\d+\./.test(cell)) {
+        const code = (cell.match(/^(\d+\.\d+\.)/) || [])[1] || '';
+        currentSpec = specByCode[code] || specByLabel[rhNormalizeDocKey(cell)] || null;
+        return;
+      }
+      if (/^\d+\./.test(cell)) {
+        return;
+      }
+      if (/^Observa(?:ç|c)ões?:/i.test(cell)) {
+        assignObservationToCurrent(cell);
+      }
+    }
   });
 
-  const avaliacao = rhParseAvaliacao(text);
+  return { meta, respostas, avaliacao };
+}
+
+function parseRhDocxHtml(html, cand) {
+  const parsedTable = rhParseDocxTablesHtml(html);
+  const meta = parsedTable.meta || {};
+  const respostas = parsedTable.respostas || {
+    dados_basicos_identificacao: {},
+    experiencia_profissional: {},
+    situacao_atual_disponibilidade: {},
+    idiomas: {},
+    motivacao_objetivo_profissional: {},
+    preferencias_profissionais: {},
+    integracao_familia_adaptacao: {},
+    documentacao_riscos_viabilidade: {},
+    mensagem_final: {}
+  };
+  const avaliacao = parsedTable.avaliacao || {};
   const derivados = rhBuildDerivados(meta, respostas, avaliacao);
 
   const contact = respostas.dados_basicos_identificacao?.contato_organizacao_pessoal || '';
@@ -7763,7 +7907,6 @@ function parseRhDocxHtml(html, cand) {
   derivados.cidade_atual = rhParseCidadeAtual(dadosBasicos) || rhParseCidadeAtual(contact);
 
   const conflitos_detectados = rhBuildInterviewConflicts({ meta, respostas, avaliacao, derivados }, cand);
-
   return { meta, respostas, avaliacao, derivados, conflitos_detectados, meta_warnings: [] };
 }
 
