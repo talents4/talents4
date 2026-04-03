@@ -1224,6 +1224,32 @@ a{color:inherit;text-decoration:none}
 .bi-action-list { display:flex; flex-direction:column; gap:10px; max-height:360px; overflow:auto; padding-right:4px; }
 .bi-action-list.show-3 { max-height:308px; }
 .bi-action-list.show-3.tight { max-height:292px; }
+.bi-note-list{display:flex;flex-direction:column;gap:10px}
+.bi-note-item{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:11px 12px;border-radius:14px;background:rgba(255,255,255,.03);border:1px solid var(--border)}
+.bi-note-main{min-width:0}
+.bi-note-title{font-size:12px;font-weight:800;color:var(--txt)}
+.bi-note-sub{margin-top:4px;font-size:11px;color:var(--txt2);line-height:1.45}
+.bi-note-value{font-family:var(--mono);font-size:22px;line-height:1;color:var(--txt);flex-shrink:0}
+.bi-sla{display:grid;grid-template-columns:1.2fr repeat(4,minmax(0,1fr));gap:8px;margin-top:4px}
+.bi-sla-head,.bi-sla-cell{padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.02);font-size:11px}
+.bi-sla-head{font-weight:800;color:var(--txt2);text-align:center}
+.bi-sla-stage{font-weight:700;color:var(--txt);display:flex;align-items:center}
+.bi-sla-cell{font-family:var(--mono);color:var(--txt2);text-align:center}
+.bi-sla-cell.good{color:var(--green)}
+.bi-sla-cell.warn{color:var(--de-gold)}
+.bi-sla-cell.risk{color:#ffb86b}
+.bi-sla-cell.danger{color:#ff6b81}
+.bi-pressure-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.bi-stack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.bi-chip-inline{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--border2);background:rgba(255,255,255,.03);font-size:10px;font-weight:700;color:var(--txt2)}
+.bi-mini-note{margin-top:8px;font-size:11px;color:var(--txt3);line-height:1.45}
+.bi-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--txt3);font-weight:700;margin-bottom:8px}
+.bi-empty-soft{padding:10px 12px;border-radius:14px;border:1px dashed var(--border2);color:var(--txt3);font-size:11px;background:rgba(255,255,255,.02)}
+.emp-employer-mini summary{display:block}
+.emp-mini-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.emp-mini-card-preview{font-size:11.5px;color:#d5def0;line-height:1.45;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.emp-mini-card-toggle{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#7eb5ff;flex-shrink:0}
+.is-scope-hidden{display:none !important}
 .bi-summary-stack { display:flex; flex-direction:column; gap:10px; min-height:0; }
 .bi-action-row {
   display:grid;
@@ -1859,6 +1885,8 @@ details.bi-secondary {
 .emp-employer-mini{padding:10px 11px;border-radius:12px;background:#10192d;border:1px solid rgba(103,126,170,.14)}
 .emp-employer-mini-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#90a3c6}
 .emp-employer-mini-val{font-size:12px;color:#eef4ff;font-weight:700;margin-top:5px;line-height:1.5;white-space:pre-wrap}
+.emp-employer-mini .emp-mini-preview,.emp-employer-mini .emp-mini-full{font-size:12px;color:#eef4ff;font-weight:700;line-height:1.5;white-space:pre-wrap}
+.emp-employer-mini .emp-mini-toggle{margin-top:6px}
 .emp-stat-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#92a3c2}
 .emp-stat-val{font-size:20px;font-weight:900;color:#f4f7ff;margin-top:4px}
 .emp-tabs{display:flex;gap:8px;flex-wrap:wrap}
@@ -3677,7 +3705,7 @@ function _navSetupUI(view) {
   const titles = {
     dashboard:'Dashboard BI', kanban:'Kanban — Pipeline', candidates:'Candidatos',
     prioritarios:'Talentos Prioritários',
-    triagem:'Triagem & Novos Candidatos', entrevistas:'Entrevistas', analise:'Análise RH',
+    triagem:'Triagem', entrevistas:'Entrevistas', analise:'Análise RH',
     alemao:'Curso de Alemão', documentacao:'Documentação', employer:'Employer / Matching',
     inativos:'Inativos & Não Qualificados', agenda:'Agenda / Entrevistas', settings:'Configurações'
   };
@@ -3846,6 +3874,10 @@ function dashboardSetScope(scope) {
   dashboardEnsureState();
   S.dashboardUi.scope = scope;
   renderView();
+  requestAnimationFrame(() => {
+    const wrap = document.querySelector('.content');
+    if (wrap) wrap.scrollTop = 0;
+  });
 }
 function isCourseCandidate(c) {
   return fv(c,'STATUS PIPELINE','status_pipeline') === 'Curso de alemão' || isYes(fv(c,'Em curso de alemão','em_curso_de_alemao'));
@@ -3874,6 +3906,18 @@ function dashboardGroupCount(list, fn) {
     m[k] = (m[k] || 0) + 1;
   });
   return Object.entries(m).map(([label,count])=>({label,count})).sort((a,b)=>b.count-a.count);
+}
+function dashboardSourceBucket(raw) {
+  const v = normalizeUpper(String(raw || '').trim());
+  if (!v) return 'Sem origem';
+  if (/PDF|CURRIC/.test(v)) return 'Currículo PDF';
+  if (/LINKEDIN/.test(v)) return 'LinkedIn';
+  if (/INDIC|REFERR|RECOMEND|WHATSAPP|WPP/.test(v)) return 'Indicação / WhatsApp';
+  if (/SITE|FORM|LANDING|WEB/.test(v)) return 'Site / Formulário';
+  if (/EMAIL|E-MAIL/.test(v)) return 'E-mail';
+  if (/INSTAGRAM|FACEBOOK|META|SOCIAL/.test(v)) return 'Redes sociais';
+  if (/IMPORTA|PLANILHA|SHEET|BANCO|BASE/.test(v)) return 'Importação / Base';
+  return String(raw || '').trim();
 }
 function dashboardDrill(key, extra='') {
   clearFilters();
@@ -3935,6 +3979,66 @@ function dashboardDrill(key, extra='') {
       _navSetupUI('analise');
       S.filter._customFn = c => getRiskLevel(c) === 'ALTO';
       break;
+    case 'missing_email':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => !String(fv(c,'E-mail','email') || '').trim();
+      break;
+    case 'missing_phone':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => !String(fv(c,'Telefone','telefone') || '').trim();
+      break;
+    case 'missing_german':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => { const n = String(fv(c,'Nível de alemão','Nível alemão','nivel_alemao') || '').trim(); return !n || ['Nenhum','A0'].includes(n); };
+      break;
+    case 'missing_owner':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => !String(fv(c,'Responsável interno','responsavel_interno','Avaliador') || '').trim();
+      break;
+    case 'missing_profession':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => !String(fv(c,'Profissão principal','Profissão','profissao_principal') || '').trim();
+      break;
+    case 'stalled_21':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => { const dt = fv(c,'Data entrada etapa atual','Última atualização','updated_at','created_at'); const days = daysSince(dt); return days !== null && days > 21; };
+      break;
+    case 'freshness_stale_7':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days > 7; };
+      break;
+    case 'freshness_stale_21':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days > 21; };
+      break;
+    case 'freshness_stale_45':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days > 45; };
+      break;
+    case 'freshness_recent_3':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days <= 3; };
+      break;
+    case 'source_bucket':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => dashboardSourceBucket(fv(c,'Referência / Origem','referencia_origem','origem')) === extra;
+      break;
+    case 'ready_linked':
+      _navSetupUI('candidates');
+      S.filter._customFn = c => isEmployerReadyDashboard(c) && !!getEmployerDisplay(c).trim();
+      break;
+    case 'approved_linked':
+      _navSetupUI('employer');
+      S.filter._customFn = c => ['aprovados','contratados'].includes(getEmployerLinkBucket(c));
+      break;
+    case 'hired_linked':
+      _navSetupUI('employer');
+      S.filter._customFn = c => getEmployerLinkBucket(c) === 'contratados' || fv(c,'STATUS PIPELINE','status_pipeline') === 'Contratado';
+      break;
+    case 'owner_bucket':
+      _navSetupUI(extra === 'Sem responsável' ? 'candidates' : 'candidates');
+      S.filter._customFn = c => (fv(c,'Responsável interno','responsavel_interno','Avaliador') || 'Sem responsável') === extra;
+      break;
     case 'profession':
       _navSetupUI('prioritarios');
       S.filter.profissao = extra || '';
@@ -3970,6 +4074,22 @@ function uiFormatDate(value, options) {
   const lang = uiCurrentLang();
   const locale = lang === 'de' ? 'de-DE' : 'pt-BR';
   return dt.toLocaleDateString(locale, options || undefined);
+}
+function uiPercent(part, total) {
+  if (!total) return 0;
+  return Math.round((Number(part || 0) / Number(total || 1)) * 100);
+}
+function averageDaysInCurrentStage(list) {
+  const vals = (list || []).map(c => {
+    const dt = fv(c,'Data entrada etapa atual','Última atualização','updated_at','created_at');
+    return daysSince(dt);
+  }).filter(v => Number.isFinite(v));
+  if (!vals.length) return null;
+  return Math.round(vals.reduce((acc, cur) => acc + cur, 0) / vals.length);
+}
+function formatDaysCompact(days) {
+  if (!Number.isFinite(days)) return '—';
+  return `${days}d`;
 }
 
 function renderDashboard(el) {
@@ -4012,6 +4132,14 @@ function renderDashboard(el) {
   const employersApproved = employerGroups.filter(g => g.aprovados > 0).length;
   const employersHired = employerGroups.filter(g => g.contratados > 0).length;
 
+  const readyLinked = readyPool.filter(c => !!getEmployerDisplay(c).trim());
+  const readyApprovedCandidates = readyLinked.filter(c => ['aprovados','contratados'].includes(getEmployerLinkBucket(c)));
+  const readyHiredCandidates = readyLinked.filter(c => getEmployerLinkBucket(c) === 'contratados' || fv(c,'STATUS PIPELINE','status_pipeline') === 'Contratado');
+  const fresh3 = ativos.filter(c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days <= 3; });
+  const stale7 = ativos.filter(c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days > 7; });
+  const stale45 = ativos.filter(c => { const dt = fv(c,'Última atualização','updated_at','Data entrada etapa atual','created_at'); const days = daysSince(dt); return days !== null && days > 45; });
+  const sourceBuckets = dashboardGroupCount(ativos, c => dashboardSourceBucket(fv(c,'Referência / Origem','referencia_origem','origem'))).slice(0,6);
+
   const noOwnerTalents = talentos.filter(c => !fv(c,'Responsável interno','responsavel_interno','Avaliador'));
   const docsBlockingTalents = talentos.filter(c => !!(fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim() || !isYes(fv(c,'Documentação completa','documentacao_completa')));
   const riskTalents = talentos.filter(c => getRiskLevel(c) === 'ALTO');
@@ -4036,6 +4164,44 @@ function renderDashboard(el) {
   const rhCoerenciaLow = ativos.filter(c => normalizeUpper(fv(c,'coerencia_candidatura','Coerência da candidatura') || '').includes('BAIX'));
   const readinessHigh = ativos.filter(c => normalizeUpper(fv(c,'readiness_internacional') || '') === 'ALTO');
 
+  const stalled21 = ativos.filter(c => {
+    const dt = fv(c,'Data entrada etapa atual','Última atualização','Data da Candidatura','created_at');
+    const days = daysSince(dt);
+    return days !== null && days > 21;
+  });
+  const staleEmployer = employerPipeline.filter(c => {
+    const dt = fv(c,'Data entrada etapa atual','Última atualização','updated_at');
+    const days = daysSince(dt);
+    return days !== null && days > 14;
+  });
+  const missingEmail = ativos.filter(c => !String(fv(c,'E-mail','email') || '').trim());
+  const missingPhone = ativos.filter(c => !String(fv(c,'Telefone','telefone') || '').trim());
+  const missingGerman = ativos.filter(c => !String(fv(c,'Nível de alemão','Nível alemão','nivel_alemao') || '').trim() || ['Nenhum','A0'].includes(String(fv(c,'Nível de alemão','Nível alemão','nivel_alemao') || '').trim()));
+  const missingOwner = ativos.filter(c => !String(fv(c,'Responsável interno','responsavel_interno','Avaliador') || '').trim());
+  const missingProfession = ativos.filter(c => !String(fv(c,'Profissão principal','Profissão','profissao_principal') || '').trim());
+  const missingEmployer = ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE','status_pipeline')) && !getEmployerDisplay(c).trim());
+
+  const candidateIdOf = c => String(fv(c,'ID','id') || c?.ID || c?.id || '');
+  const essentialIssueIds = new Set([...missingEmail, ...missingPhone, ...missingOwner, ...missingProfession].map(candidateIdOf).filter(Boolean));
+  const criticalIssueIds = new Set([...docsBlockingTalents, ...stalled21, ...missingEmployer].map(candidateIdOf).filter(Boolean));
+  const readyCovered = readyPool.filter(c => getEmployerDisplay(c).trim());
+  const avgStageAgeAll = averageDaysInCurrentStage(ativos);
+  const avgStageAgeEmployer = averageDaysInCurrentStage(employerPipeline);
+  const dataCompletenessPct = uiPercent(Math.max(ativos.length - essentialIssueIds.size, 0), ativos.length);
+  const readyCoveragePct = uiPercent(readyCovered.length, readyPool.length);
+  const employerPositivePct = uiPercent(employerGroups.filter(g => g.aprovados > 0 || g.contratados > 0).length, employerGroups.length);
+  const criticalPressurePct = uiPercent(criticalIssueIds.size, ativos.length);
+
+  const ownerRows = dashboardGroupCount(ativos, c => fv(c,'Responsável interno','responsavel_interno','Avaliador') || 'Sem responsável').slice(0,6);
+  const ownerActionRows = ownerRows.map(row => {
+    const stalled = ativos.filter(c => (fv(c,'Responsável interno','responsavel_interno','Avaliador') || 'Sem responsável') === row.label).filter(c => {
+      const dt = fv(c,'Data entrada etapa atual','Última atualização','updated_at','created_at');
+      const days = daysSince(dt);
+      return days !== null && days > 21;
+    }).length;
+    return { ...row, stalled };
+  });
+
   const currentScope = S.dashboardUi.scope || 'all';
   const scopePools = {
     all: ativos,
@@ -4045,14 +4211,16 @@ function renderDashboard(el) {
     rh: rhPool,
   };
   const scopeMeta = {
-    all: { label:'Visão geral', sub:'Toda a operação ativa, com foco em supply e conversão.' },
-    talents: { label:'Foco em talentos', sub:'Base qualificada por idioma e prontidão.' },
-    employers: { label:'Foco em employers', sub:'Empresas, cobertura e retorno comercial.' },
-    course: { label:'Foco em curso de alemão', sub:'Supply pipeline e evolução de idioma.' },
-    rh: { label:'Foco em RH readiness', sub:'Entrevistas, decisão e risco operacional.' },
+    all: { label:'Visão geral', sub:'Toda a operação ativa, com foco em supply, gargalo e cobertura operacional.' },
+    talents: { label:'Foco em talentos', sub:'Base qualificada por idioma, dono operacional e prontidão comercial.' },
+    employers: { label:'Foco em employers', sub:'Empresas, cobertura, aging comercial e resposta do pipeline.' },
+    course: { label:'Foco em curso de alemão', sub:'Supply pipeline, proximidade de B1/B2 e risco de estagnação.' },
+    rh: { label:'Foco em RH readiness', sub:'Entrevistas, decisão operacional, coerência e risco de desistência.' },
   };
   const scopePool = scopePools[currentScope] || ativos;
   const scopeInfo = scopeMeta[currentScope] || scopeMeta.all;
+  const scopeAllows = (...scopes) => currentScope === 'all' || scopes.includes(currentScope);
+  const scopeClass = (...scopes) => scopeAllows(...scopes) ? '' : 'is-scope-hidden';
 
   const genAt = S.lastSync ? new Date(S.lastSync).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '—';
 
@@ -4079,11 +4247,9 @@ function renderDashboard(el) {
   ];
   const agingHtml = agingStages.map(stage => {
     const [a,b,c,d] = agingBands(stage.list);
-    const cell = (val, cls) => `<div class="bi-aging-cell ${cls}">${val || '·'}</div>`;
-    return `<div class="bi-aging-row">
-      <div class="bi-aging-stage">${esc(stage.label)} <span style="color:var(--txt3)">(${stage.list.length})</span></div>
-      ${cell(a,'good')}${cell(b,'warn')}${cell(c,'risk')}${cell(d,'danger')}
-    </div>`;
+    const cell = (val, cls) => `<div class="bi-sla-cell ${cls}">${val || '·'}</div>`;
+    return `<div class="bi-sla-stage">${esc(stage.label)} <span style="color:var(--txt3);margin-left:6px">(${stage.list.length})</span></div>
+      ${cell(a,'good')}${cell(b,'warn')}${cell(c,'risk')}${cell(d,'danger')}`;
   }).join('');
 
   const topEmployerRows = employerGroups.slice(0, 6).map(g => `
@@ -4109,20 +4275,106 @@ function renderDashboard(el) {
   `).join('') || `<div class="bi-data-note">Sem talentos qualificados nessa base.</div>`;
 
   const criticalListHtml = [
-    { label:'Prontos sem employer', value: readyWithoutEmployer.length, tag:'warn', action:'ready_without_employer' },
-    { label:'Sem employer definido', value: employerUnassigned.length, tag:'risk', action:'employer_unassigned' },
-    { label:'Talentos sem responsável', value: noOwnerTalents.length, tag:'warn', action:'talent_no_owner' },
-    { label:'Docs travando talentos', value: docsBlockingTalents.length, tag:'risk', action:'critical' },
+    { label:'Prontos sem employer', sub:'Talentos prontos sem vínculo', value: readyWithoutEmployer.length, tag:'warn', action:'ready_without_employer' },
+    { label:'Sem employer definido', sub:'No pipeline employer sem empresa', value: employerUnassigned.length, tag:'risk', action:'employer_unassigned' },
+    { label:'Talentos sem responsável', sub:'Sem dono claro na operação', value: noOwnerTalents.length, tag:'warn', action:'talent_no_owner' },
+    { label:'Docs travando talentos', sub:'Ação imediata em documentação', value: docsBlockingTalents.length, tag:'risk', action:'critical' },
   ].filter(x => x.value > 0).map(row => `
     <div class="bi-action-row" onclick="dashboardDrill('${row.action}')">
       <div class="bi-action-main">
         <div class="bi-action-name">${row.label}</div>
-        <div class="bi-action-sub">Acione esse gargalo a partir da dashboard</div>
+        <div class="bi-action-sub">${row.sub}</div>
       </div>
       <span class="bi-tag ${row.tag}">${row.tag === 'risk' ? 'crítico' : 'atenção'}</span>
       <div class="bi-action-meta">${row.value}</div>
     </div>
   `).join('') || `<div class="bi-data-note">Sem gargalos críticos destacados agora.</div>`;
+
+  const dataQualityRows = [
+    { key:'missing_email', label:'Sem e-mail', sub:'Cadastro sem contato de retorno', value: missingEmail.length, tag:'warn' },
+    { key:'missing_phone', label:'Sem telefone', sub:'Contato direto ausente', value: missingPhone.length, tag:'warn' },
+    { key:'missing_german', label:'Idioma ausente/baixo', sub:'Nível não informado ou ainda A0/Nenhum', value: missingGerman.length, tag:'risk' },
+    { key:'missing_owner', label:'Sem responsável', sub:'Sem dono operacional definido', value: missingOwner.length, tag:'risk' },
+    { key:'missing_profession', label:'Sem profissão', sub:'Dado-chave ausente para matching', value: missingProfession.length, tag:'warn' },
+    { key:'stalled_21', label:'Parados +21 dias', sub:'Fila sem avanço recente', value: stalled21.length, tag:'risk' },
+  ].map(row => `
+    <div class="bi-note-item" onclick="dashboardDrill('${row.key}')" style="cursor:pointer">
+      <div class="bi-note-main">
+        <div class="bi-note-title">${esc(row.label)}</div>
+        <div class="bi-note-sub">${esc(row.sub)}</div>
+      </div>
+      <div class="bi-note-value" style="color:${row.tag==='risk' ? '#ff6b81' : 'var(--de-gold)'}">${row.value}</div>
+    </div>
+  `).join('');
+
+  const ownerRowsHtml = ownerActionRows.map(row => `
+    <div class="bi-action-row" onclick="dashboardDrill('owner_bucket','${row.label.replace(/'/g,"\'")}')">
+      <div class="bi-action-main">
+        <div class="bi-action-name">${esc(row.label)}</div>
+        <div class="bi-action-sub">${row.count} registros · ${row.stalled} parados +21d</div>
+      </div>
+      <span class="bi-tag ${row.label === 'Sem responsável' ? 'risk' : row.stalled > 0 ? 'warn' : 'info'}">${row.label === 'Sem responsável' ? 'sem dono' : row.stalled > 0 ? 'aging' : 'ok'}</span>
+      <div class="bi-action-meta">${row.count}</div>
+    </div>
+  `).join('') || `<div class="bi-data-note">Sem responsáveis mapeados.</div>`;
+
+  const todayActionRowsHtml = [
+    { key:'ready_without_employer', label:'Acionar employers para ready pool', sub:`${readyWithoutEmployer.length} prontos sem employer`, value: readyWithoutEmployer.length, tag:'warn' },
+    { key:'employer_unassigned', label:'Corrigir pipeline employer sem empresa', sub:`${employerUnassigned.length} no pipeline sem employer`, value: employerUnassigned.length, tag:'risk' },
+    { key:'freshness_stale_21', label:'Reaquecer fila parada', sub:`${stalled21.length} sem avanço há mais de 21 dias`, value: stalled21.length, tag:'risk' },
+    { key:'course_no_forecast', label:'Fechar previsão do alemão', sub:`${courseNoForecast.length} sem previsão de término`, value: courseNoForecast.length, tag:'warn' },
+  ].filter(row => row.value > 0).map(row => `
+    <div class="bi-action-row" onclick="dashboardDrill('${row.key}')">
+      <div class="bi-action-main">
+        <div class="bi-action-name">${esc(row.label)}</div>
+        <div class="bi-action-sub">${esc(row.sub)}</div>
+      </div>
+      <span class="bi-tag ${row.tag}">${row.tag === 'risk' ? 'crítico' : 'ação'}</span>
+      <div class="bi-action-meta">${row.value}</div>
+    </div>
+  `).join('') || `<div class="bi-data-note">Nenhuma ação crítica aberta agora.</div>`;
+
+  const conversionRowsHtml = [
+    { key:'ready_employer', label:'Ready pool', sub:`${readyPool.length} candidatos aptos para employer`, value:`${uiPercent(readyPool.length, talentos.length || readyPool.length)}% da base talento`, tag:'info' },
+    { key:'ready_linked', label:'Ready vinculados', sub:`${readyLinked.length} já com employer definido`, value:`${uiPercent(readyLinked.length, readyPool.length)}%`, tag:'good' },
+    { key:'approved_linked', label:'Employer com retorno positivo', sub:`${readyApprovedCandidates.length} aprovados ou contratados`, value:`${uiPercent(readyApprovedCandidates.length, readyLinked.length)}%`, tag:'warn' },
+    { key:'hired_linked', label:'Contratação efetiva', sub:`${readyHiredCandidates.length} em contratação fechada`, value:`${uiPercent(readyHiredCandidates.length, readyApprovedCandidates.length || readyLinked.length)}%`, tag:'good' },
+  ].map(row => `
+    <div class="bi-action-row" onclick="dashboardDrill('${row.key}')">
+      <div class="bi-action-main">
+        <div class="bi-action-name">${esc(row.label)}</div>
+        <div class="bi-action-sub">${esc(row.sub)}</div>
+      </div>
+      <span class="bi-tag ${row.tag}">${row.tag==='good' ? 'forte' : row.tag==='warn' ? 'atenção' : 'tracking'}</span>
+      <div class="bi-action-meta">${row.value}</div>
+    </div>
+  `).join('');
+
+  const freshnessRowsHtml = [
+    { key:'freshness_recent_3', label:'Atualizados até 3 dias', sub:'Base em cadência operacional recente', value:fresh3.length, tag:'good' },
+    { key:'freshness_stale_7', label:'Sem atualização há +7 dias', sub:'Primeiro sinal de fila fria', value:stale7.length, tag:'warn' },
+    { key:'freshness_stale_21', label:'Sem atualização há +21 dias', sub:'Travamento operacional real', value:stalled21.length, tag:'risk' },
+    { key:'freshness_stale_45', label:'Sem atualização há +45 dias', sub:'Registro muito envelhecido na base ativa', value:stale45.length, tag:'risk' },
+  ].map(row => `
+    <div class="bi-note-item" onclick="dashboardDrill('${row.key}')" style="cursor:pointer">
+      <div class="bi-note-main">
+        <div class="bi-note-title">${esc(row.label)}</div>
+        <div class="bi-note-sub">${esc(row.sub)}</div>
+      </div>
+      <div class="bi-note-value" style="color:${row.tag==='good' ? 'var(--green)' : row.tag==='warn' ? 'var(--de-gold)' : '#ff6b81'}">${row.value}</div>
+    </div>
+  `).join('');
+
+  const sourceRowsHtml = sourceBuckets.map(row => `
+    <div class="bi-action-row" onclick="dashboardDrill('source_bucket','${row.label.replace(/'/g,"\'")}')">
+      <div class="bi-action-main">
+        <div class="bi-action-name">${esc(row.label)}</div>
+        <div class="bi-action-sub">Origem / referência operacional da base ativa</div>
+      </div>
+      <span class="bi-tag info">origem</span>
+      <div class="bi-action-meta">${row.count}</div>
+    </div>
+  `).join('') || `<div class="bi-empty-soft">Sem origem consolidada.</div>`;
 
   const cities = dashboardGroupCount(scopePool, c => fv(c,'Cidade atual','cidade_atual') || 'N/A').slice(0,6);
   const substatus = dashboardGroupCount(scopePool, c => fv(c,'Substatus','substatus') || 'Sem substatus').slice(0,8);
@@ -4149,6 +4401,25 @@ function renderDashboard(el) {
           <button class="bi-scope-btn ${currentScope==='employers'?'active':''}" onclick="dashboardSetScope('employers')">Employers</button>
           <button class="bi-scope-btn ${currentScope==='course'?'active':''}" onclick="dashboardSetScope('course')">Curso de alemão</button>
           <button class="bi-scope-btn ${currentScope==='rh'?'active':''}" onclick="dashboardSetScope('rh')">RH readiness</button>
+        </div>
+
+        <div class="bi-exec-strip" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px">
+          <div class="bi-summary-box" onclick="dashboardDrill('ready_employer')" style="cursor:pointer">
+            <div class="top"><div class="name">Cobertura ready → employer</div><div class="num">${readyCoveragePct}%</div></div>
+            <div class="line"><strong>${readyCovered.length}</strong> de <strong>${readyPool.length}</strong> já vinculados a employer</div>
+          </div>
+          <div class="bi-summary-box" onclick="dashboardDrill('employers_active')" style="cursor:pointer">
+            <div class="top"><div class="name">Retorno positivo dos employers</div><div class="num">${employerPositivePct}%</div></div>
+            <div class="line"><strong>${employerGroups.filter(g => g.aprovados > 0 || g.contratados > 0).length}</strong> de <strong>${employerGroups.length}</strong> com aprovados ou contratados</div>
+          </div>
+          <div class="bi-summary-box" onclick="dashboardDrill('missing_owner')" style="cursor:pointer">
+            <div class="top"><div class="name">Qualidade cadastral essencial</div><div class="num">${dataCompletenessPct}%</div></div>
+            <div class="line"><strong>${essentialIssueIds.size}</strong> registros com falta de owner, contato ou profissão</div>
+          </div>
+          <div class="bi-summary-box" onclick="dashboardDrill('critical')" style="cursor:pointer">
+            <div class="top"><div class="name">Pressão operacional crítica</div><div class="num">${criticalPressurePct}%</div></div>
+            <div class="line">idade média na etapa: <strong>${formatDaysCompact(avgStageAgeAll)}</strong> · employer: <strong>${formatDaysCompact(avgStageAgeEmployer)}</strong></div>
+          </div>
         </div>
 
         <div class="bi-kpi-strip">
@@ -4180,13 +4451,13 @@ function renderDashboard(el) {
           <div class="bi-kpi" onclick="dashboardDrill('critical')">
             <div class="bi-kpi-label">Pendências críticas</div>
             <div class="bi-kpi-value" style="color:#ff5d76">${criticalPool.length}</div>
-            <div class="bi-kpi-sub"><strong>${employerUnassigned.length}</strong> sem employer definido</div>
+            <div class="bi-kpi-sub"><strong>${stalled21.length}</strong> parados +21d</div>
           </div>
         </div>
       </div>
 
       <div class="bi-grid">
-        <section class="bi-card span-8">
+        <section class="bi-card span-8 ${scopeClass('employers')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Employer intelligence</div>
@@ -4219,7 +4490,7 @@ function renderDashboard(el) {
           </div>
         </section>
 
-        <section class="bi-card span-4">
+        <section class="bi-card span-4 ${scopeClass('employers','talents','course','rh')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Prioridades de ação</div>
@@ -4228,34 +4499,133 @@ function renderDashboard(el) {
             <span class="bi-card-badge">live</span>
           </div>
           <div class="bi-card-body">
-            <div class="bi-mini-metrics">
-              <div class="bi-mini" onclick="dashboardDrill('ready_without_employer')">
-                <div class="lbl">Prontos sem employer</div>
-                <div class="val" style="color:var(--de-gold)">${readyWithoutEmployer.length}</div>
-                <div class="sub">Talentos prontos sem vínculo</div>
-              </div>
-              <div class="bi-mini" onclick="dashboardDrill('employer_unassigned')">
-                <div class="lbl">Sem employer definido</div>
-                <div class="val" style="color:#ff5d76">${employerUnassigned.length}</div>
-                <div class="sub">No pipeline employer sem empresa</div>
-              </div>
-              <div class="bi-mini" onclick="dashboardDrill('talent_no_owner')">
-                <div class="lbl">Talentos sem responsável</div>
-                <div class="val" style="color:#c9a7ff">${noOwnerTalents.length}</div>
-                <div class="sub">Sem dono claro na operação</div>
-              </div>
-              <div class="bi-mini" onclick="dashboardDrill('critical')">
-                <div class="lbl">Críticos totais</div>
-                <div class="val" style="color:#ff8c42">${criticalPool.length}</div>
-                <div class="sub">Docs, employer e risco</div>
-              </div>
-            </div>
-            <div style="height:14px"></div>
-            <div class="bi-action-list">${criticalListHtml}</div>
+            <div class="bi-action-list show-3">${criticalListHtml}</div>
           </div>
         </section>
 
-        <section class="bi-card span-6">
+        <section class="bi-card span-6 ${scopeClass('employers','rh','course')}">
+          <div class="bi-card-head">
+            <div>
+              <div class="bi-card-title">Pressão operacional</div>
+              <div class="bi-card-sub">Volume por etapa e aging para identificar fila travada.</div>
+            </div>
+            <span class="bi-card-badge">SLA</span>
+          </div>
+          <div class="bi-card-body">
+            <div class="bi-pressure-grid">
+              <div>
+                <div class="bi-section-title">Pipeline atual</div>
+                <div class="bi-funnel-mini">${funnelHtml}</div>
+                <div class="bi-mini-note">Clique em uma etapa para abrir a lista filtrada correspondente.</div>
+              </div>
+              <div>
+                <div class="bi-section-title">Aging por etapa</div>
+                <div class="bi-sla">
+                  <div class="bi-sla-head" style="text-align:left">Etapa</div>
+                  <div class="bi-sla-head">0–7d</div>
+                  <div class="bi-sla-head">8–15d</div>
+                  <div class="bi-sla-head">16–30d</div>
+                  <div class="bi-sla-head">31d+</div>
+                  ${agingHtml}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="bi-card span-6 ${scopeClass('talents','employers','rh')}">
+          <div class="bi-card-head">
+            <div>
+              <div class="bi-card-title">Qualidade da base</div>
+              <div class="bi-card-sub">Campos críticos faltantes e carga operacional por responsável.</div>
+            </div>
+            <span class="bi-card-badge">governança</span>
+          </div>
+          <div class="bi-card-body">
+            <div class="bi-stack-grid">
+              <div>
+                <div class="bi-section-title">Campos críticos</div>
+                <div class="bi-note-list">${dataQualityRows}</div>
+              </div>
+              <div>
+                <div class="bi-section-title">Responsáveis / carga</div>
+                <div class="bi-action-list show-3 tight">${ownerRowsHtml}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="bi-card span-6 ${scopeClass('talents','employers','rh')}">
+          <div class="bi-card-head">
+            <div>
+              <div class="bi-card-title">Conversão operacional</div>
+              <div class="bi-card-sub">Leitura de avanço real do ready pool até employer, aprovação e contratação.</div>
+            </div>
+            <span class="bi-card-badge">funil executivo</span>
+          </div>
+          <div class="bi-card-body">
+            <div class="bi-stack-grid">
+              <div>
+                <div class="bi-section-title">Etapas de conversão</div>
+                <div class="bi-action-list show-3 tight">${conversionRowsHtml}</div>
+              </div>
+              <div>
+                <div class="bi-section-title">Cadência operacional</div>
+                <div class="bi-note-list">${freshnessRowsHtml}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="bi-card span-6 ${scopeClass('talents','employers','course','rh')}">
+          <div class="bi-card-head">
+            <div>
+              <div class="bi-card-title">Ações do dia</div>
+              <div class="bi-card-sub">Fila curta de ações com maior impacto operacional imediato.</div>
+            </div>
+            <span class="bi-card-badge">prioridade</span>
+          </div>
+          <div class="bi-card-body">
+            <div class="bi-action-list show-3 tight">${todayActionRowsHtml}</div>
+          </div>
+        </section>
+
+        <section class="bi-card span-6 ${scopeClass('talents','employers','course','rh')}">
+          <div class="bi-card-head">
+            <div>
+              <div class="bi-card-title">Origem e qualidade comercial</div>
+              <div class="bi-card-sub">De onde a base está entrando e qual parte já está esfriando.</div>
+            </div>
+            <span class="bi-card-badge">entrada</span>
+          </div>
+          <div class="bi-card-body">
+            <div class="bi-stack-grid">
+              <div>
+                <div class="bi-section-title">Top origens</div>
+                <div class="bi-action-list show-3 tight">${sourceRowsHtml}</div>
+              </div>
+              <div>
+                <div class="bi-section-title">Leitura rápida</div>
+                <div class="bi-summary-stack">
+                  <div class="bi-summary-box" onclick="dashboardDrill('freshness_recent_3')" style="cursor:pointer">
+                    <div class="top"><div class="name">Base aquecida</div><div class="num">${uiPercent(fresh3.length, ativos.length)}%</div></div>
+                    <div class="line"><strong>${fresh3.length}</strong> registros com atualização recente</div>
+                  </div>
+                  <div class="bi-summary-box" onclick="dashboardDrill('freshness_stale_21')" style="cursor:pointer">
+                    <div class="top"><div class="name">Base envelhecida</div><div class="num">${uiPercent(stalled21.length, ativos.length)}%</div></div>
+                    <div class="line"><strong>${stalled21.length}</strong> sem avanço há mais de 21 dias</div>
+                  </div>
+                  <div class="bi-summary-box" onclick="dashboardDrill('source_bucket','Currículo PDF')" style="cursor:pointer">
+                    <div class="top"><div class="name">Dependência de PDF</div><div class="num">${uiPercent((sourceBuckets.find(x => x.label === 'Currículo PDF') || {count:0}).count, ativos.length)}%</div></div>
+                    <div class="line">quanto da base ativa entrou por currículo PDF</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="bi-card span-6 ${scopeClass('talents')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Talent pool intelligence</div>
@@ -4271,185 +4641,132 @@ function renderDashboard(el) {
               </div>
               <div class="bi-summary-stack">
                 <div class="bi-summary-box">
-                  <div class="top"><div class="name">Talentos sem employer</div><div class="num">${talentos.filter(c => !getEmployerDisplay(c).trim()).length}</div></div>
-                  <div class="line"><strong>${readyWithoutEmployer.length}</strong> já prontos para abordagem</div>
+                  <div class="top"><div class="name">Talentos sem employer</div><div class="num">${readyWithoutEmployer.length}</div></div>
+                  <div class="line"><strong>${readyPool.filter(c => !getEmployerDisplay(c).trim()).length}</strong> já prontos para abordagem</div>
                 </div>
                 <div class="bi-summary-box">
                   <div class="top"><div class="name">Risco alto</div><div class="num">${riskTalents.length}</div></div>
                   <div class="line"><strong>${docsBlockingTalents.length}</strong> com travas documentais ou críticas</div>
                 </div>
-                <div class="bi-action-list show-3 tight">${topProfessionRows}</div>
+                <div class="bi-action-list show-3">${topProfessionRows}</div>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="bi-card span-6">
+        <section class="bi-card span-6 ${scopeClass('course')}">
           <div class="bi-card-head">
             <div>
-              <div class="bi-card-title">Curso de alemão como supply pipeline</div>
+              <div class="bi-card-title">Curso de Alemão como supply pipeline</div>
               <div class="bi-card-sub">Evolução do pool e proximidade de B1/B2.</div>
             </div>
-            <span class="bi-card-badge">${coursePool.length} em curso</span>
+            <span class="bi-card-badge">pipeline</span>
           </div>
           <div class="bi-card-body">
             <div class="bi-split">
               <div>
                 <div class="bi-chart-wrap"><canvas id="chart-bi-course-levels"></canvas></div>
-                <div class="bi-data-note">Esse painel mostra o curso como motor de abastecimento do pipeline futuro.</div>
+                <div class="bi-data-note">Clique nos KPIs para abrir listas filtradas de próximos a B1, B2 e sem previsão.</div>
               </div>
-              <div class="bi-course-grid">
-                <div class="bi-mini" onclick="dashboardDrill('course_next_b1')">
-                  <div class="lbl">Próximos a B1</div>
-                  <div class="val" style="color:#38bdf8">${courseNextB1.length}</div>
-                  <div class="sub">Base A2 prestes a virar talento</div>
+              <div class="bi-summary-stack">
+                <div class="bi-summary-box" onclick="dashboardDrill('course_next_b1')" style="cursor:pointer">
+                  <div class="top"><div class="name">Próximos a B1</div><div class="num">${courseNextB1.length}</div></div>
+                  <div class="line"><strong>${courseStalled.length}</strong> base A2 prestes a virar talento</div>
                 </div>
-                <div class="bi-mini" onclick="dashboardDrill('course_next_b2')">
-                  <div class="lbl">Próximos a B2</div>
-                  <div class="val" style="color:#c9a7ff">${courseNextB2.length}</div>
-                  <div class="sub">Base B1 em evolução</div>
+                <div class="bi-summary-box" onclick="dashboardDrill('course_next_b2')" style="cursor:pointer">
+                  <div class="top"><div class="name">Próximos a B2</div><div class="num">${courseNextB2.length}</div></div>
+                  <div class="line"><strong>${courseTalentReady}</strong> base B1 em evolução</div>
                 </div>
-                <div class="bi-mini" onclick="dashboardDrill('course_no_forecast')">
-                  <div class="lbl">Sem previsão</div>
-                  <div class="val" style="color:#ff8c42">${courseNoForecast.length}</div>
-                  <div class="sub">Necessita governança de cronograma</div>
-                </div>
-                <div class="bi-mini" onclick="dashboardDrill('course')">
-                  <div class="lbl">Talento já qualificado</div>
-                  <div class="val" style="color:var(--green)">${courseTalentReady}</div>
-                  <div class="sub">Em curso e já B1+</div>
-                </div>
-                <div class="bi-mini">
-                  <div class="lbl">Parados</div>
-                  <div class="val" style="color:#ff5d76">${courseStalled.length}</div>
-                  <div class="sub">Sem atualização recente</div>
-                </div>
-                <div class="bi-mini">
-                  <div class="lbl">Base analisada</div>
-                  <div class="val" style="color:var(--txt)">${scopePool.length}</div>
-                  <div class="sub">${scopeInfo.label}</div>
+                <div class="bi-summary-box" onclick="dashboardDrill('course_no_forecast')" style="cursor:pointer">
+                  <div class="top"><div class="name">Sem previsão</div><div class="num">${courseNoForecast.length}</div></div>
+                  <div class="line"><strong>${courseStalled.length}</strong> necessita governança de cronograma</div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="bi-card span-6">
+        <section class="bi-card span-6 ${scopeClass('rh')}">
           <div class="bi-card-head">
             <div>
-              <div class="bi-card-title">${esc(uiTranslate('RH readiness'))}</div>
-              <div class="bi-card-sub">${esc(uiTranslate('Entrevista importada, risco, coerência e prontidão internacional.'))}</div>
+              <div class="bi-card-title">HR-Bereitschaft</div>
+              <div class="bi-card-sub">Entrevista importada, risco, coerência e prontidão internacional.</div>
             </div>
             <span class="bi-card-badge">${interviewsImported.length} entrevistas</span>
           </div>
           <div class="bi-card-body">
-            <div class="bi-rh-grid">
-              <div class="bi-mini" onclick="dashboardDrill('rh_pending')">
-                <div class="lbl">${esc(uiTranslate('Análise RH pendente'))}</div>
-                <div class="val" style="color:#f5c000">${rhPending.length}</div>
-                <div class="sub">${esc(uiTranslate('Entrevista importada sem decisão'))}</div>
-              </div>
-              <div class="bi-mini" onclick="dashboardDrill('rh_risk_high')">
-                <div class="lbl">${esc(uiTranslate('Risco de desistência alto'))}</div>
-                <div class="val" style="color:#ff5d76">${rhRiskHigh.length}</div>
-                <div class="sub">${esc(uiTranslate('Exige revisão de prioridade'))}</div>
-              </div>
-              <div class="bi-mini">
-                <div class="lbl">${esc(uiTranslate('Motivação baixa'))}</div>
-                <div class="val" style="color:#ff8c42">${rhMotivacaoLow.length}</div>
-                <div class="sub">${esc(uiTranslate('Pode afetar avanço real'))}</div>
-              </div>
-              <div class="bi-mini">
-                <div class="lbl">${esc(uiTranslate('Coerência baixa'))}</div>
-                <div class="val" style="color:#ff8c42">${rhCoerenciaLow.length}</div>
-                <div class="sub">${esc(uiTranslate('Candidatura pouco consistente'))}</div>
-              </div>
-              <div class="bi-mini">
-                <div class="lbl">${esc(uiTranslate('Readiness internacional alto'))}</div>
-                <div class="val" style="color:var(--green)">${readinessHigh.length}</div>
-                <div class="sub">${esc(uiTranslate('Melhor base para employer'))}</div>
-              </div>
-              <div class="bi-mini">
-                <div class="lbl">${esc(uiTranslate('Aderência / prontidão'))}</div>
-                <div class="val" style="color:#38bdf8">${readyPool.length}</div>
-                <div class="sub">${esc(uiTranslate('Prontos ou muito próximos'))}</div>
-              </div>
+            <div class="bi-mini-metrics">
+              <div class="bi-mini" onclick="dashboardDrill('rh_pending')" style="cursor:pointer"><div class="lbl">Análise RH pendente</div><div class="val" style="color:var(--de-gold)">${rhPending.length}</div><div class="sub">Entrevista importada sem decisão</div></div>
+              <div class="bi-mini" onclick="dashboardDrill('rh_risk_high')" style="cursor:pointer"><div class="lbl">Risco de desistência alto</div><div class="val" style="color:#ff5d76">${rhRiskHigh.length}</div><div class="sub">Exige revisão de prioridade</div></div>
+              <div class="bi-mini"><div class="lbl">Motivação baixa</div><div class="val" style="color:#ff8c42">${rhMotivacaoLow.length}</div><div class="sub">Pode afetar avanço real</div></div>
+              <div class="bi-mini"><div class="lbl">Coerência baixa</div><div class="val" style="color:#ff8c42">${rhCoerenciaLow.length}</div><div class="sub">Candidatura pouco consistente</div></div>
+              <div class="bi-mini"><div class="lbl">Readiness internacional alto</div><div class="val" style="color:#1de99b">${readinessHigh.length}</div><div class="sub">Melhor base para employer</div></div>
+              <div class="bi-mini"><div class="lbl">Aderência / prontidão</div><div class="val" style="color:#7ec8ff">${readyPool.length}</div><div class="sub">Prontos ou muito próximos</div></div>
             </div>
           </div>
         </section>
 
-        <section class="bi-card span-6">
+        <section class="bi-card span-6 ${scopeClass('employers','course','rh')}">
           <div class="bi-card-head">
             <div>
-              <div class="bi-card-title">Conversão e aging</div>
-              <div class="bi-card-sub">Funil e tempo parado nas etapas mais críticas.</div>
+              <div class="bi-card-title">Geografia e concentração</div>
+              <div class="bi-card-sub">Distribuição útil para cluster comercial e fila operacional.</div>
             </div>
-            <span class="bi-card-badge">${ativos.length} ativos</span>
+            <span class="bi-card-badge">top buckets</span>
           </div>
           <div class="bi-card-body">
-            <div class="bi-flow-grid">
+            <div class="bi-split">
               <div>
-                <div class="bi-chart-wrap" style="min-height:auto;padding-top:0">
-                  <div class="bi-funnel-mini">${funnelHtml || '<div class="bi-data-note">Sem dados de funil.</div>'}</div>
-                </div>
+                <div class="bi-chart-wrap"><canvas id="chart-bi-cities"></canvas></div>
               </div>
               <div>
-                <div class="bi-aging-table">
-                  <div class="bi-aging-row head">
-                    <div></div><div>0–7d</div><div>8–15d</div><div>16–30d</div><div>+30d</div>
-                  </div>
-                  ${agingHtml}
-                </div>
+                <div class="bi-chart-wrap" style="height:260px"><canvas id="chart-bi-substatus"></canvas></div>
               </div>
             </div>
           </div>
         </section>
 
-        <details class="bi-card bi-secondary span-12">
-          <summary>Analytics secundário</summary>
-          <div class="bi-secondary-body">
-            <div class="bi-secondary-grid">
-              <div class="bi-secondary-panel">
-                <h4>Profissões dos talentos</h4>
-                <canvas id="chart-bi-professions"></canvas>
+        <details class="bi-card bi-secondary span-12 ${scopeClass('talents','employers','course','rh')}">
+          <summary>
+            <div>
+              <div class="bi-card-title">Camada analítica expandida</div>
+              <div class="bi-card-sub">Profissões priorizadas, cidades e buckets auxiliares para leitura operacional.</div>
+            </div>
+            <span class="bi-card-badge">expandir</span>
+          </summary>
+          <div class="bi-card-body">
+            <div class="bi-grid" style="gap:12px">
+              <div class="bi-card span-6" style="background:rgba(255,255,255,.02)">
+                <div class="bi-card-head"><div><div class="bi-card-title">Profissões priorizadas</div><div class="bi-card-sub">Top da base qualificada</div></div></div>
+                <div class="bi-card-body"><div class="bi-chart-wrap"><canvas id="chart-bi-professions"></canvas></div></div>
               </div>
-              <div class="bi-secondary-panel">
-                <h4>Cidades</h4>
-                <canvas id="chart-bi-cities"></canvas>
-              </div>
-              <div class="bi-secondary-panel">
-                <h4>Substatus / prioridade</h4>
-                <canvas id="chart-bi-substatus"></canvas>
+              <div class="bi-card span-6" style="background:rgba(255,255,255,.02)">
+                <div class="bi-card-head"><div><div class="bi-card-title">Buckets auxiliares</div><div class="bi-card-sub">Substatus e prioridade na visão corrente</div></div></div>
+                <div class="bi-card-body"><div class="bi-empty-soft">Clique nos cards e KPIs acima para abrir a operação já filtrada.</div></div>
               </div>
             </div>
           </div>
         </details>
       </div>
-    </div>
-  `;
+    </div>`;
 
   requestAnimationFrame(() => {
-    if (!window.Chart) return;
-    if (window.ChartDataLabels) Chart.register(ChartDataLabels);
     const TOOLTIP = {
-      backgroundColor: '#11131a', borderColor: '#242736', borderWidth: 1,
-      titleColor: '#eaecf5', bodyColor: '#7a80a0', padding: 10, cornerRadius: 6,
-      titleFont: { family: "'Bricolage Grotesque', sans-serif", size: 12 },
-      bodyFont: { family: "'JetBrains Mono', monospace", size: 11 },
+      callbacks: {
+        label: ctx => ` ${ctx.formattedValue}`
+      }
     };
-    const idCache = {};
-    function destroyIfExists(id){
-      const node = document.getElementById(id);
-      if (!node) return null;
-      const existing = Chart.getChart(node);
-      if (existing) existing.destroy();
-      return node;
-    }
-    function hbar(id, data, colors, opts={}) {
-      const ctx = destroyIfExists(id);
-      if (!ctx || !data.length) return;
+
+    const hbar = (id, data, colors, opts={}) => {
+      const canvas = document.getElementById(id);
+      if (!canvas || !window.Chart) return;
+      const ctx = canvas.getContext('2d');
+      if (window.__biCharts?.[id]) {
+        try { window.__biCharts[id].destroy(); } catch(_) {}
+      }
+      window.__biCharts = window.__biCharts || {};
       const displayLabels = data.map(d => uiTranslate(d.label));
-      new Chart(ctx, {
+      window.__biCharts[id] = new Chart(ctx, {
         type: 'bar',
         plugins: window.ChartDataLabels ? [ChartDataLabels] : [],
         data: {
@@ -4497,7 +4814,7 @@ function renderDashboard(el) {
           }
         }
       });
-    }
+    };
 
     hbar('chart-bi-employers',
       employerGroups.slice(0,7).map(g => ({ label:g.name, count:g.total })),
@@ -5587,7 +5904,7 @@ function renderEmployerHub(el) {
       selectedEmployer.nivel_alemao_minimo ? `Alemão mín.: ${selectedEmployer.nivel_alemao_minimo}` : '',
       Number.isFinite(Number(selectedEmployer.vagas_abertas)) ? `Vagas: ${Number(selectedEmployer.vagas_abertas)}` : ''
     ].filter(Boolean);
-    const mini = (lbl, val) => `<div class="emp-employer-mini"><div class="emp-employer-mini-lbl">${esc(lbl)}</div><div class="emp-employer-mini-val">${esc(String(val || '—'))}</div></div>`;
+    const mini = (lbl, val) => { const raw = String(val || '').trim(); const preview = raw ? empPreview(raw.replace(/\s+/g,' ').trim(), 96) : '—'; return `<div class="emp-employer-mini"><details class="emp-mini-expand"><summary><div class="emp-mini-card-head"><div class="emp-employer-mini-lbl">${esc(lbl)}</div><div class="emp-mini-card-toggle">${esc(uiTranslate('Clique para expandir'))}</div></div><div class="emp-mini-card-preview">${esc(preview)}</div></summary><div class="emp-employer-mini-val">${raw ? esc(raw) : '—'}</div></details></div>`; };
     return `<div class="emp-employer-brief">
       <div class="emp-employer-brief-top">
         <div>
@@ -5865,36 +6182,22 @@ function renderTable(el, filterStatus) {
   // Base de dados por aba
   let list;
   if (filterStatus === '__entrevistas') {
-    list = S.candidates.filter(c => {
-      const epi = fv(c,'entrevista_preliminar_id');
-      const dt  = fv(c,'entrevista_preliminar_data','Data da Entrevista','data_da_entrevista');
-      const av  = fv(c,'entrevista_preliminar_entrevistador','Avaliador');
-      const rr  = fv(c,'resumo_rh_curto','entrevista_preliminar_resumo_rh');
-      return !!((epi||'').toString().trim() || (dt||'').toString().trim() || (av||'').toString().trim() || (rr||'').toString().trim());
-    });
+    list = filterCands(S.candidates, false).filter(c =>
+      fv(c,'STATUS PIPELINE','status_pipeline') === 'Entrevista'
+    );
   } else if (filterStatus === '__analise') {
-    list = S.candidates.filter(c => {
-      const rr  = fv(c,'resumo_rh_curto','entrevista_preliminar_resumo_rh');
-      const rd  = fv(c,'risco_desistencia');
-      const pe  = fv(c,'pronto_para_employer');
-      const ci  = fv(c,'coerencia_candidatura');
-      const mr  = fv(c,'motivacao_real');
-      return !!((rr||'').toString().trim() || (rd||'').toString().trim() || (pe||'').toString().trim() || (ci||'').toString().trim() || (mr||'').toString().trim());
-    });
+    list = filterCands(S.candidates, false).filter(c =>
+      fv(c,'STATUS PIPELINE','status_pipeline') === 'Análise RH'
+    );
   } else if (filterStatus === '__prioritarios') {
     list = filterCands(S.candidates, false).filter(c => _nivelRank(c) >= 3);
   } else if (filterStatus === '__triagem') {
     list = filterCands(S.candidates, false).filter(c =>
-      ['Triagem','Novo candidato'].includes(fv(c,'STATUS PIPELINE'))
+      fv(c,'STATUS PIPELINE','status_pipeline') === 'Triagem'
     );
   } else if (filterStatus === '__documentacao') {
     list = filterCands(S.candidates, false).filter(c =>
-      fv(c,'STATUS PIPELINE') === 'Documentação' ||
-      ['passaporte','diploma','historico','registro'].some(k => normalizeUpper(getDocStatus(c, k)) !== 'NAO SOLICITADO') ||
-      (fv(c,'CPF')||'').trim() ||
-      (fv(c,'Carteira de vacinação','carteira_de_vacinacao')||'').trim() ||
-      (fv(c,'Contrato','contrato')||'').trim() ||
-      (fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim()
+      fv(c,'STATUS PIPELINE','status_pipeline') === 'Documentação'
     );
   } else if (filterStatus) {
     list = filterCands(S.candidates, false).filter(c =>
@@ -8722,8 +9025,143 @@ function populateNewForm() {
 // Fluxo: upload PDF → extração de texto no navegador → endpoint determinístico → revisão humana obrigatória
 // ══════════════════════════════════════════════════════════════
 
-const EXTRACT_CURRICULUM_FIELDS_URL =
-  'https://xcxqtjzlqmncwnhbolnl.supabase.co/functions/v1/extract-curriculum-fields';
+const EXTRACT_CURRICULUM_FIELDS_URL = `${SUPABASE_URL}/functions/v1/extract-curriculum-fields`;
+const EXTRACT_CURRICULUM_FIELDS_TIMEOUT_MS = 45000;
+function _pdfNormalizeSpace(str) {
+  return String(str || '').replace(/\u00a0/g,' ').replace(/[ \t]+/g,' ').trim();
+}
+
+function _pdfBuildLines(items) {
+  const rows = [];
+  for (const item of items || []) {
+    const str = _pdfNormalizeSpace(item?.str || '');
+    if (!str) continue;
+    const tf = Array.isArray(item.transform) ? item.transform : [];
+    const x = Number(tf[4] || 0);
+    const y = Number(tf[5] || 0);
+    const w = Number(item.width || 0);
+    const h = Number(item.height || 0);
+    let row = rows.find(r => Math.abs(r.y - y) <= Math.max(2.5, h * 0.45 || 2.5));
+    if (!row) {
+      row = { y, items: [] };
+      rows.push(row);
+    }
+    row.items.push({ x, y, w, h, str });
+  }
+  rows.sort((a,b) => b.y - a.y);
+  return rows.map(row => {
+    row.items.sort((a,b) => a.x - b.x);
+    let text = '';
+    let prev = null;
+    row.items.forEach(it => {
+      const gap = prev ? (it.x - (prev.x + prev.w)) : 0;
+      if (!prev) text += it.str;
+      else if (gap > 16) text += '    ' + it.str;
+      else text += ' ' + it.str;
+      prev = it;
+    });
+    return {
+      y: row.y,
+      x: Math.min(...row.items.map(i => i.x)),
+      text: _pdfNormalizeSpace(text),
+    };
+  }).filter(r => r.text);
+}
+
+function _pdfSplitColumns(lines, pageWidth) {
+  const ordered = Array.isArray(lines) ? [...lines] : [];
+  if (!ordered.length) return { hasTwoCols:false, left:[], right:[], header:[] };
+  const xs = ordered.map(l => Number(l.x || 0)).sort((a,b) => a-b);
+  const medianX = xs[Math.floor(xs.length / 2)] || (pageWidth * 0.5);
+  const splitX = Math.max(pageWidth * 0.42, Math.min(pageWidth * 0.62, medianX + Math.min(120, pageWidth * 0.08)));
+  const header = [];
+  const left = [];
+  const right = [];
+  const pageTopY = Math.max(...ordered.map(l => Number(l.y || 0)), 0);
+  for (const line of ordered) {
+    const txt = String(line.text || '').trim();
+    const nearTop = pageTopY - Number(line.y || 0) <= 72;
+    const fullWidthish = txt.length > 42 || Number(line.x || 0) <= pageWidth * 0.12;
+    if (nearTop && fullWidthish) {
+      header.push(line);
+      continue;
+    }
+    if (Number(line.x || 0) >= splitX) right.push(line);
+    else left.push(line);
+  }
+  const hasTwoCols = left.length >= 5 && right.length >= 5;
+  if (!hasTwoCols) return { hasTwoCols:false, left:ordered, right:[], header:[] };
+  return { hasTwoCols:true, left, right, header };
+}
+function _pdfCollectKeyValueLines(lines) {
+  return (lines || []).map(line => String(line?.text || '').trim()).filter(Boolean).filter(text => /^[^:\n]{2,42}\s*[:|-]\s*.+$/.test(text)).slice(0, 100);
+}
+function _pdfDetectQuality(pagePayloads) {
+  const stats = (pagePayloads || []).map(p => {
+    const lines = (p.sections || []).reduce((acc, sec) => acc + (sec.lines?.length || 0), 0);
+    const chars = (p.sections || []).reduce((acc, sec) => acc + String((sec.lines || []).join(' ')).length, 0);
+    return { page: p.page, lines, chars };
+  });
+  const totalLines = stats.reduce((acc, cur) => acc + cur.lines, 0);
+  const totalChars = stats.reduce((acc, cur) => acc + cur.chars, 0);
+  const pageCount = stats.length || 0;
+  const avgLinesPerPage = pageCount ? Math.round(totalLines / pageCount) : totalLines;
+  const avgCharsPerPage = pageCount ? Math.round(totalChars / pageCount) : totalChars;
+  const likelyScanned = totalChars < 240 || avgLinesPerPage < 8;
+  return {
+    page_count: pageCount,
+    total_lines: totalLines,
+    total_chars: totalChars,
+    avg_lines_per_page: avgLinesPerPage,
+    avg_chars_per_page: avgCharsPerPage,
+    likely_scanned: likelyScanned
+  };
+}
+function _pdfExtractLabeledValue(lines, patterns) {
+  const arr = Array.isArray(lines) ? lines : [];
+  for (const rawLine of arr) {
+    const line = String(rawLine || '').trim();
+    if (!line) continue;
+    for (const rx of patterns || []) {
+      if (rx.test(line)) {
+        const cleaned = line.replace(rx, '').replace(/^\s*[:\-–—]\s*/, '').trim();
+        if (cleaned) return cleaned;
+      }
+    }
+  }
+  return null;
+}
+function _pdfExtractLikelyCity(lines) {
+  const arr = Array.isArray(lines) ? lines : [];
+  const labeled = _pdfExtractLabeledValue(arr, [/^(cidade|city|wohnort|ort|localidade)\b\s*[:\-–—]?/i, /^(endereço|address|adresse)\b\s*[:\-–—]?/i]);
+  if (labeled) {
+    const chunk = labeled.split(/[\/|]/)[0].split(/,| - /)[0].trim();
+    if (chunk && chunk.length >= 2 && chunk.length <= 40) return chunk;
+  }
+  for (const line of arr.slice(0, 20)) {
+    const m = line.match(/\b([A-ZÀ-Ý][A-Za-zÀ-ÿ' -]{2,28})(?:\s*[-,/]\s*[A-Z]{2})\b/);
+    if (m?.[1]) return m[1].trim();
+  }
+  return null;
+}
+
+function _pdfDetectSectionLabel(line) {
+  const s = String(line || '').trim();
+  if (!s) return '';
+  const plain = s.toLowerCase();
+  const map = [
+    [/^(dados pessoais|personal data|personal details|informações pessoais|kontaktdaten|persönliche daten)/i, 'CONTATO'],
+    [/^(resumo|profil|profile|objective|objetivo|sobre mim|summary)/i, 'RESUMO'],
+    [/^(experiência|experiencia|experience|berufserfahrung|professional experience)/i, 'EXPERIÊNCIA'],
+    [/^(formação|formacao|education|ausbildung|academic background)/i, 'FORMAÇÃO'],
+    [/^(idiomas|sprachen|languages)/i, 'IDIOMAS'],
+    [/^(certificações|certificacoes|certifications|zertifikate)/i, 'CERTIFICAÇÕES'],
+    [/^(cursos|courses|weiterbildung)/i, 'CURSOS'],
+  ];
+  for (const [rx, label] of map) if (rx.test(s) || rx.test(plain)) return label;
+  return '';
+}
+
 async function extractCurriculumTextFromPdf(file) {
   if (!window.pdfjsLib) throw new Error('Leitor de PDF indisponível no navegador.');
   if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
@@ -8732,31 +9170,315 @@ async function extractCurriculumTextFromPdf(file) {
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
-  const pages = [];
+  const pagePayloads = [];
+  const rawPages = [];
+  const structuredPages = [];
 
   for (let pageNo = 1; pageNo <= pdf.numPages; pageNo++) {
     const page = await pdf.getPage(pageNo);
-    const content = await page.getTextContent();
-    let pageText = '';
-    let lastY = null;
+    const viewport = page.getViewport({ scale: 1 });
+    const content = await page.getTextContent({ normalizeWhitespace: false, disableCombineTextItems: false });
+    const lines = _pdfBuildLines(content.items || []);
+    const linearText = lines.map(l => l.text).join('\n');
+    rawPages.push(linearText.trim());
 
-    for (const item of content.items || []) {
-      const str = item?.str || '';
-      if (!str) continue;
-      const y = Array.isArray(item.transform) ? item.transform[5] : null;
-      if (lastY !== null && y !== null && Math.abs(y - lastY) > 2) {
-        pageText += '\n';
-      } else if (pageText && !pageText.endsWith('\n')) {
-        pageText += ' ';
-      }
-      pageText += str;
-      lastY = y;
+    const cols = _pdfSplitColumns(lines, viewport.width || 1000);
+    let structured = `[[PAGE ${pageNo}]]\n`;
+    if (cols.hasTwoCols) {
+      const headerText = (cols.header || []).map(l => l.text).join('\n');
+      structured += `${headerText ? `[[HEADER]]\n${headerText}\n\n` : ''}[[LEFT COLUMN]]\n${cols.left.map(l => l.text).join('\n')}\n\n[[RIGHT COLUMN]]\n${cols.right.map(l => l.text).join('\n')}`;
+    } else {
+      structured += lines.map(l => l.text).join('\n');
     }
 
-    pages.push(pageText.trim());
+    const sections = [];
+    let currentSection = { label: 'GERAL', lines: [] };
+    for (const line of lines) {
+      const sectionLabel = _pdfDetectSectionLabel(line.text);
+      if (sectionLabel) {
+        if (currentSection.lines.length) sections.push(currentSection);
+        currentSection = { label: sectionLabel, lines: [line.text] };
+      } else {
+        currentSection.lines.push(line.text);
+      }
+    }
+    if (currentSection.lines.length) sections.push(currentSection);
+
+    const kvLines = _pdfCollectKeyValueLines(lines);
+    pagePayloads.push({ page: pageNo, width: viewport.width || 0, hasTwoCols: cols.hasTwoCols, sections, kv_lines: kvLines });
+    structuredPages.push(structured.trim());
   }
 
-  return pages.filter(Boolean).join('\n\n');
+  const sectionText = pagePayloads.map(p => p.sections.map(sec => `[[${sec.label}]]\n${sec.lines.join('\n')}`).join('\n\n')).join('\n\n');
+  const kvText = pagePayloads.map(p => (p.kv_lines || []).length ? `[[PAGE ${p.page} KV]]\n${p.kv_lines.join('\n')}` : '').filter(Boolean).join('\n\n');
+  const quality = _pdfDetectQuality(pagePayloads);
+  const text = [
+    '[[LAYOUT_AWARE_TEXT]]',
+    structuredPages.join('\n\n'),
+    '\n[[SECTION_VIEW]]\n',
+    sectionText,
+    kvText ? '\n[[KEY_VALUE_VIEW]]\n' : '',
+    kvText,
+    '\n[[LINEAR_VIEW]]\n',
+    rawPages.join('\n\n')
+  ].join('\n');
+
+  return {
+    text,
+    raw_text: rawPages.join('\n\n'),
+    pages: pagePayloads,
+    page_count: pdf.numPages,
+    quality,
+  };
+}
+
+function extractCurriculumDeterministicHints(payload) {
+  const text = String(payload?.text || payload || '');
+  const normalized = text.replace(/\r/g,'');
+  const lines = normalized.split(/\n+/).map(s => _pdfNormalizeSpace(s)).filter(Boolean);
+  const topLines = lines.slice(0, 24);
+
+  const emailMatch = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig);
+  const linkedinMatch =
+    normalized.match(/https?:\/\/(?:[\w.-]+\.)?linkedin\.com\/[\w\-/?=&.%#]+/ig) ||
+    normalized.match(/linkedin\.com\/[\w\-/?=&.%#]+/ig);
+
+  const phoneCandidates = normalized.match(/(?:\+?\d{1,3}[\s().-]*)?(?:\d[\s().-]*){8,16}/g) || [];
+  const phone = phoneCandidates
+    .map(s => s.replace(/\s+/g,' ').trim())
+    .find(s => (s.match(/\d/g) || []).length >= 8) || null;
+
+  const labeledName = _pdfExtractLabeledValue(topLines, [
+    /^(nome|name|vollständiger name|vollstaendiger name)\b\s*[:\-–—]?/i
+  ]);
+
+  let nome = labeledName || null;
+  if (!nome) {
+    for (const line of topLines) {
+      if (/[@\d]|curriculum|curr[ií]culo|lebenslauf|resume|telefone|telefon|email|e-mail|linkedin/i.test(line)) continue;
+      const clean = line.replace(/[^A-Za-zÀ-ÿ' -]/g,' ').replace(/\s+/g,' ').trim();
+      const parts = clean.split(' ').filter(Boolean);
+      if (parts.length >= 2 && parts.length <= 5 && clean.length <= 60) {
+        const upperish = parts.filter(p => /^[A-ZÀ-Ý][a-zà-ÿ' -]+$/.test(p)).length;
+        if (upperish >= Math.max(2, parts.length - 1)) {
+          nome = clean;
+          break;
+        }
+      }
+    }
+  }
+
+  const birthLabel = _pdfExtractLabeledValue(lines, [
+    /^(data de nascimento|nascimento|date of birth|geburtsdatum)\b\s*[:\-–—]?/i
+  ]);
+  const dateSource = birthLabel || normalized;
+  const dateMatch =
+    dateSource.match(/\b(\d{2})[./-](\d{2})[./-](\d{4})\b/) ||
+    dateSource.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+
+  let nascimento = null;
+  if (dateMatch) {
+    if (dateMatch[1].length === 4) nascimento = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`;
+    else nascimento = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
+  }
+
+  const germanContext = lines
+    .filter(l => /(alem[aã]o|deutsch|german|sprach)/i.test(l))
+    .slice(0, 12)
+    .join(' | ');
+
+  const germanLevelMatch = (germanContext || normalized).match(/\b(A0|A1|A2|B1|B2\+?|C1|C2)\b/i);
+  let inferredGermanLevel = germanLevelMatch ? germanLevelMatch[1].toUpperCase() : null;
+  if (!inferredGermanLevel && germanContext) {
+    if (/(fluente|fluent|verhandlungssicher|fortgeschritten|advanced|avancad)/i.test(germanContext)) inferredGermanLevel = 'C1';
+    else if (/(intermedi[aá]rio|intermediate|mittelstufe|gute kenntnisse|gut)/i.test(germanContext)) inferredGermanLevel = 'B1';
+    else if (/(b[aá]sico|basic|grundkenntnisse|anf[aä]nger)/i.test(germanContext)) inferredGermanLevel = 'A1';
+  }
+
+  const profissaoMap = [
+    [/enfermeir|pflegefach|nurs/i, 'Enfermeiro'],
+    [/t[eé]cnic[oa].*enferm|pflegeassist/i, 'Técnico de Enfermagem'],
+    [/soldador|schwei[ßs]|welder/i, 'Soldador'],
+    [/serralh|schlosser|metallbau/i, 'Serralheiro / Metalúrgico'],
+    [/cnc|usinagem|zerspan|dreher|fr[aä]ser/i, 'Operador CNC / Usinagem'],
+    [/mecatr[oô]nic|mechatron/i, 'Mecatrônica'],
+    [/eletric|elektro|elektroniker/i, 'Eletrotécnica'],
+    [/log[ií]st|logistik|warehouse|almox/i, 'Logística'],
+    [/produ[cç][aã]o|produktion|operador de produ|manufatura/i, 'Operador de Produção'],
+    [/financeir|finanz|buchhalt|cont[aá]bil/i, 'Analista Financeiro'],
+    [/administrativ|administra|office|backoffice/i, 'Assistente Administrativo'],
+    [/farm[aá]c|pharma/i, 'Farmácia'],
+    [/fisioter|physio/i, 'Fisioterapeuta'],
+    [/pedreir|beton|constru[cç][aã]o|bauer|concrete/i, 'Construção / Betonagem'],
+  ];
+  let profissao = null;
+  for (const [rx, val] of profissaoMap) {
+    if (rx.test(normalized)) {
+      profissao = val;
+      break;
+    }
+  }
+
+  const areaMap = {
+    'Enfermeiro':'Saúde',
+    'Técnico de Enfermagem':'Saúde',
+    'Farmácia':'Saúde',
+    'Fisioterapeuta':'Saúde',
+    'Logística':'Logística',
+    'Operador de Produção':'Industrial',
+    'Analista Financeiro':'Financeira',
+    'Assistente Administrativo':'Administrativa',
+    'Eletrotécnica':'Industrial',
+    'Operador CNC / Usinagem':'Industrial',
+    'Serralheiro / Metalúrgico':'Industrial',
+    'Construção / Betonagem':'Industrial',
+    'Mecatrônica':'Industrial',
+    'Soldador':'Industrial',
+  };
+
+  const city = _pdfExtractLikelyCity(lines);
+  const nationalityLine = _pdfExtractLabeledValue(lines, [
+    /^(nacionalidade|nationality|staatsangehörigkeit)\b\s*[:\-–—]?/i
+  ]);
+
+  let pais = null;
+  const nationalitySource = `${nationalityLine || ''} ${normalized}`;
+  if (/brasil|brazil|brasileir/i.test(nationalitySource)) pais = 'Brasil';
+  else if (/argentin/i.test(nationalitySource)) pais = 'Argentina';
+  else if (/col[oô]mb/i.test(nationalitySource)) pais = 'Colômbia';
+  else if (/peru/i.test(nationalitySource)) pais = 'Peru';
+  else if (/chile/i.test(nationalitySource)) pais = 'Chile';
+  else if (/venez/i.test(nationalitySource)) pais = 'Venezuela';
+  else if (/urugua/i.test(nationalitySource)) pais = 'Uruguai';
+  else if (/paragua/i.test(nationalitySource)) pais = 'Paraguai';
+
+  const quality = payload?.quality || {};
+  const scanPenalty = quality?.likely_scanned ? 0.78 : 1;
+  const conf = (score, hasValue) => hasValue ? Math.max(0.25, Math.min(0.99, Number((score * scanPenalty).toFixed(2)))) : null;
+
+  const confidence = {
+    nome_completo: conf(labeledName ? 0.92 : 0.62, !!nome),
+    email: conf(0.98, !!(emailMatch && emailMatch[0])),
+    telefone: conf(0.90, !!phone),
+    linkedin: conf(0.96, !!(linkedinMatch && linkedinMatch[0])),
+    data_nascimento: conf(birthLabel ? 0.90 : 0.72, !!nascimento),
+    nivel_alemao: conf(germanContext ? 0.84 : 0.68, !!inferredGermanLevel),
+    profissao_principal: conf(0.62, !!profissao),
+    area_profissional: conf(0.58, !!profissao),
+    cidade_atual: conf(0.52, !!city),
+    pais_de_origem: conf(0.64, !!pais)
+  };
+
+  const parserSummary = [
+    `Importado via currículo PDF${payload?.page_count ? ` · ${payload.page_count} página(s)` : ''}.`,
+    quality?.likely_scanned ? 'PDF com baixa densidade textual; revisar campos manualmente.' : 'Extração com layout preservado e validação determinística.',
+    profissao ? `Profissão provável: ${profissao}.` : '',
+    inferredGermanLevel ? `Alemão detectado: ${inferredGermanLevel}.` : '',
+    city ? `Cidade provável: ${city}.` : '',
+    pais ? `País provável: ${pais}.` : '',
+    nationalityLine && !pais ? `Nacionalidade localizada: ${nationalityLine}.` : ''
+  ].filter(Boolean).join(' ');
+
+  return {
+    nome_completo: nome,
+    email: emailMatch ? emailMatch[0] : null,
+    telefone: phone,
+    linkedin: linkedinMatch ? linkedinMatch[0] : null,
+    data_nascimento: nascimento,
+    nivel_alemao: inferredGermanLevel || null,
+    profissao_principal: profissao,
+    area_profissional: profissao ? (areaMap[profissao] || null) : null,
+    pais_de_origem: pais,
+    cidade_atual: city,
+    status_inicial: 'Triagem',
+    referencia_origem: 'Currículo PDF',
+    observacao_parser: parserSummary,
+    _layout_pages: payload?.page_count || null,
+    _quality: quality,
+    _confidence: confidence,
+  };
+}
+
+function mergeCurriculumFields(aiFields, deterministicFields) {
+  const merged = { ...(aiFields || {}) };
+  const deterministic = deterministicFields || {};
+  for (const [key, value] of Object.entries(deterministic)) {
+    if (key.startsWith('_')) continue;
+    if (!merged[key] || String(merged[key]).trim() === '') merged[key] = value;
+  }
+  ['email','telefone','linkedin','data_nascimento','cidade_atual','pais_de_origem'].forEach(key => {
+    if (deterministic[key] && (!merged[key] || String(merged[key]).trim().length < 3)) merged[key] = deterministic[key];
+  });
+  merged._quality = deterministic._quality || merged._quality || null;
+  merged._confidence = { ...(merged._confidence || {}), ...(deterministic._confidence || {}) };
+  merged._layout_pages = deterministic._layout_pages || merged._layout_pages || null;
+  if ((!merged.observacao || !String(merged.observacao).trim()) && deterministic.observacao_parser) {
+    merged.observacao = deterministic.observacao_parser;
+  }
+  if (!merged.referencia_origem && deterministic.referencia_origem) merged.referencia_origem = deterministic.referencia_origem;
+  if (!merged.status_inicial && deterministic.status_inicial) merged.status_inicial = deterministic.status_inicial;
+  return merged;
+}
+
+function _parserNormalizePhoneDigits(value) {
+  return String(value || '').replace(/\D+/g,'');
+}
+function _parserNormalizeNameLoose(value) {
+  return String(value || '').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+function _parserCriticalMissingFields(fields) {
+  const checks = [
+    ['nome_completo','Nome'],
+    ['email','E-mail'],
+    ['telefone','Telefone'],
+    ['profissao_principal','Profissão'],
+    ['nivel_alemao','Alemão'],
+  ];
+  return checks.filter(([key]) => !String(fields?.[key] || '').trim()).map(([,label]) => label);
+}
+function detectCurriculumDuplicates(fields) {
+  const pool = Array.isArray(S?.candidates) ? S.candidates : [];
+  if (!pool.length) return [];
+  const email = String(fields?.email || '').trim().toLowerCase();
+  const phone = _parserNormalizePhoneDigits(fields?.telefone || '');
+  const name = _parserNormalizeNameLoose(fields?.nome_completo || '');
+  const city = String(fields?.cidade_atual || '').trim().toLowerCase();
+  return pool.map(c => {
+    const candidateId = String(fv(c,'ID','id') || c?.ID || c?.id || '');
+    const candEmail = String(fv(c,'E-mail','email') || '').trim().toLowerCase();
+    const candPhone = _parserNormalizePhoneDigits(fv(c,'Telefone','telefone') || '');
+    const candName = _parserNormalizeNameLoose(fv(c,'Nome completo','nome_completo') || '');
+    const candCity = String(fv(c,'Cidade atual','cidade_atual') || '').trim().toLowerCase();
+    let score = 0;
+    const reasons = [];
+    if (email && candEmail && email === candEmail) { score += 100; reasons.push('e-mail igual'); }
+    if (phone && candPhone && phone === candPhone) { score += 90; reasons.push('telefone igual'); }
+    if (name && candName && name === candName) { score += 65; reasons.push('nome igual'); }
+    else if (name && candName) {
+      const nameTokens = new Set(name.split(' ').filter(Boolean));
+      const candTokens = new Set(candName.split(' ').filter(Boolean));
+      const common = [...nameTokens].filter(t => candTokens.has(t)).length;
+      if (common >= 2 && Math.min(nameTokens.size, candTokens.size) >= 2) {
+        score += 35;
+        reasons.push('nome muito parecido');
+      }
+    }
+    if (city && candCity && city === candCity) { score += 8; reasons.push('mesma cidade'); }
+    if (score < 35) return null;
+    return {
+      id: candidateId,
+      name: String(fv(c,'Nome completo','nome_completo') || '—'),
+      score,
+      reasons,
+      stage: String(fv(c,'STATUS PIPELINE','status_pipeline') || '—'),
+    };
+  }).filter(Boolean).sort((a,b) => b.score - a.score).slice(0, 3);
+}
+function openDuplicateCandidate(id) {
+  if (!id) return;
+  const nextId = String(id);
+  closeNew();
+  setTimeout(() => openCand(nextId), 80);
 }
 
 function triggerCurriculumImport() {
@@ -8781,40 +9503,63 @@ async function handleCurriculumFile(input) {
   const btn      = document.getElementById('n-cv-btn');
 
   statusEl.style.display = 'block';
-  statusEl.innerHTML = `<div class="doc-parse-bar"><span class="doc-ico">⏳</span><span class="doc-msg">Processando currículo e identificando campos do cadastro...</span></div>`;
+  statusEl.innerHTML = `<div class="doc-parse-bar"><span class="doc-ico">⏳</span><span class="doc-msg">Processando currículo, preservando layout e identificando campos do cadastro...</span></div>`;
   btn.disabled = true;
   btn.textContent = '⏳ Processando...';
 
   try {
-    const textContent = await extractCurriculumTextFromPdf(file);
+    const pdfPayload = await extractCurriculumTextFromPdf(file);
+    const textContent = pdfPayload?.text || '';
     if (!textContent || textContent.trim().length < 40) {
       throw new Error('Não foi possível extrair texto suficiente do PDF. Faça o cadastro manualmente.');
     }
+    const deterministicHints = extractCurriculumDeterministicHints(pdfPayload);
 
     const supa = await getSupa();
     const { data: sessionData2 } = await supa.auth.getSession();
     const session = sessionData2?.session ?? null;
     if (!session?.access_token) throw new Error('Sessão expirada. Faça login novamente.');
 
-    const res = await fetch(EXTRACT_CURRICULUM_FIELDS_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + session.access_token,
-        'apikey': SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({
-        text_content: textContent,
-        file_name: file.name,
-        mime_type: 'application/pdf'
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), EXTRACT_CURRICULUM_FIELDS_TIMEOUT_MS);
 
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Erro ao processar o currículo.');
+    let data = null;
+    let rawResponse = '';
+    try {
+      const res = await fetch(EXTRACT_CURRICULUM_FIELDS_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+          'apikey': SUPABASE_ANON_KEY,
+        },
+        signal: controller.signal,
+        body: JSON.stringify({
+          text_content: textContent,
+          raw_text_content: pdfPayload?.raw_text || '',
+          layout_pages: pdfPayload?.pages || [],
+          deterministic_hints: deterministicHints,
+          quality_metrics: pdfPayload?.quality || null,
+          file_name: file.name,
+          mime_type: 'application/pdf'
+        }),
+      });
+
+      rawResponse = await res.text();
+      try { data = rawResponse ? JSON.parse(rawResponse) : null; }
+      catch { throw new Error('A função de currículo retornou uma resposta inválida.'); }
+
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || `Erro ao processar o currículo (${res.status}).`);
+      }
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     _pendingCurriculumFile = file;
-    _fillNewFormFromCurriculum(data.data || {}, file.name);
+    const mergedFields = mergeCurriculumFields(data?.data || {}, deterministicHints || {});
+    if (data?.meta) mergedFields._backend = data.meta;
+    _fillNewFormFromCurriculum(mergedFields, file.name);
 
   } catch (e) {
     statusEl.innerHTML = `<div class="doc-parse-bar" style="color:var(--red);background:var(--red-bg);border-color:rgba(255,61,90,.25)">
@@ -8832,6 +9577,7 @@ function _fillNewFormFromCurriculum(fields, fileName) {
     'telefone':       'n-tel',
     'cidade_atual':   'n-cidade',
     'pais_de_origem': 'n-pais',
+    'referencia_origem': 'n-origem',
     'observacao':     'n-obs',
   };
 
@@ -8841,6 +9587,7 @@ function _fillNewFormFromCurriculum(fields, fileName) {
     'n-tel':'Telefone',
     'n-cidade':'Cidade atual',
     'n-pais':'País de origem',
+    'n-origem':'Referência / Origem',
     'n-obs':'Observação'
   };
 
@@ -8858,9 +9605,9 @@ function _fillNewFormFromCurriculum(fields, fileName) {
   }
 
   const applySelectValue = (id, value, label) => {
-    if (!value) { skipped.push(label); return; }
+    if (!value) { skipped.push(label); return false; }
     const sel = document.getElementById(id);
-    if (!sel) { skipped.push(label); return; }
+    if (!sel) { skipped.push(label); return false; }
     let match = Array.from(sel.options).find(o => o.value.toLowerCase() === String(value).trim().toLowerCase());
     if (!match) {
       const opt = document.createElement('option');
@@ -8871,22 +9618,75 @@ function _fillNewFormFromCurriculum(fields, fileName) {
     if (!sel.value) {
       sel.value = match.value;
       sel.classList.add('doc-field-filled');
-      filled.push(label);
+      if (!filled.includes(label)) filled.push(label);
+      return true;
     }
+    return false;
+  };
+
+  const applyInputValue = (id, value, label) => {
+    if (!value) { skipped.push(label); return false; }
+    const el = document.getElementById(id);
+    if (!el || el.value.trim() !== '') return false;
+    el.value = String(value).trim();
+    el.classList.add('doc-field-filled');
+    if (!filled.includes(label)) filled.push(label);
+    return true;
   };
 
   applySelectValue('n-prof', fields.profissao_principal || fields.profissao || '', 'Profissão');
   applySelectValue('n-area', fields.area_profissional || '', 'Área profissional');
   applySelectValue('n-alemao', fields.nivel_alemao || '', 'Nível de alemão');
+  applySelectValue('n-status', fields.status_inicial || 'Triagem', 'Status inicial');
+  applyInputValue('n-origem', fields.referencia_origem || 'Currículo PDF', 'Referência / Origem');
+  applyInputValue('n-resp', fields.responsavel || '', 'Responsável');
 
-  ['status_inicial','responsavel','referencia_origem'].forEach(k => {
-    if (!fields[k]) skipped.push({ status_inicial:'Status inicial', responsavel:'Responsável', referencia_origem:'Referência / Origem' }[k]);
-  });
+  if (!fields.responsavel) skipped.push('Responsável');
+  if (!fields.status_inicial) skipped.push('Status inicial');
+
+  if (fields.observacao_parser) {
+    const obsEl = document.getElementById('n-obs');
+    if (obsEl && !obsEl.value.trim()) {
+      obsEl.value = String(fields.observacao_parser).trim();
+      obsEl.classList.add('doc-field-filled');
+      if (!filled.includes('Observação')) filled.push('Observação');
+    }
+  }
 
   const statusEl = document.getElementById('n-cv-status');
-  const lowData = filled.length < 3;
+  const lowData = filled.length < 4;
   const skippedClean = [...new Set(skipped.filter(Boolean))];
-  statusEl.innerHTML = `<div class="doc-parse-bar" style="flex-direction:column;align-items:flex-start;gap:6px">
+  const quality = fields._quality || {};
+  const confidence = fields._confidence || {};
+  const criticalMissing = _parserCriticalMissingFields(fields);
+  const duplicateSignals = detectCurriculumDuplicates(fields);
+  const confidenceLabelMap = {
+    nome_completo:'Nome',
+    email:'E-mail',
+    telefone:'Telefone',
+    linkedin:'LinkedIn',
+    data_nascimento:'Nascimento',
+    nivel_alemao:'Alemão',
+    profissao_principal:'Profissão',
+    cidade_atual:'Cidade',
+    pais_de_origem:'País'
+  };
+  const confidenceTier = score => score >= 0.86 ? 'Alta' : score >= 0.65 ? 'Média' : 'Baixa';
+  const confidenceColor = score => score >= 0.86 ? 'var(--green)' : score >= 0.65 ? 'var(--de-gold)' : 'var(--red)';
+  const confidenceRows = Object.entries(confidence)
+    .filter(([,score]) => typeof score === 'number')
+    .sort((a,b) => (b[1] || 0) - (a[1] || 0))
+    .slice(0, 6)
+    .map(([key, score]) => `<div style="display:flex;justify-content:space-between;gap:8px;color:var(--txt2)"><span>${esc(confidenceLabelMap[key] || key)}</span><span style="color:${confidenceColor(score)}">${confidenceTier(score)} · ${Math.round(score * 100)}%</span></div>`)
+    .join('');
+  const duplicateHtml = duplicateSignals.length
+    ? duplicateSignals.map(item => `<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start"><div style="min-width:0"><div style="color:var(--txt2);font-weight:600">${esc(item.name)}</div><div style="color:var(--txt3)">${esc(item.stage)} · ${esc(item.reasons.join(' + '))}</div></div><button type="button" class="btn btn-xs btn-ghost" onclick="openDuplicateCandidate('${String(item.id).replace(/'/g, "\'")}')">Abrir</button></div>`).join('')
+    : '<div style="color:var(--txt3)">nenhum sinal forte</div>';
+  const criticalMissingHtml = criticalMissing.length
+    ? criticalMissing.map(label => `<div style="color:var(--txt3)">· ${esc(label)}</div>`).join('')
+    : '<div style="color:var(--green)">nenhum campo crítico ausente</div>';
+
+  statusEl.innerHTML = `<div class="doc-parse-bar" style="flex-direction:column;align-items:flex-start;gap:8px">
     <div style="display:flex;align-items:center;gap:8px;width:100%">
       <span class="doc-ico">📎</span>
       <span class="doc-msg" style="flex:1">
@@ -8895,7 +9695,7 @@ function _fillNewFormFromCurriculum(fields, fileName) {
       </span>
       <button class="btn btn-xs btn-ghost" onclick="clearCurriculumFill()" style="flex-shrink:0">Limpar</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:11px;width:100%;padding-left:28px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;font-size:11px;width:100%;padding-left:28px">
       <div>
         <div style="color:var(--green);font-weight:600;margin-bottom:2px">✓ Preenchidos (${filled.length})</div>
         ${filled.length ? filled.map(f=>`<div style="color:var(--txt2)">· ${esc(f)}</div>`).join('') : '<div style="color:var(--txt3)">nenhum</div>'}
@@ -8904,21 +9704,40 @@ function _fillNewFormFromCurriculum(fields, fileName) {
         <div style="color:var(--txt3);font-weight:600;margin-bottom:2px">— Não preenchidos</div>
         ${skippedClean.length ? skippedClean.map(f=>`<div style="color:var(--txt3)">· ${esc(f)}</div>`).join('') : '<div style="color:var(--txt3)">—</div>'}
       </div>
+      <div>
+        <div style="color:var(--de-gold);font-weight:600;margin-bottom:2px">⚠ Campos críticos ausentes</div>
+        ${criticalMissingHtml}
+      </div>
+      <div>
+        <div style="color:var(--blue);font-weight:600;margin-bottom:2px">ℹ Qualidade do PDF</div>
+        <div style="color:var(--txt2)">· páginas: ${esc(String(fields._layout_pages || quality.page_count || '—'))}</div>
+        <div style="color:var(--txt2)">· linhas/página: ${esc(String(quality.avg_lines_per_page || '—'))}</div>
+        <div style="color:var(--txt2)">· chars/página: ${esc(String(quality.avg_chars_per_page || '—'))}</div>
+      </div>
+      <div>
+        <div style="color:var(--teal);font-weight:600;margin-bottom:2px">⟐ Confiança por campo</div>
+        ${confidenceRows || '<div style="color:var(--txt3)">sem score</div>'}
+      </div>
+      <div>
+        <div style="color:#f0a3ff;font-weight:600;margin-bottom:2px">≋ Possíveis duplicidades</div>
+        ${duplicateHtml}
+      </div>
     </div>
+    ${quality.likely_scanned ? `<div style="font-size:11px;color:var(--red);padding-left:28px">⚠ PDF com baixa densidade textual. Se o currículo for imagem/scan, revise tudo manualmente.</div>` : ''}
     ${_pendingCurriculumFile ? `<div style="font-size:11px;color:var(--blue);padding-left:28px">📎 PDF retido — será enviado ao Drive ao criar o candidato.</div>` : ''}
   </div>`;
 }
 
 function clearCurriculumFill() {
   _pendingCurriculumFile = null;
-  ['n-nome','n-email','n-tel','n-cidade','n-pais','n-obs'].forEach(id => {
+  ['n-nome','n-email','n-tel','n-cidade','n-pais','n-origem','n-resp','n-obs'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.classList.contains('doc-field-filled')) {
       el.value = '';
       el.classList.remove('doc-field-filled');
     }
   });
-  ['n-prof','n-area','n-alemao'].forEach(id => {
+  ['n-prof','n-area','n-alemao','n-status'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.classList.contains('doc-field-filled')) {
       el.value = '';
@@ -10610,9 +11429,88 @@ function agNav(dir) {
     'ativo':'aktiv',
     'sem resp.':'ohne Zust.',
     'Talentos priorizados por profissão':'Priorisierte Talente nach Beruf',
-    'A visão de talentos usa o critério de idioma já validado no produto.':'Die Talentansicht nutzt das im Produkt bereits validierte Sprachkriterium.'
+    'A visão de talentos usa o critério de idioma já validado no produto.':'Die Talentansicht nutzt das im Produkt bereits validierte Sprachkriterium.',
+    'Toda a operação ativa, com foco em supply, gargalo e cobertura operacional.':'Gesamte aktive Pipeline mit Fokus auf Talentpool, Engpässe und operative Abdeckung.',
+    'Conversão operacional':'Operative Konversion',
+    'Leitura de avanço real do ready pool até employer, aprovação e contratação.':'Reale Fortschrittsanalyse vom Ready-Pool bis zu Arbeitgeber, Zusage und Einstellung.',
+    'funil executivo':'Executive Funnel',
+    'Etapas de conversão':'Konversionsstufen',
+    'Ready pool':'Ready-Pool',
+    'Ready vinculados':'Ready verknüpft',
+    'Employer com retorno positivo':'Arbeitgeber mit positivem Feedback',
+    'Contratação efetiva':'Tatsächliche Einstellung',
+    'Cadência operacional':'Operative Taktung',
+    'Atualizados até 3 dias':'Aktualisiert in den letzten 3 Tagen',
+    'Sem atualização há +7 dias':'Seit über 7 Tagen keine Aktualisierung',
+    'Sem atualização há +21 dias':'Seit über 21 Tagen keine Aktualisierung',
+    'Sem atualização há +45 dias':'Seit über 45 Tagen keine Aktualisierung',
+    'Base em cadência operacional recente':'Bestand mit aktueller operativer Taktung',
+    'Primeiro sinal de fila fria':'Erstes Signal einer kalten Pipeline',
+    'Travamento operacional real':'Realer operativer Stau',
+    'Registro muito envelhecido na base ativa':'Datensatz in der aktiven Basis stark überaltert',
+    'Origem e qualidade comercial':'Herkunft und Vertriebsqualität',
+    'De onde a base está entrando e qual parte já está esfriando.':'Woher die Pipeline kommt und welcher Teil bereits auskühlt.',
+    'entrada':'Eingang',
+    'Top origens':'Top-Herkünfte',
+    'Origem / referência operacional da base ativa':'Operative Herkunft / Referenz der aktiven Basis',
+    'Leitura rápida':'Schnellansicht',
+    'Base aquecida':'Warme Pipeline',
+    'registros com atualização recente':'Datensätze mit aktueller Aktualisierung',
+    'Base envelhecida':'Gealterte Pipeline',
+    'sem avanço há mais de 21 dias':'ohne Fortschritt seit mehr als 21 Tagen',
+    'Dependência de PDF':'PDF-Abhängigkeit',
+    'quanto da base ativa entrou por currículo PDF':'Anteil der aktiven Basis, der über Lebenslauf-PDF einging',
+    'Base qualificada por idioma, dono operacional e prontidão comercial.':'Qualifizierter Bestand nach Sprachstand, operativer Zuständigkeit und vertrieblicher Einsatzbereitschaft.',
+    'Empresas, cobertura, aging comercial e resposta do pipeline.':'Unternehmen, Abdeckung, vertriebliches Aging und Pipeline-Rückmeldung.',
+    'Supply pipeline, proximidade de B1/B2 e risco de estagnação.':'Talentpipeline, Nähe zu B1/B2 und Stagnationsrisiko.',
+    'Entrevistas, decisão operacional, coerência e risco de desistência.':'Interviews, operative Entscheidung, Kohärenz und Absprungrisiko.',
+    'Pressão operacional':'Operativer Druck',
+    'Volume por etapa e aging para identificar fila travada.':'Volumen pro Phase und Aging zur Erkennung blockierter Warteschlangen.',
+    'Pipeline atual':'Aktuelle Pipeline',
+    'Aging por etapa':'Aging nach Phase',
+    'Etapa':'Phase',
+    'Qualidade da base':'Datenqualität',
+    'Campos críticos faltantes e carga operacional por responsável.':'Fehlende kritische Felder und operative Last pro Verantwortlichem.',
+    'Ações do dia':'Tagesaktionen',
+    'Fila curta de ações com maior impacto operacional imediato.':'Kurze Aktionsliste mit der größten unmittelbaren operativen Wirkung.',
+    'Acionar employers para ready pool':'Arbeitgeber für den Ready-Pool aktivieren',
+    'Corrigir pipeline employer sem empresa':'Arbeitgeber-Pipeline ohne Unternehmen korrigieren',
+    'Reaquecer fila parada':'Stillstehende Pipeline reaktivieren',
+    'Fechar previsão do alemão':'Deutschprognose abschließen',
+    'Campos críticos ausentes':'Kritische Pflichtfelder fehlen',
+    'Possíveis duplicidades':'Mögliche Duplikate',
+    'nenhum sinal forte':'kein starkes Signal',
+    'Abrir':'Öffnen',
+    'e-mail igual':'gleiche E-Mail',
+    'telefone igual':'gleiche Telefonnummer',
+    'nome igual':'gleicher Name',
+    'nome muito parecido':'Name sehr ähnlich',
+    'mesma cidade':'gleiche Stadt',
+    'governança':'Governance',
+    'Campos críticos':'Kritische Felder',
+    'Sem e-mail':'Ohne E-Mail',
+    'Cadastro sem contato de retorno':'Datensatz ohne Rückkontakt',
+    'Sem telefone':'Ohne Telefon',
+    'Contato direto ausente':'Direkter Kontakt fehlt',
+    'Idioma ausente/baixo':'Sprache fehlt/zu niedrig',
+    'Nível não informado ou ainda A0/Nenhum':'Niveau nicht angegeben oder noch A0/Kein',
+    'Sem profissão':'Ohne Beruf',
+    'Dado-chave ausente para matching':'Schlüsseldaten für Matching fehlen',
+    'Parados +21 dias':'Stillstand +21 Tage',
+    'Fila sem avanço recente':'Warteschlange ohne jüngsten Fortschritt',
+    'Responsáveis / carga':'Verantwortliche / Auslastung',
+    'owner':'Owner',
+    'Sem responsáveis mapeados.':'Keine Verantwortlichen zugeordnet.',
+    'Profissões priorizadas':'Priorisierte Berufe',
+    'Top da base qualificada':'Top des qualifizierten Bestands',
+    'Buckets auxiliares':'Hilfs-Buckets',
+    'Substatus e prioridade na visão corrente':'Unterstatus und Priorität in der aktuellen Sicht',
+    'Clique nos cards e KPIs acima para abrir a operação já filtrada.':'Klicken Sie auf die Cards und KPIs oben, um die bereits gefilterte Operation zu öffnen.',
+    'Geografia e concentração':'Geografie und Konzentration',
+    'Distribuição útil para cluster comercial e fila operacional.':'Nützliche Verteilung für Vertriebscluster und operative Warteschlangen.',
+    'top buckets':'Top-Buckets',
+    'SLA':'SLA',
   };
-
   const placeholderMap = {
     'Nome completo':'Vollständiger Name',
     'email@exemplo.com':'beispiel@firma.de',
@@ -10634,6 +11532,32 @@ function agNav(dir) {
     'Editar vínculo':'Verknüpfung bearbeiten'
   };
 
+  Object.assign(exactMap, {
+    'Cobertura ready → employer':'Ready-Abdeckung → Arbeitgeber',
+    'Retorno positivo dos employers':'Positive Arbeitgeber-Rückmeldung',
+    'Qualidade cadastral essencial':'Essenzielle Datenqualität',
+    'Pressão operacional crítica':'Kritischer operativer Druck',
+    'já vinculados a employer':'bereits einem Arbeitgeber zugeordnet',
+    'com aprovados ou contratados':'mit Freigaben oder Einstellungen',
+    'registros com falta de owner, contato ou profissão':'Datensätze ohne Owner, Kontakt oder Beruf',
+    'idade média na etapa':'durchschnittliches Etappenalter',
+    'Currículo processado:':'Lebenslauf verarbeitet:',
+    'Poucos campos identificados. Revise o preenchimento.':'Nur wenige Felder erkannt. Bitte prüfen Sie die Eingaben.',
+    'Não preenchidos':'Nicht ausgefüllt',
+    'Qualidade do PDF':'PDF-Qualität',
+    'Confiança por campo':'Feldvertrauen',
+    'PDF com baixa densidade textual. Se o currículo for imagem/scan, revise tudo manualmente.':'PDF mit geringer Textdichte. Falls der Lebenslauf ein Scan/Bild ist, bitte alles manuell prüfen.',
+    'PDF retido — será enviado ao Drive ao criar o candidato.':'PDF zwischengespeichert – wird beim Anlegen des Bewerbers in Drive hochgeladen.',
+    'Importado via currículo PDF':'Importiert per Lebenslauf-PDF',
+    'Extração com layout preservado e validação determinística.':'Extraktion mit Layout-Erhalt und deterministischer Validierung.',
+    'Profissão provável:':'Wahrscheinlicher Beruf:',
+    'Alemão detectado:':'Erkanntes Deutschniveau:',
+    'Cidade provável:':'Wahrscheinliche Stadt:',
+    'Status inicial':'Startstatus',
+    'Referência / Origem':'Referenz / Herkunft',
+    'Responsável':'Verantwortlich',
+    'Observação':'Anmerkung'
+  });
   const reverseMap = Object.fromEntries(Object.entries(exactMap).map(([pt,de]) => [de, pt]));
   const reversePlaceholderMap = Object.fromEntries(Object.entries(placeholderMap).map(([pt,de]) => [de, pt]));
   const reverseTitleMap = Object.fromEntries(Object.entries(titleMap).map(([pt,de]) => [de, pt]));
