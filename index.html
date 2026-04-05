@@ -25,7 +25,7 @@
   --teal:#2dd4bf;--teal-bg:rgba(45,212,191,.10);
   --r:6px;--r2:10px;--r3:14px;--r4:20px;
   --sh:0 8px 32px rgba(0,0,0,.6);--sh2:0 2px 8px rgba(0,0,0,.35);
-  --sidebar:228px;--topbar:52px;
+  --sidebar:212px;--topbar:52px;
   --font:'Bricolage Grotesque',sans-serif;--mono:'JetBrains Mono',monospace;
   /* German flag stripe vars */
   --de-black:#1a1a1a;--de-red:#c41e3a;--de-gold:#f5c000;
@@ -1148,6 +1148,7 @@ a{color:inherit;text-decoration:none}
   margin-top:8px;
   font-size:11px;
   color:var(--txt2);
+  line-height:1.5;
 }
 .bi-kpi-sub strong { color:var(--txt); font-weight:700; }
 
@@ -1230,24 +1231,24 @@ a{color:inherit;text-decoration:none}
 .bi-note-title{font-size:12px;font-weight:800;color:var(--txt)}
 .bi-note-sub{margin-top:4px;font-size:11px;color:var(--txt2);line-height:1.45}
 .bi-note-value{font-family:var(--mono);font-size:22px;line-height:1;color:var(--txt);flex-shrink:0}
-.bi-sla{display:grid;grid-template-columns:1.2fr repeat(4,minmax(0,1fr));gap:8px;margin-top:4px}
+.bi-sla{display:grid;grid-template-columns:minmax(140px,1.45fr) repeat(4,minmax(46px,1fr));gap:8px;margin-top:4px}
 .bi-sla-head,.bi-sla-cell{padding:8px 10px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.02);font-size:11px}
-.bi-sla-head{font-weight:800;color:var(--txt2);text-align:center}
-.bi-sla-stage{font-weight:700;color:var(--txt);display:flex;align-items:center}
-.bi-sla-cell{font-family:var(--mono);color:var(--txt2);text-align:center}
+.bi-sla-head{font-weight:800;color:var(--txt2);text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px}
+.bi-sla-stage{font-weight:700;color:var(--txt);display:flex;align-items:center;line-height:1.35;padding-right:6px}
+.bi-sla-cell{font-family:var(--mono);color:var(--txt2);text-align:center;display:flex;align-items:center;justify-content:center;min-height:44px}
 .bi-sla-cell.good{color:var(--green)}
 .bi-sla-cell.warn{color:var(--de-gold)}
 .bi-sla-cell.risk{color:#ffb86b}
 .bi-sla-cell.danger{color:#ff6b81}
-.bi-pressure-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
+.bi-pressure-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:14px}
 .bi-stack-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .bi-chip-inline{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:999px;border:1px solid var(--border2);background:rgba(255,255,255,.03);font-size:10px;font-weight:700;color:var(--txt2)}
 .bi-mini-note{margin-top:8px;font-size:11px;color:var(--txt3);line-height:1.45}
 .bi-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.09em;color:var(--txt3);font-weight:700;margin-bottom:8px}
 .bi-empty-soft{padding:10px 12px;border-radius:14px;border:1px dashed var(--border2);color:var(--txt3);font-size:11px;background:rgba(255,255,255,.02)}
 .emp-employer-mini summary{display:block}
-.emp-mini-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
-.emp-mini-card-preview{font-size:11.5px;color:#d5def0;line-height:1.58;margin-top:6px;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
+.emp-mini-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:nowrap}
+.emp-mini-card-preview{font-size:11.5px;color:#d5def0;line-height:1.58;margin-top:6px;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word;hyphens:auto}
 .emp-mini-card-toggle{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#7eb5ff;flex-shrink:0;white-space:nowrap}
 .is-scope-hidden{display:none !important}
 .bi-summary-stack { display:flex; flex-direction:column; gap:10px; min-height:0; }
@@ -1273,9 +1274,11 @@ a{color:inherit;text-decoration:none}
   color:var(--txt);
   font-size:13px;
   font-weight:700;
-  white-space:nowrap;
+  line-height:1.35;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
   overflow:hidden;
-  text-overflow:ellipsis;
 }
 .bi-action-sub {
   color:var(--txt3);
@@ -1326,26 +1329,35 @@ a{color:inherit;text-decoration:none}
   border:1px solid var(--border);
   border-radius:14px;
   padding:12px;
+  min-height:104px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
 }
 .bi-summary-box .top {
   display:flex;
   justify-content:space-between;
-  gap:8px;
-  align-items:center;
+  gap:10px;
+  align-items:flex-start;
 }
 .bi-summary-box .top .name {
   color:var(--txt);
   font-size:12px;
   font-weight:700;
+  line-height:1.35;
 }
 .bi-summary-box .top .num {
   font-family:var(--mono);
-  font-size:20px;
+  font-size:18px;
+  line-height:1;
   color:var(--txt);
+  flex-shrink:0;
+  padding-top:2px;
 }
 .bi-summary-box .line {
   margin-top:8px;
   font-size:11px;
+  line-height:1.5;
   color:var(--txt2);
 }
 .bi-summary-box .line strong { color:var(--txt); }
@@ -1409,29 +1421,32 @@ details.bi-secondary {
 }
 .bi-funnel-mini { display:flex; flex-direction:column; gap:8px; }
 .bi-funnel-mini-row {
-  position:relative;
-  height:34px;
-  border-radius:10px;
+  display:grid;
+  grid-template-columns:minmax(120px,1fr) minmax(110px,2fr) auto;
+  align-items:center;
+  gap:10px;
+  min-height:42px;
+  padding:0 10px;
+  border-radius:12px;
   background:rgba(255,255,255,.03);
-  overflow:hidden;
+  border:1px solid var(--border);
   cursor:pointer;
 }
 .bi-funnel-mini-fill {
-  position:absolute;
-  inset:0 auto 0 0;
-  border-radius:10px;
-  opacity:.18;
+  position:relative;
+  height:12px;
+  border-radius:999px;
+  opacity:.22;
 }
 .bi-funnel-mini-label,
 .bi-funnel-mini-count {
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
+  position:static;
+  transform:none;
   z-index:1;
   font-size:11px;
 }
-.bi-funnel-mini-label { left:12px; color:var(--txt); font-weight:700; }
-.bi-funnel-mini-count { right:12px; color:var(--txt2); font-family:var(--mono); }
+.bi-funnel-mini-label { color:var(--txt); font-weight:700; line-height:1.35; }
+.bi-funnel-mini-count { color:var(--txt2); font-family:var(--mono); min-width:24px; text-align:right; }
 
 .bi-aging-table {
   display:flex;
@@ -1473,6 +1488,10 @@ details.bi-secondary {
   .bi-kpi-strip { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .bi-course-grid, .bi-rh-grid, .bi-talent-grid, .bi-mini-metrics { grid-template-columns:1fr; }
   .bi-aging-row { grid-template-columns:110px repeat(4,1fr); }
+  .bi-sla{grid-template-columns:minmax(92px,1.2fr) repeat(4,minmax(36px,1fr))}
+  .bi-funnel-mini-row{grid-template-columns:1fr; padding:10px}
+  .bi-funnel-mini-fill{width:100% !important}
+  .bi-funnel-mini-count{text-align:left}
 }
 
 
@@ -1846,7 +1865,7 @@ details.bi-secondary {
 
 
 /* ───────── Employer Hub v3 ───────── */
-.emp-hub{display:grid;grid-template-columns:186px minmax(760px,1.65fr) 364px;gap:14px;height:calc(100vh - 180px);max-height:calc(100vh - 180px);min-height:calc(100vh - 180px);align-items:stretch;overflow:hidden}
+.emp-hub{display:grid;grid-template-columns:170px minmax(860px,1.9fr) 348px;gap:14px;height:calc(100vh - 180px);max-height:calc(100vh - 180px);min-height:calc(100vh - 180px);align-items:stretch;overflow:hidden}
 .emp-pane{background:linear-gradient(180deg,rgba(13,19,33,.98),rgba(10,15,27,.98));border:1px solid rgba(103,126,170,.18);border-radius:18px;min-height:0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.28)}
 .emp-pane-hd{padding:16px 16px 12px;border-bottom:1px solid rgba(103,126,170,.16);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .emp-pane-title{font-size:15px;font-weight:900;color:#f4f7ff}
@@ -1881,7 +1900,7 @@ details.bi-secondary {
 .emp-employer-brief-sub{font-size:10.5px;color:#8fa1bf;margin-top:3px;line-height:1.45}
 .emp-employer-chips{display:flex;flex-wrap:wrap;gap:6px}
 .emp-employer-chip{font-size:10.5px;color:#d1dcf2;padding:3px 8px;border-radius:999px;background:#10192d;border:1px solid rgba(103,126,170,.16)}
-.emp-employer-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.emp-employer-brief-grid{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:10px}
 .emp-employer-mini{padding:10px 11px;border-radius:12px;background:#10192d;border:1px solid rgba(103,126,170,.14)}
 .emp-employer-mini-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#90a3c6;overflow-wrap:anywhere;word-break:break-word}
 .emp-employer-mini-val{font-size:12px;color:#eef4ff;font-weight:700;margin-top:8px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;hyphens:auto;display:none}
@@ -1934,8 +1953,8 @@ details.bi-secondary {
 .emp-link:hover{text-decoration:underline}
 .emp-muted{color:#9baccc}
 .emp-section-note{font-size:11px;color:#8fa1bf}
-.emp-create{white-space:nowrap;padding:6px 8px;font-size:10px;min-height:30px;min-width:auto;max-width:74px}
-@media (max-width: 1480px){.emp-hub{grid-template-columns:178px minmax(540px,1fr) 338px}}
+.emp-create{white-space:nowrap;padding:4px 8px;font-size:10px;min-height:28px;min-width:auto;max-width:66px}
+@media (max-width: 1480px){.emp-hub{grid-template-columns:164px minmax(620px,1.55fr) 330px}}
 @media (max-width: 1120px){.emp-hub{grid-template-columns:1fr}.emp-pane{min-height:auto}.emp-scroll{max-height:none}.emp-main-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.emp-employer-brief-grid{grid-template-columns:1fr}}
 @media (max-width: 820px){.field-grid,.field-grid.g3{grid-template-columns:1fr}.modal-footer{flex-wrap:wrap}.modal-footer .btn{flex:1 1 auto}.detail-tabs{margin:12px 14px 0}.detail-panel{padding:14px 14px 18px}.modal-hdr,.modal-footer{padding-left:14px;padding-right:14px}}
 @media (max-width: 720px){.emp-employer-brief-grid{grid-template-columns:1fr}}
@@ -2131,8 +2150,9 @@ details.bi-secondary {
         <div class="field-group"><label class="field-lbl">Telefone</label><input class="field-input" id="n-tel" placeholder="+55 11 99999-9999" autocomplete="off"></div>
         <div class="field-group"><label class="field-lbl">País de origem</label><input class="field-input" id="n-pais" placeholder="Brasil" value="BRASIL" autocomplete="off"></div>
         <div class="field-group"><label class="field-lbl">Cidade atual</label><input class="field-input" id="n-cidade" placeholder="São Paulo - SP" autocomplete="off"></div>
-        <div class="field-group"><label class="field-lbl">Profissão</label><div class="field-select-wrap"><select class="field-select" id="n-prof"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Profissão principal',this,'n-prof')">+</button></div></div>
-        <div class="field-group"><label class="field-lbl">Área profissional</label><div class="field-select-wrap"><select class="field-select" id="n-area"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Área profissional',this,'n-area')">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Área profissional</label><div class="field-select-wrap"><select class="field-select" id="n-area" onchange="onNewCandidateAreaChange()"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('area')">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Profissão</label><div class="field-select-wrap"><select class="field-select" id="n-prof" onchange="onNewCandidateProfessionChange()"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('profession')">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Subárea</label><div class="field-select-wrap"><select class="field-select" id="n-subarea"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('subarea')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Nível de alemão</label><div class="field-select-wrap"><select class="field-select" id="n-alemao"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Nível de alemão',this,'n-alemao')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Status inicial</label><div class="field-select-wrap"><select class="field-select" id="n-status"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('STATUS PIPELINE',this,'n-status')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Referência / Origem</label><input class="field-input" id="n-origem" placeholder="Instagram, Indicação..."></div>
@@ -2795,6 +2815,7 @@ const S = {
   lastSync: null,
   parserAuditLogs: [],
   parserAuditError: '',
+  taxonomy: { areas: [], professions: [], subareas: [], requestsEnabled: false },
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -3277,7 +3298,7 @@ function buildDashboardPayload(cands) {
       byPerfil:    gc(visible, c => fv(c,'Perfil','perfil')||'Não avaliado'),
       byAlemao:    gc(visible, c => fv(c,'Nível alemão','nivel_alemao')||'Nenhum'),
       byStatus:    gc(cands,   c => fv(c,'STATUS PIPELINE','status_pipeline')||'Sem status'),
-      byProfissao: gc(visible, c => normalizeProfissao(fv(c,'Profissão principal','profissao_principal')||'')).slice(0,12),
+      byProfissao: gc(visible, c => canonicalProfessionBucket(c)).slice(0,12),
       byCidade:    gc(visible, c => fv(c,'Cidade atual','cidade_atual')||'N/A').slice(0,12),
       byResponsavel: gc(visible, c => fv(c,'Responsável interno','responsavel_interno')||'Sem responsável').slice(0,10),
       bySubstatus:   gc(visible, c => fv(c,'Substatus','substatus')||'Sem substatus').slice(0,10),
@@ -3623,6 +3644,7 @@ async function initApp() {
   initGermanGreeting();
   try {
     await loadAll();
+    populateNewForm();
     await refreshAdminMfaState();
     agLoad().catch(e => console.warn('[Agenda] Load falhou na init:', e.message));
     startRealtime().catch(e => console.warn('[Realtime]', e));
@@ -3658,6 +3680,8 @@ async function loadAll() {
     const fetchedUsers = Array.isArray(usersResp?.users) ? usersResp.users : [];
     if (fetchedUsers.length) S.users = fetchedUsers;
     else S.users = Array.isArray(S.users) && S.users.length ? S.users : [];
+
+    await loadTaxonomyCatalog(supa);
 
     // Load employers list for modal selects
     try {
@@ -3857,13 +3881,19 @@ function normalizeProfissao(p) {
   if (v.includes('odonto') || v.includes('cirurgiã-dent')) return 'Odontologia';
   return p || 'Outros';
 }
+function canonicalProfessionBucket(c) {
+  return normalizeProfissao(candidateProfessionLabel(c) || '');
+}
+function canonicalAreaBucket(c) {
+  return normalizeProfissao(candidateAreaLabel(c) || '');
+}
 
 function isElegibleCalc(c) {
   const perfil   = fv(c,'Perfil')||'';
   const alemao   = fv(c,'Nível de alemão','Nível alemão')||'';
   const resumoRh = fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh')||'';
   const prontoEmployer = normalizeUpper(fv(c,'pronto_para_employer')||'');
-  const profissao= fv(c,'Profissão principal','Profissão')||'';
+  const profissao= candidateProfessionLabel(c)||'';
   const pendencia= fv(c,'Pendência documental crítica')||'';
   const rankMap  = {'A0':0,'A1':1,'A2':2,'B1':3,'B2':4,'B2+':5,'C1':6,'C2':7,'Nenhum':0};
   const rank     = rankMap[alemao] || 0;
@@ -4052,7 +4082,7 @@ function dashboardDrill(key, extra='') {
       break;
     case 'missing_profession':
       _navSetupUI('candidates');
-      S.filter._customFn = c => !String(fv(c,'Profissão principal','Profissão','profissao_principal') || '').trim();
+      S.filter._customFn = c => !String(candidateProfessionLabel(c) || '').trim();
       break;
     case 'stalled_21':
       _navSetupUI('candidates');
@@ -4235,11 +4265,13 @@ function renderDashboard(el) {
   const contractedPool = ativos.filter(c => fv(c,'STATUS PIPELINE','status_pipeline') === 'Contratado' || getEmployerLinkBucket(c) === 'contratados');
   const criticalPool = ativos.filter(c => hasCriticalDashboardIssue(c));
   const employers = [...new Set(employerBase.map(c => getEmployerDisplay(c).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+  const employerMapByName = new Map((S.employers || []).map(e => [normalizeSearchToken(e?.nome || e?.name || ''), e]));
   const employerGroups = employers.map(name => {
     const items = employerBase.filter(c => getEmployerDisplay(c).trim() === name);
     return {
       key: name,
       name,
+      employerObj: employerMapByName.get(normalizeSearchToken(name)) || null,
       items,
       total: items.length,
       aguardando: items.filter(c => getEmployerLinkBucket(c) === 'aguardando').length,
@@ -4268,7 +4300,8 @@ function renderDashboard(el) {
   const docsBlockingTalents = talentos.filter(c => !!(fv(c,'Pendência documental crítica','pendencia_documental_critica')||'').trim() || !isYes(fv(c,'Documentação completa','documentacao_completa')));
   const riskTalents = talentos.filter(c => getRiskLevel(c) === 'ALTO');
   const byTalentAlemao = dashboardGroupCount(talentos, c => fv(c,'Nível de alemão','Nível alemão','nivel_alemao') || 'Nenhum').filter(d=>d.label!=='N/A');
-  const byTalentProf = dashboardGroupCount(talentos, c => normalizeProfissao(fv(c,'Profissão principal','profissao_principal') || '')).slice(0,6);
+  const byTalentProf = dashboardGroupCount(talentos, c => canonicalProfessionBucket(c)).filter(d => d.label && d.label !== 'N/A').slice(0,6);
+  const byTalentArea = dashboardGroupCount(talentos, c => canonicalAreaBucket(c)).filter(d => d.label && d.label !== 'N/A').slice(0,6);
 
   const courseNextB1 = coursePool.filter(c => _nivelRank(c) === 2);
   const courseNextB2 = coursePool.filter(c => _nivelRank(c) === 3);
@@ -4302,7 +4335,7 @@ function renderDashboard(el) {
   const missingPhone = ativos.filter(c => !String(fv(c,'Telefone','telefone') || '').trim());
   const missingGerman = ativos.filter(c => !String(fv(c,'Nível de alemão','Nível alemão','nivel_alemao') || '').trim() || ['Nenhum','A0'].includes(String(fv(c,'Nível de alemão','Nível alemão','nivel_alemao') || '').trim()));
   const missingOwner = ativos.filter(c => !String(fv(c,'Responsável interno','responsavel_interno','Avaliador') || '').trim());
-  const missingProfession = ativos.filter(c => !String(fv(c,'Profissão principal','Profissão','profissao_principal') || '').trim());
+  const missingProfession = ativos.filter(c => !String(candidateProfessionLabel(c) || '').trim());
   const missingEmployer = ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE','status_pipeline')) && !getEmployerDisplay(c).trim());
 
   const candidateIdOf = c => String(fv(c,'ID','id') || c?.ID || c?.id || '');
@@ -4401,6 +4434,105 @@ function renderDashboard(el) {
       <div class="bi-action-meta">${p.count}</div>
     </div>
   `).join('') || `<div class="bi-data-note">Sem talentos qualificados nessa base.</div>`;
+
+  const topAreaRowsHtml = byTalentArea.slice(0,5).map(a => `
+    <div class="bi-action-row" onclick="dashboardDrill('area','${a.label.replace(/'/g,"\\'")}')">
+      <div class="bi-action-main">
+        <div class="bi-action-name">${esc(a.label)}</div>
+        <div class="bi-action-sub">${esc(uiTranslate('Talentos priorizados por área'))}</div>
+      </div>
+      <span class="bi-tag info">${esc(uiTranslate('área'))}</span>
+      <div class="bi-action-meta">${a.count}</div>
+    </div>
+  `).join('') || `<div class="bi-data-note">${esc(uiTranslate('Sem áreas profissionais consolidadas ainda.'))}</div>`;
+
+  const employerDemandRowsHtml = employerGroups.slice(0,6).map(g => {
+    const emp = g.employerObj || {};
+    const demandText = [emp.perfis_buscados, emp.requisitos_principais, emp.area_atuacao, emp.subsetor].filter(Boolean).join(' · ');
+    const matched = talentos.filter(c => {
+      const bag = [candidateProfessionLabel(c), candidateAreaLabel(c), fv(c,'tipo_vaga','Tipo de vaga','tipo_vaga_preferido')].filter(Boolean).join(' · ');
+      return demandText && bag && checkSemanticMatch(demandText, bag);
+    });
+    const readyMatched = matched.filter(c => isEmployerReadyDashboard(c));
+    const vagas = Math.max(Number(emp.vagas_abertas || 0) || 0, 0);
+    const gap = Math.max(vagas - readyMatched.length, 0);
+    const preview = demandText ? (demandText.length > 92 ? demandText.slice(0,92).replace(/\s+\S*$/, '').trim() + '…' : demandText) : '';
+    return `
+      <div class="bi-action-row" onclick="dashboardOpenEmployerGroup('${g.key.replace(/'/g,"\\'")}')">
+        <div class="bi-action-main">
+          <div class="bi-action-name">${esc(g.name)}</div>
+          <div class="bi-action-sub">${esc(preview || uiTranslate('Perfil buscado não informado'))}</div>
+        </div>
+        <span class="bi-tag ${gap > 0 ? 'warn' : readyMatched.length > 0 ? 'good' : 'info'}">${esc(uiTranslate(gap > 0 ? 'gap' : readyMatched.length > 0 ? 'coberto' : 'mapear'))}</span>
+        <div class="bi-action-meta">${readyMatched.length}/${vagas || matched.length || 0}</div>
+      </div>`;
+  }).join('') || `<div class="bi-data-note">${esc(uiTranslate('Sem employers suficientes para leitura de demanda.'))}</div>`;
+
+  const courseFocusRowsHtml = [
+    { key:'course_next_b1', label:'Próximos a B1', sub:`${courseNextB1.length} ${uiTranslate('candidatos com chance real de virar supply')}`, value:courseNextB1.length, tag:'good' },
+    { key:'course_next_b2', label:'Próximos a B2', sub:`${courseNextB2.length} ${uiTranslate('candidatos fortalecendo aderência')}`, value:courseNextB2.length, tag:'info' },
+    { key:'course_no_forecast', label:'Sem previsão de término', sub:`${courseNoForecast.length} ${uiTranslate('sem cronograma confiável')}`, value:courseNoForecast.length, tag:'warn' },
+    { key:'freshness_stale_21', label:'Curso parado +21 dias', sub:`${courseStalled.length} ${uiTranslate('sem atualização recente')}`, value:courseStalled.length, tag:'risk' },
+  ].filter(x => x.value > 0).map(row => `
+    <div class="bi-action-row" onclick="dashboardDrill('${row.key}')">
+      <div class="bi-action-main">
+        <div class="bi-action-name">${esc(uiTranslate(row.label))}</div>
+        <div class="bi-action-sub">${esc(row.sub)}</div>
+      </div>
+      <span class="bi-tag ${row.tag}">${esc(uiTranslate(row.tag === 'risk' ? 'crítico' : row.tag === 'warn' ? 'atenção' : row.tag === 'good' ? 'pronto' : 'evolução'))}</span>
+      <div class="bi-action-meta">${row.value}</div>
+    </div>
+  `).join('') || `<div class="bi-data-note">${esc(uiTranslate('Sem alertas relevantes no curso agora.'))}</div>`;
+
+  const scopeFocusCardHtml = currentScope === 'talents'
+    ? `<section class="bi-card span-12">
+        <div class="bi-card-head">
+          <div>
+            <div class="bi-card-title">${esc(uiTranslate('Leitura tática dos candidatos'))}</div>
+            <div class="bi-card-sub">${esc(uiTranslate('Prontidão, idioma, profissão e área para acelerar envio às empresas.'))}</div>
+          </div>
+          <span class="bi-card-badge">${talentos.length} ${esc(uiTranslate('talentos'))}</span>
+        </div>
+        <div class="bi-card-body">
+          <div class="bi-split">
+            <div>
+              <div class="bi-section-title">${esc(uiTranslate('Profissões prioritárias'))}</div>
+              <div class="bi-action-list show-3 tight">${topProfessionRows}</div>
+            </div>
+            <div>
+              <div class="bi-section-title">${esc(uiTranslate('Áreas profissionais'))}</div>
+              <div class="bi-action-list show-3 tight">${topAreaRowsHtml}</div>
+            </div>
+          </div>
+        </div>
+      </section>`
+    : currentScope === 'employers'
+      ? `<section class="bi-card span-12">
+          <div class="bi-card-head">
+            <div>
+              <div class="bi-card-title">${esc(uiTranslate('Demanda dos employers x cobertura atual'))}</div>
+              <div class="bi-card-sub">${esc(uiTranslate('Perfis buscados, vagas e quantos candidatos prontos já temos para cada conta.'))}</div>
+            </div>
+            <span class="bi-card-badge">${employerGroups.length} ${esc(uiTranslate('employers'))}</span>
+          </div>
+          <div class="bi-card-body">
+            <div class="bi-action-list show-3">${employerDemandRowsHtml}</div>
+          </div>
+        </section>`
+      : currentScope === 'course'
+        ? `<section class="bi-card span-12">
+            <div class="bi-card-head">
+              <div>
+                <div class="bi-card-title">${esc(uiTranslate('Curso de alemão como funil de supply'))}</div>
+                <div class="bi-card-sub">${esc(uiTranslate('Quem está perto de B1/B2, quem está parado e quem já pode ser aquecido para employer.'))}</div>
+              </div>
+              <span class="bi-card-badge">${coursePool.length} ${esc(uiTranslate('em curso'))}</span>
+            </div>
+            <div class="bi-card-body">
+              <div class="bi-action-list show-3">${courseFocusRowsHtml}</div>
+            </div>
+          </section>`
+        : '';
 
   const criticalListHtml = [
     { label:'Prontos sem employer', sub:'Talentos prontos sem vínculo', value: readyWithoutEmployer.length, tag:'warn', action:'ready_without_employer' },
@@ -4771,6 +4903,8 @@ function renderDashboard(el) {
         </div>
       </div>
 
+      ${scopeFocusCardHtml}
+
       <div class="bi-grid">
         <section class="bi-card span-8 ${scopeClass('employers')}">
           <div class="bi-card-head">
@@ -4818,7 +4952,7 @@ function renderDashboard(el) {
           </div>
         </section>
 
-        <section class="bi-card span-4 ${scopeClass('employers','talents','course','rh')}">
+        <section class="bi-card span-4 ${scopeClass('employers','talents','rh')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Prioridades de ação</div>
@@ -4992,7 +5126,7 @@ function renderDashboard(el) {
           </div>
         </section>
 
-        <section class="bi-card span-6 ${scopeClass('talents','employers','course','rh')}">
+        <section class="bi-card span-6 ${scopeClass('talents','employers')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Origem e qualidade comercial</div>
@@ -5027,7 +5161,7 @@ function renderDashboard(el) {
           </div>
         </section>
 
-        <section class="bi-card span-6 ${scopeClass('talents','employers','rh','course')}">
+        <section class="bi-card span-6 ${scopeClass('talents','employers')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Qualidade do parsing</div>
@@ -5159,7 +5293,7 @@ function renderDashboard(el) {
           </div>
         </section>
 
-        <section class="bi-card span-6 ${scopeClass('employers','course','rh')}">
+        <section class="bi-card span-6 ${scopeClass('employers','talents')}">
           <div class="bi-card-head">
             <div>
               <div class="bi-card-title">Geografia e concentração</div>
@@ -5179,7 +5313,7 @@ function renderDashboard(el) {
           </div>
         </section>
 
-        <details class="bi-card bi-secondary span-12 ${scopeClass('talents','employers','course','rh')}">
+        <details class="bi-card bi-secondary span-12 ${scopeClass('talents','employers')}">
           <summary>
             <div>
               <div class="bi-card-title">Camada analítica expandida</div>
@@ -5349,7 +5483,7 @@ function kanbanCard(c) {
     <div class="kc-meta">
       <div class="score-bar-mini"><div class="score-fill-mini" style="width:${score}%"></div></div>
       <span>${score}/100</span>
-      ${c['Profissão principal'] ? `· <span>${esc(c['Profissão principal'].substring(0,18))}</span>` : ''}
+      ${candidateProfessionLabel(c) ? `· <span>${esc(candidateProfessionLabel(c).substring(0,18))}</span>` : ''}
     </div>
   </div>`;
 }
@@ -5520,7 +5654,7 @@ function ensureEmployerHubState(base) {
   if (candidateSearch) {
     entries = entries.filter(e => {
       const c = e.candidate;
-      return [fv(c,'Nome completo'), fv(c,'Profissão principal','Profissão'), fv(c,'Cidade atual'), fv(c,'Nível de alemão','Nível alemão')]
+      return [fv(c,'Nome completo'), candidateProfessionLabel(c), fv(c,'Cidade atual'), fv(c,'Nível de alemão','Nível alemão')]
         .some(v => normalizeSearchToken(v).includes(candidateSearch));
     });
   }
@@ -5996,7 +6130,7 @@ async function exportEmployerXLSX() {
       { header:'Cidade atual', from:['candidate:Cidade atual','candidate:cidade_atual'] },
       { header:'Telefone', from:['candidate:Telefone','candidate:telefone'] },
       { header:'E-mail', from:['candidate:E-mail','candidate:email'] },
-      { header:'Área-alvo', from:['candidate:Profissão principal','candidate:Profissão','candidate:profissao_principal'] },
+      { header:'Área-alvo', from:['candidate:profession_id','candidate:profession_id','candidate:Profissão','candidate:profissao_principal'] },
       { header:'Formação', from:['candidate:Curso de Graduação','candidate:Diploma','candidate:diploma'] },
       { header:'Alemão', from:['candidate:Nível de alemão','candidate:Nível alemão','candidate:nivel_alemao'] },
       { header:'Outros idiomas', from:['candidate:Língua Estrangeira','candidate:idiomas_adicionais','candidate:Idiomas'] },
@@ -6480,7 +6614,7 @@ function renderEmployerHub(el) {
             const score = c._score || 0;
             const pf = fv(c,'Perfil','perfil') || '—';
             const al = fv(c,'Nível de alemão','Nível alemão') || '—';
-            const prof = fv(c,'Profissão principal','Profissão') || '—';
+            const prof = candidateProfessionLabel(c) || '—';
             const resp = fv(c,'Avaliador','Responsável interno','responsavel_interno') || '—';
             const city = fv(c,'Cidade atual') || '—';
             const thisCid = String(c.ID||c.id||'');
@@ -6555,7 +6689,7 @@ function renderEmployerHub(el) {
                 ${box('Alemão', fv(current,'Nível de alemão','Nível alemão'))}
                 ${box('Documentação', docLabel)}
                 ${box('Pronto para employer', prontoEmp)}
-                ${box('Profissão / Área-alvo', fv(current,'Profissão principal','Profissão'))}
+                ${box('Profissão / Área-alvo', candidateProfessionLabel(current))}
                 ${box('Cidade atual', fv(current,'Cidade atual'))}
                 ${box('Tipo de vaga', entTipoCard)}
                 ${box('Responsável interno', fv(current,'Avaliador','Responsável interno','responsavel_interno'))}
@@ -6680,7 +6814,7 @@ function renderTable(el, filterStatus) {
 
   // Filtros adicionais de coluna
   if (S.filter.perfil)    list = list.filter(c => fv(c,'Perfil','Perfil do candidato','perfil') === S.filter.perfil);
-  if (S.filter.profissao) list = list.filter(c => checkSemanticMatch(S.filter.profissao, fv(c,'Profissão principal','Profissão')||''));
+  if (S.filter.profissao) list = list.filter(c => checkSemanticMatch(S.filter.profissao, candidateProfessionLabel(c)||''));
   if (S.filter.alemao)    list = list.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter.alemao);
   if (S.filter.empregador === '__filled__') list = list.filter(c => (getEmployerDisplay(c)||'').trim());
   else if (S.filter.empregador === '__unassigned__') list = list.filter(c => !(getEmployerDisplay(c)||'').trim());
@@ -6692,7 +6826,7 @@ function renderTable(el, filterStatus) {
     const q = S.filter.q.toLowerCase();
     list = list.filter(c =>
       (fv(c,'Nome completo')||'').toLowerCase().includes(q) ||
-      (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
+      (candidateProfessionLabel(c)||'').toLowerCase().includes(q) ||
       (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
       (fv(c,'Cidade atual')||'').toLowerCase().includes(q) ||
       (c.ID||'').toLowerCase().includes(q)
@@ -6711,7 +6845,7 @@ function renderTable(el, filterStatus) {
     'Não qualificado/ base de dados','Desistiu','Inativo / Arquivado'];
   const alemaoOpts   = ['','Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2'];
   const perfilOpts   = ['','Candidato forte','Candidato bom','Candidato mediano','Candidato fraco','Candidato intermediário'];
-  const profissaoOpts= [''].concat([...new Set((S.enums['Profissão principal']||S.candidates.map(c=>fv(c,'Profissão principal','Profissão'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
+  const profissaoOpts= [''].concat([...new Set((taxonomyEnabled() ? S.candidates.map(c=>candidateProfessionLabel(c)) : (S.enums['Profissão principal']||S.candidates.map(c=>candidateProfessionLabel(c)))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
   const empregadorOpts=[''].concat([...new Set(S.candidates.map(c=>getEmployerDisplay(c)).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
   const substatusOpts = [''].concat([...new Set((S.enums['Substatus']||S.candidates.map(c=>fv(c,'Substatus','substatus'))).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')));
   const prioridadeOpts = ['','Alta','Média','Baixa'].concat(
@@ -6864,7 +6998,7 @@ function renderTable(el, filterStatus) {
         <td>${st?`<span class="badge ${sc}">${esc(st)}</span>`:'—'}</td>
         <td><span class="badge ${normalizeUpper(pronto).includes('SIM')?'b-aprovado':normalizeUpper(pronto).includes('PARCIAL')?'b-mediano':'b-fraco'}">${esc(pronto)}</span></td>
         <td>${esc(getEmployerDisplay(c)||'—')}</td>
-        <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
+        <td>${esc(candidateProfessionLabel(c)||'—')}</td>
         <td>${esc(fv(c,'Cidade atual')||'—')}</td>
         <td title="${esc(String(fv(c,'disponibilidade_mudanca')||'—'))}" style="max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(String(fv(c,'disponibilidade_mudanca')||'—').length > 80 ? String(fv(c,'disponibilidade_mudanca')||'—').slice(0,80) + '…' : String(fv(c,'disponibilidade_mudanca')||'—'))}</td>
         <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
@@ -6993,7 +7127,7 @@ function renderTable(el, filterStatus) {
         <td><div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:11.5px;color:var(--txt)">${esc(emp||'—')}</span>${empStatus?`<span style="font-size:10px;color:var(--txt3)">${esc(empStatus)}</span>`:''}</div></td>
         <td>${pf?`<span class="badge ${pfc}">${esc(pf.replace('Candidato ',''))}</span>`:'—'}</td>
         <td>${al?`<span style="font-weight:600;color:${alc};font-size:12px">${al}</span>`:'—'}</td>
-        <td>${esc(fv(c,'Profissão principal','Profissão')||'—')}</td>
+        <td>${esc(candidateProfessionLabel(c)||'—')}</td>
         <td>${esc(fv(c,'Cidade atual')||'—')}</td>
         <td>${esc(fv(c,'Avaliador','Responsável interno')||'—')}</td>
         <td><span style="font-family:var(--mono);font-size:10.5px;color:var(--txt3);background:var(--bg3);padding:1px 6px;border-radius:4px">${c['_score']||0}</span></td>
@@ -7037,7 +7171,7 @@ function renderInativo(el) {
     list = list.filter(c =>
       (fv(c,'Nome completo')||'').toLowerCase().includes(q) ||
       (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
-      (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
+      (candidateProfessionLabel(c)||'').toLowerCase().includes(q) ||
       (fv(c,'Motivo inativação')||'').toLowerCase().includes(q) ||
       (c.ID||'').toLowerCase().includes(q)
     );
@@ -7131,7 +7265,7 @@ function validateConsistency(c) {
 
   // ── Dados pessoais/profissionais ──────────────────────────
   const telefone   = fv(c, 'Telefone') || '';
-  const profissao  = fv(c, 'Profissão principal', 'profissao_principal') || '';
+  const profissao  = candidateProfessionLabel(c) || '';
 
   // ── CRÍTICO ───────────────────────────────────────────────
   // Documentação marcada como completa mas há pendência crítica registrada
@@ -7231,7 +7365,7 @@ function getSortValue(c, key, filterStatus) {
     case 'perfil': return fv(c,'Perfil','perfil') || '';
     case 'tipo': return fv(c,'tipo_vaga_preferido','Tipo de candidato','Tipo candidato') || '';
     case 'alemao': return _nivelRank(c);
-    case 'profissao': return fv(c,'Profissão principal','Profissão') || '';
+    case 'profissao': return candidateProfessionLabel(c) || '';
     case 'cidade': return fv(c,'Cidade atual') || '';
     case 'avaliador': return fv(c,'Avaliador','Responsável interno','responsavel_interno') || '';
     case 'score': return Number(c._score || 0);
@@ -7279,7 +7413,7 @@ function getReadiness(c) {
   const perfil  = fv(c,'Perfil') || '';
   const analise = fv(c,'resumo_rh_curto','Resumo RH curto','entrevista_preliminar_resumo_rh') || '';
   const rank    = _nivelRank(c);
-  const profissao = fv(c,'Profissão principal','profissao_principal') || '';
+  const profissao = candidateProfessionLabel(c) || '';
   const elegivel  = isYes(fv(c,'Elegível para employer','elegivel_para_employer')) || isElegibleCalc(c);
   const dtEntrada = fv(c,'Data entrada etapa atual','data_entrada_etapa_atual') || '';
   const diasParado = daysSince(dtEntrada);
@@ -9248,8 +9382,8 @@ function buildCandidatePdfHtml(c, interview) {
   const name = fv(c,'Nome completo') || 'Candidato';
   const status = fv(c,'STATUS PIPELINE') || '—';
   const perfil = fv(c,'Perfil','perfil') || '—';
-  const profissao = fv(c,'Profissão principal','Profissão') || '—';
-  const area = fv(c,'Área profissional','area_profissional') || '—';
+  const profissao = candidateProfessionLabel(c) || '—';
+  const area = candidateAreaLabel(c) || '—';
   const cidade = fv(c,'Cidade atual') || '—';
   const pais = fv(c,'País de origem','pais_origem') || '—';
   const alemao = fv(c,'Nível de alemão','Nível alemão','nivel_alemao_declarado') || '—';
@@ -9469,6 +9603,153 @@ async function downloadCandidatePdf() {
 function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; S.rhInterviewDirty=false; }
 function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overlay')) closeCand(); }
 
+
+// ══════════════════════════════════════════════════════════════
+// TAXONOMIA PADRONIZADA — áreas / profissões / subáreas
+// ══════════════════════════════════════════════════════════════
+function taxonomyEnabled() {
+  return Array.isArray(S?.taxonomy?.areas) && S.taxonomy.areas.length > 0 && Array.isArray(S?.taxonomy?.professions) && S.taxonomy.professions.length > 0;
+}
+function taxonomyFindById(list, id) {
+  const key = String(id ?? '').trim();
+  if (!key) return null;
+  return (Array.isArray(list) ? list : []).find(item => String(item?.id ?? '') === key) || null;
+}
+function taxonomyFindByCode(list, code) {
+  const key = String(code ?? '').trim().toLowerCase();
+  if (!key) return null;
+  return (Array.isArray(list) ? list : []).find(item => String(item?.code ?? '').trim().toLowerCase() === key) || null;
+}
+function taxonomyFindByLabel(list, label) {
+  const key = String(label ?? '').trim().toLowerCase();
+  if (!key) return null;
+  return (Array.isArray(list) ? list : []).find(item => {
+    const pt = String(item?.label_pt ?? '').trim().toLowerCase();
+    const de = String(item?.label_de ?? '').trim().toLowerCase();
+    return key === pt || key === de;
+  }) || null;
+}
+function taxonomyDisplay(item) {
+  if (!item) return '';
+  const lang = uiCurrentLang ? uiCurrentLang() : 'pt-BR';
+  return String((lang === 'de-DE' ? item?.label_de : item?.label_pt) || item?.label_pt || item?.label_de || item?.code || '').trim();
+}
+function candidateAreaLabel(c) {
+  const areaId = fv(c,'area_id') || c?.area_id;
+  const area = taxonomyFindById(S?.taxonomy?.areas || [], areaId);
+  return area ? taxonomyDisplay(area) : (fv(c,'Área profissional','area_profissional') || '');
+}
+function candidateProfessionLabel(c) {
+  const professionId = fv(c,'profession_id') || c?.profession_id;
+  const prof = taxonomyFindById(S?.taxonomy?.professions || [], professionId);
+  return prof ? taxonomyDisplay(prof) : (fv(c,'Profissão principal','Profissão','profissao_principal') || '');
+}
+function candidateSubareaLabel(c) {
+  const subareaId = fv(c,'subarea_id') || c?.subarea_id;
+  const sub = taxonomyFindById(S?.taxonomy?.subareas || [], subareaId);
+  return sub ? taxonomyDisplay(sub) : (fv(c,'subarea_label','subarea_nome','subarea') || '');
+}
+function loadTaxonomySelect(selectEl, rows, selectedValue='') {
+  if (!selectEl) return;
+  const opts = (Array.isArray(rows) ? rows : []).map(row => `<option value="${esc(String(row.id))}">${esc(taxonomyDisplay(row))}</option>`).join('');
+  selectEl.innerHTML = `<option value="">${esc(uiTranslate('Selecionar'))}</option>` + opts;
+  if (selectedValue && Array.from(selectEl.options).some(o => o.value === String(selectedValue))) selectEl.value = String(selectedValue);
+}
+function currentTaxonomyProfessions(areaId='') {
+  const list = Array.isArray(S?.taxonomy?.professions) ? [...S.taxonomy.professions] : [];
+  if (!areaId) return list;
+  return list.filter(p => String(p?.area_id ?? '') === String(areaId));
+}
+function currentTaxonomySubareas(professionId='') {
+  const list = Array.isArray(S?.taxonomy?.subareas) ? [...S.taxonomy.subareas] : [];
+  if (!professionId) return list;
+  return list.filter(s => String(s?.profession_id ?? '') === String(professionId));
+}
+function onNewCandidateAreaChange() {
+  if (!taxonomyEnabled()) return;
+  const areaId = document.getElementById('n-area')?.value || '';
+  const profSel = document.getElementById('n-prof');
+  const currentProf = profSel?.value || '';
+  const allowedProf = currentTaxonomyProfessions(areaId);
+  loadTaxonomySelect(profSel, allowedProf, currentProf);
+  if (currentProf && !allowedProf.some(p => String(p.id) === String(currentProf)) && profSel) profSel.value = '';
+  onNewCandidateProfessionChange();
+}
+function onNewCandidateProfessionChange() {
+  if (!taxonomyEnabled()) return;
+  const profId = document.getElementById('n-prof')?.value || '';
+  const prof = taxonomyFindById(S?.taxonomy?.professions || [], profId);
+  const areaSel = document.getElementById('n-area');
+  if (prof?.area_id && areaSel && !areaSel.value) areaSel.value = String(prof.area_id);
+  const subSel = document.getElementById('n-subarea');
+  const currentSub = subSel?.value || '';
+  const allowedSub = currentTaxonomySubareas(profId);
+  loadTaxonomySelect(subSel, allowedSub, currentSub);
+  if (subSel) {
+    subSel.disabled = !allowedSub.length;
+    if (currentSub && !allowedSub.some(s => String(s.id) === String(currentSub))) subSel.value = '';
+  }
+}
+async function loadTaxonomyCatalog(supa) {
+  try {
+    const [{ data: areas, error: areasErr }, { data: professions, error: professionsErr }, { data: subareas, error: subareasErr }] = await Promise.all([
+      supa.from('areas_master').select('*').eq('active', true).order('sort_order').order('label_pt'),
+      supa.from('professions_master').select('*').eq('active', true).order('sort_order').order('label_pt'),
+      supa.from('profession_subareas_master').select('*').eq('active', true).order('sort_order').order('label_pt'),
+    ]);
+    if (areasErr || professionsErr || subareasErr) throw (areasErr || professionsErr || subareasErr);
+    S.taxonomy = {
+      areas: areas || [],
+      professions: professions || [],
+      subareas: subareas || [],
+      requestsEnabled: true,
+    };
+  } catch (e) {
+    S.taxonomy = { areas: [], professions: [], subareas: [], requestsEnabled: false };
+  }
+}
+async function requestTaxonomyOption(kind) {
+  const labelMap = { area:'nova área', profession:'nova profissão', subarea:'nova subárea' };
+  const raw = window.prompt(uiTranslate(`Digite a ${labelMap[kind] || 'nova opção'} desejada:`), '');
+  const value = String(raw || '').trim();
+  if (!value) return;
+  const sess = getSession();
+  try {
+    const supa = await getSupa();
+    const payload = {
+      request_type: kind,
+      requested_value: value,
+      requested_by: sess?.nome || sess?.user || 'web',
+      context_area_id: document.getElementById('n-area')?.value || null,
+      context_profession_id: document.getElementById('n-prof')?.value || null,
+      status: 'pending',
+    };
+    const { error } = await supa.from('taxonomy_change_requests').insert(payload);
+    if (error) throw error;
+    toast(uiTranslate('Sugestão enviada para revisão do catálogo.'), 'ok');
+  } catch (e) {
+    toast((e?.message || '').includes('taxonomy_change_requests')
+      ? uiTranslate('Tabela de sugestões do catálogo ainda não publicada no Supabase.')
+      : uiTranslate('Não foi possível enviar a sugestão de catálogo.'), 'warn', 7000);
+  }
+}
+function applyTaxonomyClassification(fields = {}) {
+  if (!taxonomyEnabled()) return false;
+  const cls = fields?._classification || fields?.classification || null;
+  const areaSel = document.getElementById('n-area');
+  const profSel = document.getElementById('n-prof');
+  const subSel = document.getElementById('n-subarea');
+  let changed = false;
+  const area = cls?.area_id ? taxonomyFindById(S.taxonomy.areas, cls.area_id) : (cls?.area_code ? taxonomyFindByCode(S.taxonomy.areas, cls.area_code) : taxonomyFindByLabel(S.taxonomy.areas, fields.area_profissional || ''));
+  const prof = cls?.profession_id ? taxonomyFindById(S.taxonomy.professions, cls.profession_id) : (cls?.profession_code ? taxonomyFindByCode(S.taxonomy.professions, cls.profession_code) : taxonomyFindByLabel(S.taxonomy.professions, fields.profissao_principal || fields.profissao || ''));
+  const sub = cls?.subarea_id ? taxonomyFindById(S.taxonomy.subareas, cls.subarea_id) : (cls?.subarea_code ? taxonomyFindByCode(S.taxonomy.subareas, cls.subarea_code) : taxonomyFindByLabel(S.taxonomy.subareas, fields.subarea_label || fields.subarea || ''));
+  if (areaSel && area?.id && !areaSel.value) { areaSel.value = String(area.id); changed = true; }
+  onNewCandidateAreaChange();
+  if (profSel && prof?.id && !profSel.value) { profSel.value = String(prof.id); changed = true; }
+  onNewCandidateProfessionChange();
+  if (subSel && sub?.id && !subSel.value) { subSel.value = String(sub.id); changed = true; }
+  return changed;
+}
 // ══════════════════════════════════════════════════════════════
 // NEW CANDIDATE
 // ══════════════════════════════════════════════════════════════
@@ -9479,14 +9760,27 @@ function populateNewForm() {
     const opts = (S.enums[field]&&S.enums[field].length ? S.enums[field] : fallback).filter(Boolean);
     el.innerHTML = '<option value="">Selecionar</option>' + opts.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
   };
-  fillSelect('n-prof','Profissão principal',[
-    'Assistente Administrativo','Analista Financeiro','Operador Logístico','Logística','Técnico de Enfermagem',
-    'Enfermeiro','Farmácia','Recepcionista','Operador de Produção','Cuidador de Idosos',
-    'Fisioterapeuta','Eletrotécnica','Outros'
-  ]);
-  fillSelect('n-area','Área profissional',[
-    'Administrativa','Financeira','Logística','Saúde','Industrial','Comercial','Tecnologia','Educação','Outros'
-  ]);
+  if (taxonomyEnabled()) {
+    loadTaxonomySelect(document.getElementById('n-area'), S.taxonomy.areas || []);
+    loadTaxonomySelect(document.getElementById('n-prof'), S.taxonomy.professions || []);
+    loadTaxonomySelect(document.getElementById('n-subarea'), []);
+    const subSel = document.getElementById('n-subarea');
+    if (subSel) subSel.disabled = true;
+  } else {
+    fillSelect('n-prof','Profissão principal',[
+      'Assistente Administrativo','Analista Financeiro','Operador Logístico','Logística','Técnico de Enfermagem',
+      'Enfermeiro','Farmácia','Recepcionista','Operador de Produção','Cuidador de Idosos',
+      'Fisioterapeuta','Eletrotécnica','Outros'
+    ]);
+    fillSelect('n-area','Área profissional',[
+      'Administrativa','Financeira','Logística','Saúde','Industrial','Comercial','Tecnologia','Educação','Outros'
+    ]);
+    const subSel = document.getElementById('n-subarea');
+    if (subSel) {
+      subSel.innerHTML = '<option value="">Selecionar</option>';
+      subSel.disabled = true;
+    }
+  }
   fillSelect('n-alemao','Nível de alemão',['Nenhum','A0','A1','A2','B1','B2','B2+','C1','C2']);
   fillSelect('n-status','STATUS PIPELINE', PIPELINE_STAGES);
 }
@@ -9888,6 +10182,7 @@ function mergeCurriculumFields(aiFields, deterministicFields) {
   }
   if (!merged.referencia_origem && deterministic.referencia_origem) merged.referencia_origem = deterministic.referencia_origem;
   if (!merged.status_inicial && deterministic.status_inicial) merged.status_inicial = deterministic.status_inicial;
+  if (!merged._classification && deterministic._classification) merged._classification = deterministic._classification;
   return merged;
 }
 
@@ -10129,8 +10424,10 @@ function _fillNewFormFromCurriculum(fields, fileName) {
     return true;
   };
 
+  applyTaxonomyClassification(fields);
   applySelectValue('n-prof', fields.profissao_principal || fields.profissao || '', 'Profissão');
   applySelectValue('n-area', fields.area_profissional || '', 'Área profissional');
+  applySelectValue('n-subarea', fields.subarea_label || fields.subarea || '', 'Subárea');
   applySelectValue('n-alemao', fields.nivel_alemao || '', 'Nível de alemão');
   applySelectValue('n-status', fields.status_inicial || 'Triagem', 'Status inicial');
   applyInputValue('n-origem', fields.referencia_origem || 'Currículo PDF', 'Referência / Origem');
@@ -10164,6 +10461,7 @@ function _fillNewFormFromCurriculum(fields, fileName) {
     data_nascimento:_parserTranslate('Nascimento'),
     nivel_alemao:_parserTranslate('Alemão'),
     profissao_principal:_parserTranslate('Profissão'),
+    subarea_label:_parserTranslate('Subárea'),
     cidade_atual:_parserTranslate('Cidade'),
     pais_de_origem:_parserTranslate('País')
   };
@@ -10253,7 +10551,7 @@ function clearCurriculumFill() {
       el.classList.remove('doc-field-filled');
     }
   });
-  ['n-prof','n-area','n-alemao','n-status'].forEach(id => {
+  ['n-prof','n-area','n-subarea','n-alemao','n-status'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.classList.contains('doc-field-filled')) {
       el.value = '';
@@ -10290,8 +10588,12 @@ async function submitNew() {
         'Telefone':             document.getElementById('n-tel').value.trim(),
         'País de origem':       document.getElementById('n-pais').value.trim(),
         'Cidade atual':         document.getElementById('n-cidade').value.trim(),
-        'Profissão principal':  document.getElementById('n-prof').value.trim(),
-        'Área profissional':    document.getElementById('n-area').value.trim(),
+        'Profissão principal':  (taxonomyFindById(S?.taxonomy?.professions || [], document.getElementById('n-prof').value)?.label_pt) || document.getElementById('n-prof').value.trim(),
+        'Área profissional':    (taxonomyFindById(S?.taxonomy?.areas || [], document.getElementById('n-area').value)?.label_pt) || document.getElementById('n-area').value.trim(),
+        'subarea_label':        (taxonomyFindById(S?.taxonomy?.subareas || [], document.getElementById('n-subarea').value)?.label_pt) || null,
+        'area_id':              document.getElementById('n-area').value || null,
+        'profession_id':        document.getElementById('n-prof').value || null,
+        'subarea_id':           document.getElementById('n-subarea').value || null,
         'Nível alemão':         document.getElementById('n-alemao').value,
         'Referência':           document.getElementById('n-origem').value.trim(),
         'Responsável interno':  document.getElementById('n-resp').value.trim(),
@@ -10305,7 +10607,7 @@ async function submitNew() {
     _pendingCurriculumFile = null;
     closeNew();
     btn.textContent = '✓ Criar Candidato'; btn.disabled = false;
-    ['n-nome','n-email','n-tel','n-cidade','n-prof','n-area','n-origem','n-resp','n-obs'].forEach(id=>{
+    ['n-nome','n-email','n-tel','n-cidade','n-prof','n-area','n-subarea','n-origem','n-resp','n-obs'].forEach(id=>{
       const el = document.getElementById(id); if (el) el.value = '';
     });
     await loadAll(); renderView();
@@ -10811,9 +11113,9 @@ function filterCands(list, includeInactive=false) {
   if (S.filter.status)   r = r.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
   if (S.filter.perfil)   r = r.filter(c => fv(c,'Perfil') === S.filter.perfil);
   // M7: filtro de profissão usa checkSemanticMatch (agrupamento semântico)
-  if (S.filter.profissao) r = r.filter(c => checkSemanticMatch(S.filter.profissao, fv(c,'Profissão principal','Profissão')||''));
+  if (S.filter.profissao) r = r.filter(c => checkSemanticMatch(S.filter.profissao, candidateProfessionLabel(c)||''));
   // M8: filtros NLP
-  if (S.filter._nlpProfissao) r = r.filter(c => checkSemanticMatch(S.filter._nlpProfissao, fv(c,'Profissão principal','Profissão')||''));
+  if (S.filter._nlpProfissao) r = r.filter(c => checkSemanticMatch(S.filter._nlpProfissao, candidateProfessionLabel(c)||''));
   if (S.filter._nlpAlemao)    r = r.filter(c => fv(c,'Nível de alemão','Nível alemão') === S.filter._nlpAlemao);
   if (S.filter._nlpCidade)    r = r.filter(c => (fv(c,'Cidade atual')||'').toLowerCase().includes(S.filter._nlpCidade.toLowerCase()));
   if (S.filter._nlpIdadeMax !== null && S.filter._nlpIdadeMax !== undefined) {
@@ -10832,7 +11134,7 @@ function filterCands(list, includeInactive=false) {
     const q = S.filter.q.toLowerCase();
     r = r.filter(c =>
       (fv(c,'Nome completo')||'').toLowerCase().includes(q) ||
-      (fv(c,'Profissão principal','Profissão')||'').toLowerCase().includes(q) ||
+      (candidateProfessionLabel(c)||'').toLowerCase().includes(q) ||
       (fv(c,'E-mail')||'').toLowerCase().includes(q) ||
       (fv(c,'Cidade atual')||'').toLowerCase().includes(q) ||
       (getEmployerDisplay(c)||'').toLowerCase().includes(q) ||
