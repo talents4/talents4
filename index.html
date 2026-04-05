@@ -271,7 +271,7 @@ a{color:inherit;text-decoration:none}
 .data-tbl tr:last-child td{border-bottom:none}
 .data-tbl tr{transition:background .1s;cursor:pointer}.data-tbl tbody tr:nth-child(2n) td{background:color-mix(in srgb,var(--bg2) 90%, var(--bg3))}
 .data-tbl tr:hover td{background:var(--bg3)}
-.data-tbl td.td-name{color:var(--txt);font-weight:600;max-width:260px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;line-height:1.35}
+.data-tbl td.td-name{color:var(--txt);font-weight:600;max-width:320px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:normal;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}
 .data-tbl td.td-id{font-family:var(--mono);font-size:11px;color:var(--txt3);white-space:nowrap}
 .data-tbl td.td-center{text-align:center}
 .th-sort{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;padding:0}
@@ -1866,7 +1866,7 @@ details.bi-secondary {
 
 
 /* ───────── Employer Hub v3 ───────── */
-.emp-hub{display:grid;grid-template-columns:minmax(232px,252px) minmax(0,1fr);grid-template-areas:'left main';grid-template-rows:minmax(420px,1fr);gap:14px;height:calc(100vh - 180px);max-height:calc(100vh - 180px);min-height:calc(100vh - 180px);align-items:stretch;overflow:hidden}
+.emp-hub{display:grid;grid-template-columns:minmax(272px,296px) minmax(0,1fr);grid-template-areas:'left main';grid-template-rows:minmax(420px,1fr);gap:14px;height:calc(100vh - 180px);max-height:calc(100vh - 180px);min-height:calc(100vh - 180px);align-items:stretch;overflow:hidden}
 .emp-pane{background:linear-gradient(180deg,rgba(13,19,33,.98),rgba(10,15,27,.98));border:1px solid rgba(103,126,170,.18);border-radius:18px;min-height:0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.28)}
 .emp-hub>.emp-pane:nth-of-type(1){grid-area:left}
 .emp-hub>.emp-pane:nth-of-type(2){grid-area:main}
@@ -1888,7 +1888,7 @@ details.bi-secondary {
 .emp-item.warn{border-color:rgba(245,158,11,.34);background:linear-gradient(180deg,rgba(245,158,11,.10),rgba(245,158,11,.05))}
 .emp-item.warn.active{border-color:rgba(245,158,11,.62);box-shadow:0 0 0 1px rgba(245,158,11,.18) inset}
 .emp-item-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.emp-item-name{font-size:13.5px;font-weight:800;color:#f4f7ff;line-height:1.35}
+.emp-item-name{font-size:13.5px;font-weight:800;color:#f4f7ff;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 .emp-item-sub{font-size:10.5px;color:#8fa1bf;line-height:1.45}
 .emp-count{font-size:11px;font-weight:800;color:#f5f8ff;background:#111b31;border:1px solid rgba(103,126,170,.18);border-radius:999px;padding:2px 8px}
 .emp-mini{display:flex;flex-wrap:wrap;gap:6px}
@@ -1922,7 +1922,7 @@ details.bi-secondary {
 .emp-cand:hover{background:#15203a;border-color:rgba(116,165,255,.34)}
 .emp-cand.active{border-color:rgba(96,165,250,.58);background:linear-gradient(180deg,rgba(59,130,246,.16),rgba(59,130,246,.08))}
 .emp-cand-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.emp-cand-name{font-size:14px;font-weight:900;color:#f4f7ff;line-height:1.35}
+.emp-cand-name{font-size:14px;font-weight:900;color:#f4f7ff;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 .emp-cand-meta{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
 .emp-cand-meta span{font-size:10.5px;color:#d1dcf2;padding:2px 7px;border-radius:999px;background:#10192d;border:1px solid rgba(103,126,170,.16)}
 .emp-cand-foot{margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11.2px;color:#b4c0d8}
@@ -1965,7 +1965,7 @@ details.bi-secondary {
 .emp-muted{color:#9baccc}
 .emp-section-note{font-size:11px;color:#8fa1bf}
 .emp-create{white-space:nowrap;padding:4px 8px;font-size:10px;min-height:28px;min-width:auto;max-width:64px}
-@media (max-width: 1480px){.emp-hub{grid-template-columns:minmax(214px,228px) minmax(0,1fr);grid-template-rows:minmax(400px,1fr)}}
+@media (max-width: 1480px){.emp-hub{grid-template-columns:minmax(248px,268px) minmax(0,1fr);grid-template-rows:minmax(400px,1fr)}}
 @media (max-width: 1120px){.emp-hub{grid-template-columns:1fr;grid-template-areas:'left' 'main';grid-template-rows:auto auto;height:auto;max-height:none;min-height:0}.emp-pane{min-height:auto}.emp-scroll{max-height:none;height:auto}.emp-main-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.emp-employer-brief-grid{grid-template-columns:1fr}.emp-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width: 820px){.field-grid,.field-grid.g3{grid-template-columns:1fr}.modal-footer{flex-wrap:wrap}.modal-footer .btn{flex:1 1 auto}.detail-tabs{margin:12px 14px 0}.detail-panel{padding:14px 14px 18px}.modal-hdr,.modal-footer{padding-left:14px;padding-right:14px}}
 @media (max-width: 720px){.emp-employer-brief-grid{grid-template-columns:1fr}.emp-summary-grid{grid-template-columns:1fr}}
@@ -5692,9 +5692,27 @@ function setEmployerHubEmployer(key) {
   persistUiState(EMPLOYER_HUB_KEY, S.employerHub);
   renderView();
 }
+function captureEmployerHubScrollState() {
+  const sc = document.getElementById('emp-main-scroll');
+  if (!S.employerHub) S.employerHub = {};
+  S.employerHub._scrollTop = sc ? sc.scrollTop : 0;
+  S.employerHub._windowScrollY = window.scrollY || 0;
+}
+function restoreEmployerHubScrollState() {
+  if (!S.employerHub) return;
+  const top = Number(S.employerHub._scrollTop || 0);
+  const winY = Number(S.employerHub._windowScrollY || 0);
+  requestAnimationFrame(() => {
+    const sc = document.getElementById('emp-main-scroll');
+    if (sc) sc.scrollTop = top;
+    window.scrollTo({ top: winY, left: 0, behavior: 'auto' });
+  });
+}
 function setEmployerHubCandidate(id) {
   S.employerHub = Object.assign({ selectedEmployer:'', selectedCandidateId:'', tab:'todos', employerSearch:'', candidateSearch:'', quickFilter:'todos' }, S.employerHub || {});
-  S.employerHub.selectedCandidateId = id || '';
+  captureEmployerHubScrollState();
+  const nextId = String(id || '');
+  S.employerHub.selectedCandidateId = String(S.employerHub.selectedCandidateId || '') === nextId ? '' : nextId;
   persistUiState(EMPLOYER_HUB_KEY, S.employerHub);
   renderView();
 }
@@ -6715,7 +6733,7 @@ function renderEmployerHub(el) {
 
       <!-- ── COLUNA 2: Candidatos do empregador ── -->
       <section class="emp-pane">
-        <div class="emp-scroll">
+        <div class="emp-scroll" id="emp-main-scroll">
         <div class="emp-main-top">
           <div class="emp-main-head">
             <div>
@@ -6790,7 +6808,9 @@ function renderEmployerHub(el) {
 
     </div>`;
   bindEmployerHubInteractions(el);
+  restoreEmployerHubScrollState();
 }
+
 
 
 function renderTable(el, filterStatus) {
@@ -9736,6 +9756,26 @@ function taxonomyRowsFor(kind, areaId='', professionId='') {
   if (kind === 'subarea') return currentTaxonomySubareas(professionId);
   return [];
 }
+function taxonomyFilterRows(rows, query) {
+  const q = String(query || '').trim().toLowerCase();
+  const list = Array.isArray(rows) ? rows : [];
+  if (!q) return list;
+  const enriched = list.map(row => {
+    const values = [taxonomyDisplay(row), row?.label_pt, row?.label_de, row?.code]
+      .filter(Boolean)
+      .map(v => String(v).trim().toLowerCase());
+    const exact = values.some(v => v === q);
+    const prefix = values.some(v => v.startsWith(q));
+    const includes = values.some(v => v.includes(q));
+    return { row, exact, prefix, includes, label: String(taxonomyDisplay(row) || '').toLowerCase() };
+  });
+  const exactRows = enriched.filter(x => x.exact).map(x => x.row);
+  if (exactRows.length) return exactRows;
+  return enriched
+    .filter(x => x.includes)
+    .sort((a,b) => Number(b.prefix) - Number(a.prefix) || a.label.localeCompare(b.label, 'pt-BR'))
+    .map(x => x.row);
+}
 function syncNewTaxonomySearch(kind) {
   const idMap = { area:'n-area', profession:'n-prof', subarea:'n-subarea' };
   const searchMap = { area:'n-area-search', profession:'n-prof-search', subarea:'n-subarea-search' };
@@ -9757,7 +9797,7 @@ function filterNewTaxonomySelect(kind) {
   const q = String(searchEl.value || '').trim().toLowerCase();
   const selected = selectEl.value || '';
   let rows = taxonomyRowsFor(kind, areaId, profId);
-  if (q) rows = rows.filter(row => taxonomyDisplay(row).toLowerCase().includes(q));
+  if (q) rows = taxonomyFilterRows(rows, q);
   loadTaxonomySelect(selectEl, rows, selected);
   if (kind === 'profession') selectEl.disabled = !areaId || !rows.length;
   if (kind === 'subarea') selectEl.disabled = !profId || !rows.length;
@@ -9872,10 +9912,12 @@ function getTaxonomyFieldState(c, kind) {
   const isArea = kind === 'area';
   const isProf = kind === 'profession';
   const idField = isArea ? 'area_id' : isProf ? 'profession_id' : 'subarea_id';
+  const uiIdField = isArea ? '__tax_area_ui_id' : isProf ? '__tax_profession_ui_id' : '__tax_subarea_ui_id';
   const labelField = isArea ? 'Área profissional' : isProf ? 'Profissão principal' : 'subarea_label';
   const pendingId = Object.prototype.hasOwnProperty.call(S.pendingEdits, idField) ? S.pendingEdits[idField] : undefined;
+  const pendingUiId = Object.prototype.hasOwnProperty.call(S.pendingEdits, uiIdField) ? S.pendingEdits[uiIdField] : undefined;
   const pendingLabel = Object.prototype.hasOwnProperty.call(S.pendingEdits, labelField) ? S.pendingEdits[labelField] : undefined;
-  const currentId = pendingId !== undefined ? pendingId : (fv(c,idField) || c?.[idField] || '');
+  const currentId = pendingUiId !== undefined ? pendingUiId : (pendingId !== undefined ? pendingId : (fv(c,idField) || c?.[idField] || ''));
   let currentLabel = pendingLabel !== undefined ? pendingLabel : (isArea ? candidateAreaLabel(c) : isProf ? candidateProfessionLabel(c) : candidateSubareaLabel(c));
   const row = taxonomyFindById(isArea ? S.taxonomy.areas : isProf ? S.taxonomy.professions : S.taxonomy.subareas, currentId);
   if (row) currentLabel = taxonomyDisplay(row);
@@ -9911,7 +9953,7 @@ function filterCandidateTaxonomySelect(kind, inputEl) {
   const profState = getTaxonomyFieldState(c, 'profession');
   let rows = taxonomyRowsFor(kind, areaState.id, profState.id);
   const q = String(inputEl.value || '').trim().toLowerCase();
-  if (q) rows = rows.filter(row => taxonomyDisplay(row).toLowerCase().includes(q));
+  if (q) rows = taxonomyFilterRows(rows, q);
   const selected = selectEl.value || '';
   loadTaxonomySelect(selectEl, rows, selected);
   if (kind === 'profession') selectEl.disabled = !areaState.id || !rows.length;
