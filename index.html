@@ -533,7 +533,8 @@ a{color:inherit;text-decoration:none}
 .filter-chip.active{border-color:var(--accent);color:var(--accent2);background:var(--accent-bg)}
 .filter-select{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--txt2);cursor:pointer}
 .filter-select option{background:var(--bg2)}
-.field-select-wrap{display:flex;gap:8px;align-items:center}.field-select-wrap .field-select{flex:1}.field-select-add{min-width:38px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--txt2);cursor:pointer;font-size:18px;line-height:1}.field-select-add:hover{border-color:var(--accent);color:var(--txt)}
+.field-select-wrap{display:flex;gap:8px;align-items:center}.field-select-wrap .field-select{flex:1}.field-select-add{min-width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--txt2);cursor:pointer;font-size:18px;line-height:1}.field-select-add:hover{border-color:var(--accent);color:var(--txt)}
+.field-taxonomy{display:grid;gap:6px}.field-taxonomy-hint{font-size:10.5px;color:var(--txt3);line-height:1.35}.field-taxonomy-search{padding:8px 10px}.field-taxonomy-search::placeholder{color:var(--txt3)}
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 0 0}
 .pg-btn{width:30px;height:30px;border-radius:var(--r);background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--txt2);transition:all .12s;cursor:pointer}
 .pg-btn:hover{border-color:var(--accent);color:var(--accent2)}
@@ -1865,8 +1866,11 @@ details.bi-secondary {
 
 
 /* ───────── Employer Hub v3 ───────── */
-.emp-hub{display:grid;grid-template-columns:170px minmax(860px,1.9fr) 348px;gap:14px;height:calc(100vh - 180px);max-height:calc(100vh - 180px);min-height:calc(100vh - 180px);align-items:stretch;overflow:hidden}
+.emp-hub{display:grid;grid-template-columns:158px minmax(0,1fr);grid-template-areas:'left main' 'left detail';grid-template-rows:minmax(420px,1fr) minmax(300px,.88fr);gap:14px;height:calc(100vh - 180px);max-height:calc(100vh - 180px);min-height:calc(100vh - 180px);align-items:stretch;overflow:hidden}
 .emp-pane{background:linear-gradient(180deg,rgba(13,19,33,.98),rgba(10,15,27,.98));border:1px solid rgba(103,126,170,.18);border-radius:18px;min-height:0;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.emp-hub>.emp-pane:nth-of-type(1){grid-area:left}
+.emp-hub>.emp-pane:nth-of-type(2){grid-area:main}
+.emp-hub>.emp-pane:nth-of-type(3){grid-area:detail}
 .emp-pane-hd{padding:16px 16px 12px;border-bottom:1px solid rgba(103,126,170,.16);display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .emp-pane-title{font-size:15px;font-weight:900;color:#f4f7ff}
 .emp-pane-sub{font-size:11.5px;color:#97a7c6;margin-top:4px;line-height:1.45}
@@ -1926,7 +1930,7 @@ details.bi-secondary {
 .emp-summary{padding:16px;display:flex;flex-direction:column;gap:12px}
 .emp-summary-name{font-size:20px;font-weight:900;color:#f8fbff;line-height:1.25}
 .emp-summary-sub{display:flex;flex-wrap:wrap;gap:7px}
-.emp-summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.emp-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .emp-box{padding:11px 12px;border-radius:14px;background:#0f172a;border:1px solid rgba(103,126,170,.16)}
 .emp-box-lbl{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:#92a3c2}
 .emp-box-val{font-size:13px;color:#f1f6ff;font-weight:800;margin-top:5px;line-height:1.4}
@@ -1953,11 +1957,11 @@ details.bi-secondary {
 .emp-link:hover{text-decoration:underline}
 .emp-muted{color:#9baccc}
 .emp-section-note{font-size:11px;color:#8fa1bf}
-.emp-create{white-space:nowrap;padding:4px 8px;font-size:10px;min-height:28px;min-width:auto;max-width:66px}
-@media (max-width: 1480px){.emp-hub{grid-template-columns:164px minmax(620px,1.55fr) 330px}}
-@media (max-width: 1120px){.emp-hub{grid-template-columns:1fr}.emp-pane{min-height:auto}.emp-scroll{max-height:none}.emp-main-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.emp-employer-brief-grid{grid-template-columns:1fr}}
+.emp-create{white-space:nowrap;padding:3px 7px;font-size:10px;min-height:26px;min-width:auto;max-width:58px}
+@media (max-width: 1480px){.emp-hub{grid-template-columns:152px minmax(0,1fr);grid-template-rows:minmax(400px,1fr) minmax(280px,.82fr)}}
+@media (max-width: 1120px){.emp-hub{grid-template-columns:1fr;grid-template-areas:'left' 'main' 'detail';grid-template-rows:auto auto auto;height:auto;max-height:none;min-height:0}.emp-pane{min-height:auto}.emp-scroll{max-height:none;height:auto}.emp-main-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.emp-employer-brief-grid{grid-template-columns:1fr}.emp-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width: 820px){.field-grid,.field-grid.g3{grid-template-columns:1fr}.modal-footer{flex-wrap:wrap}.modal-footer .btn{flex:1 1 auto}.detail-tabs{margin:12px 14px 0}.detail-panel{padding:14px 14px 18px}.modal-hdr,.modal-footer{padding-left:14px;padding-right:14px}}
-@media (max-width: 720px){.emp-employer-brief-grid{grid-template-columns:1fr}}
+@media (max-width: 720px){.emp-employer-brief-grid{grid-template-columns:1fr}.emp-summary-grid{grid-template-columns:1fr}}
 
 /* ───────── Employer Modal ───────── */
 .emp-modal-overlay{position:fixed;inset:0;background:rgba(4,6,14,.82);backdrop-filter:blur(4px);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow:auto}
@@ -2150,9 +2154,9 @@ details.bi-secondary {
         <div class="field-group"><label class="field-lbl">Telefone</label><input class="field-input" id="n-tel" placeholder="+55 11 99999-9999" autocomplete="off"></div>
         <div class="field-group"><label class="field-lbl">País de origem</label><input class="field-input" id="n-pais" placeholder="Brasil" value="BRASIL" autocomplete="off"></div>
         <div class="field-group"><label class="field-lbl">Cidade atual</label><input class="field-input" id="n-cidade" placeholder="São Paulo - SP" autocomplete="off"></div>
-        <div class="field-group"><label class="field-lbl">Área profissional</label><div class="field-select-wrap"><select class="field-select" id="n-area" onchange="onNewCandidateAreaChange()"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('area')">+</button></div></div>
-        <div class="field-group"><label class="field-lbl">Profissão</label><div class="field-select-wrap"><select class="field-select" id="n-prof" onchange="onNewCandidateProfessionChange()"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('profession')">+</button></div></div>
-        <div class="field-group"><label class="field-lbl">Subárea</label><div class="field-select-wrap"><select class="field-select" id="n-subarea"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('subarea')">+</button></div></div>
+        <div class="field-group"><label class="field-lbl">Área profissional</label><div class="field-taxonomy"><input class="field-input field-taxonomy-search" id="n-area-search" placeholder="Digite para filtrar áreas" oninput="filterNewTaxonomySelect('area')"><div class="field-select-wrap"><select class="field-select" id="n-area" onchange="markNewTaxonomySelection('area')"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('area')" title="Adicionar nova área">+</button></div><div class="field-taxonomy-hint">Selecione uma área oficial. Se não existir, clique em + para sugerir nova.</div></div></div>
+        <div class="field-group"><label class="field-lbl">Profissão</label><div class="field-taxonomy"><input class="field-input field-taxonomy-search" id="n-prof-search" placeholder="Digite para filtrar profissões" oninput="filterNewTaxonomySelect('profession')"><div class="field-select-wrap"><select class="field-select" id="n-prof" onchange="markNewTaxonomySelection('profession')"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('profession')" title="Adicionar nova profissão">+</button></div><div class="field-taxonomy-hint">Filtrada pela área escolhida. Use a busca para localizar mais rápido.</div></div></div>
+        <div class="field-group"><label class="field-lbl">Subárea</label><div class="field-taxonomy"><input class="field-input field-taxonomy-search" id="n-subarea-search" placeholder="Digite para filtrar subáreas" oninput="filterNewTaxonomySelect('subarea')"><div class="field-select-wrap"><select class="field-select" id="n-subarea" onchange="markNewTaxonomySelection('subarea')"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('subarea')" title="Adicionar nova subárea">+</button></div><div class="field-taxonomy-hint">Opcional. A lista acompanha a profissão selecionada.</div></div></div>
         <div class="field-group"><label class="field-lbl">Nível de alemão</label><div class="field-select-wrap"><select class="field-select" id="n-alemao"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('Nível de alemão',this,'n-alemao')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Status inicial</label><div class="field-select-wrap"><select class="field-select" id="n-status"><option value="">Selecionar</option></select><button type="button" class="field-select-add" onclick="quickAddEnum('STATUS PIPELINE',this,'n-status')">+</button></div></div>
         <div class="field-group"><label class="field-lbl">Referência / Origem</label><input class="field-input" id="n-origem" placeholder="Instagram, Indicação..."></div>
@@ -6645,11 +6649,11 @@ function renderEmployerHub(el) {
       </section>
 
       <!-- ── COLUNA 3: Painel operacional do candidato ── -->
-      <section class="emp-pane">
+      <section class="emp-pane emp-detail-pane">
         <div class="emp-pane-hd">
           <div>
-            <div class="emp-pane-title">${esc(uiTranslate('Resumo operacional'))}</div>
-            <div class="emp-pane-sub">${esc(uiTranslate('Clique em um candidato para visualizar.'))}</div>
+            <div class="emp-pane-title">${esc(uiTranslate('Detalhe do candidato selecionado'))}</div>
+            <div class="emp-pane-sub">${esc(uiTranslate('Clique em um candidato na lista acima para abrir o painel detalhado abaixo.'))}</div>
           </div>
         </div>
         <div class="emp-scroll">
@@ -7772,7 +7776,8 @@ function refreshInterviewPanels() {
 function buildPanel(tabId, c) {
   const enums = S.enums;
   function fld(field, label, type='text', opts=null, fullWidth=false) {
-    const v = fv(c, field, FIELD_MAP[field], ...((REV_MAP_MULTI[FIELD_MAP[field]] || []).filter(a => a !== field))) || '';
+    const pendingVal = Object.prototype.hasOwnProperty.call(S.pendingEdits, field) ? S.pendingEdits[field] : undefined;
+    const v = (pendingVal !== undefined ? pendingVal : (fv(c, field, FIELD_MAP[field], ...((REV_MAP_MULTI[FIELD_MAP[field]] || []).filter(a => a !== field))) || '')); 
     const cls = fullWidth ? 'field-group fg-full' : 'field-group';
     if (type === 'select') {
       const options = (opts || enums[field] || []).map(o =>
@@ -7837,7 +7842,9 @@ function buildPanel(tabId, c) {
     case 't-profissional': return `<div>
       <div class="section-hdr">Formação & Carreira</div>
       <div class="field-grid">
-        ${fld('Profissão principal','Profissão principal')}${fld('Área profissional','Área profissional')}
+        ${renderCandidateTaxonomyField(c,'area','Área profissional')}
+        ${renderCandidateTaxonomyField(c,'profession','Profissão principal')}
+        ${renderCandidateTaxonomyField(c,'subarea','Subárea técnica')}
         ${fld('Universidade','Universidade / Formação')}${fld('Curso de Graduação','Curso de Graduação')}
         ${fld('Anabin','Classificação Anabin','select')}${fld('Pós-graduação','Pós-graduação?','select')}
         ${fld('Experiência Profissional (tempo)','Exp. profissional (tempo)')}${fld('Referência','Referência / Origem')}
@@ -9071,12 +9078,7 @@ function onEdit(el) {
     }
   }
 
-  const n = Object.keys(S.pendingEdits).length + (S.rhInterviewDirty ? 1 : 0);
-  const btn = document.getElementById('cm-save');
-  if (btn) {
-    btn.textContent = `💾 Salvar (${n})`;
-    btn.classList.add('has-changes');
-  }
+  updateCandidateSaveUi();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -9184,6 +9186,11 @@ async function saveCandidate() {
       const draft = ensureRhInterviewDraftShell();
       draft.meta = { ...(draft.meta || {}), ...interviewMetaEdits };
     }
+    ['area_id','profession_id','subarea_id'].forEach(key => {
+      if (Object.prototype.hasOwnProperty.call(candidateFieldsToSave, key) && !isPersistableTaxonomyId(candidateFieldsToSave[key])) {
+        candidateFieldsToSave[key] = null;
+      }
+    });
 
     // ── Rastreabilidade: detecta mudanças em campos críticos ─
     const histEntries = histBuildEntries(candidateFieldsToSave, S.currentCand, sess?.nome || 'web');
@@ -9607,6 +9614,8 @@ function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overl
 // ══════════════════════════════════════════════════════════════
 // TAXONOMIA PADRONIZADA — áreas / profissões / subáreas
 // ══════════════════════════════════════════════════════════════
+const STATIC_TAXONOMY_SEED = {"areas":[{"id":"seed:area:industrial","code":"industrial","label_pt":"Industrial","label_de":"Industrie","sort_order":10,"seed":true},{"id":"seed:area:producao","code":"producao","label_pt":"Produção","label_de":"Produktion","sort_order":15,"seed":true},{"id":"seed:area:mecanica","code":"mecanica","label_pt":"Mecânica","label_de":"Mechanik","sort_order":20,"seed":true},{"id":"seed:area:eletrica","code":"eletrica","label_pt":"Elétrica","label_de":"Elektrotechnik","sort_order":30,"seed":true},{"id":"seed:area:automacao","code":"automacao","label_pt":"Automação","label_de":"Automatisierung","sort_order":35,"seed":true},{"id":"seed:area:manutencao","code":"manutencao","label_pt":"Manutenção","label_de":"Instandhaltung","sort_order":38,"seed":true},{"id":"seed:area:metalurgia","code":"metalurgia","label_pt":"Metalurgia","label_de":"Metallindustrie","sort_order":40,"seed":true},{"id":"seed:area:logistica","code":"logistica","label_pt":"Logística","label_de":"Logistik","sort_order":50,"seed":true},{"id":"seed:area:construcao","code":"construcao","label_pt":"Construção","label_de":"Bau","sort_order":60,"seed":true},{"id":"seed:area:enfermagem","code":"enfermagem","label_pt":"Enfermagem","label_de":"Pflege","sort_order":70,"seed":true},{"id":"seed:area:saude","code":"saude","label_pt":"Saúde","label_de":"Gesundheit","sort_order":75,"seed":true},{"id":"seed:area:administrativa","code":"administrativa","label_pt":"Administrativa","label_de":"Verwaltung","sort_order":80,"seed":true},{"id":"seed:area:financeira","code":"financeira","label_pt":"Financeira","label_de":"Finanzen","sort_order":85,"seed":true},{"id":"seed:area:comercial","code":"comercial","label_pt":"Comercial","label_de":"Vertrieb","sort_order":90,"seed":true},{"id":"seed:area:ti","code":"ti","label_pt":"TI","label_de":"IT","sort_order":100,"seed":true},{"id":"seed:area:juridico","code":"juridico","label_pt":"Jurídico","label_de":"Recht","sort_order":110,"seed":true},{"id":"seed:area:qualidade","code":"qualidade","label_pt":"Qualidade","label_de":"Qualität","sort_order":120,"seed":true},{"id":"seed:area:hotelaria_gastronomia","code":"hotelaria_gastronomia","label_pt":"Hotelaria e Gastronomia","label_de":"Hotel und Gastronomie","sort_order":130,"seed":true},{"id":"seed:area:transporte","code":"transporte","label_pt":"Transporte","label_de":"Transport","sort_order":140,"seed":true}],"professions":[{"id":"seed:profession:operador_producao","code":"operador_producao","area_code":"industrial","label_pt":"Operador de Produção","label_de":"Produktionsmitarbeiter","sort_order":101,"seed":true},{"id":"seed:profession:auxiliar_producao","code":"auxiliar_producao","area_code":"industrial","label_pt":"Auxiliar de Produção","label_de":"Produktionshelfer","sort_order":102,"seed":true},{"id":"seed:profession:operador_maquina","code":"operador_maquina","area_code":"industrial","label_pt":"Operador de Máquina","label_de":"Maschinenbediener","sort_order":103,"seed":true},{"id":"seed:profession:montador_industrial","code":"montador_industrial","area_code":"industrial","label_pt":"Montador Industrial","label_de":"Industriemonteur","sort_order":104,"seed":true},{"id":"seed:profession:inspetor_producao","code":"inspetor_producao","area_code":"industrial","label_pt":"Inspetor de Produção","label_de":"Produktionsprüfer","sort_order":105,"seed":true},{"id":"seed:profession:operador_linha","code":"operador_linha","area_code":"producao","label_pt":"Operador de Linha","label_de":"Linienmitarbeiter","sort_order":151,"seed":true},{"id":"seed:profession:abastecedor_linha","code":"abastecedor_linha","area_code":"producao","label_pt":"Abastecedor de Linha","label_de":"Linienversorger","sort_order":152,"seed":true},{"id":"seed:profession:preparador_materiais","code":"preparador_materiais","area_code":"producao","label_pt":"Preparador de Materiais","label_de":"Materialvorbereiter","sort_order":153,"seed":true},{"id":"seed:profession:embalador_industrial","code":"embalador_industrial","area_code":"producao","label_pt":"Embalador Industrial","label_de":"Industrieverpacker","sort_order":154,"seed":true},{"id":"seed:profession:lider_producao","code":"lider_producao","area_code":"producao","label_pt":"Líder de Produção","label_de":"Produktionsleiter","sort_order":155,"seed":true},{"id":"seed:profession:mecanico_industrial","code":"mecanico_industrial","area_code":"mecanica","label_pt":"Mecânico Industrial","label_de":"Industriemechaniker","sort_order":201,"seed":true},{"id":"seed:profession:torneiro_mecanico","code":"torneiro_mecanico","area_code":"mecanica","label_pt":"Torneiro Mecânico","label_de":"Dreher","sort_order":202,"seed":true},{"id":"seed:profession:fresador","code":"fresador","area_code":"mecanica","label_pt":"Fresador","label_de":"Fräser","sort_order":203,"seed":true},{"id":"seed:profession:ajustador_mecanico","code":"ajustador_mecanico","area_code":"mecanica","label_pt":"Ajustador Mecânico","label_de":"Mechanischer Einrichter","sort_order":204,"seed":true},{"id":"seed:profession:usinador","code":"usinador","area_code":"mecanica","label_pt":"Usinador","label_de":"Zerspanungsmechaniker","sort_order":205,"seed":true},{"id":"seed:profession:eletricista_industrial","code":"eletricista_industrial","area_code":"eletrica","label_pt":"Eletricista Industrial","label_de":"Industrieelektriker","sort_order":301,"seed":true},{"id":"seed:profession:eletrotecnico","code":"eletrotecnico","area_code":"eletrica","label_pt":"Eletrotécnico","label_de":"Elektrotechniker","sort_order":302,"seed":true},{"id":"seed:profession:montador_eletrico","code":"montador_eletrico","area_code":"eletrica","label_pt":"Montador Elétrico","label_de":"Elektromonteur","sort_order":303,"seed":true},{"id":"seed:profession:instalador_eletrico","code":"instalador_eletrico","area_code":"eletrica","label_pt":"Instalador Elétrico","label_de":"Elektroinstallateur","sort_order":304,"seed":true},{"id":"seed:profession:painelista_eletrico","code":"painelista_eletrico","area_code":"eletrica","label_pt":"Montador de Painéis Elétricos","label_de":"Schaltschrankbauer","sort_order":305,"seed":true},{"id":"seed:profession:tecnico_automacao","code":"tecnico_automacao","area_code":"automacao","label_pt":"Técnico em Automação","label_de":"Automatisierungstechniker","sort_order":351,"seed":true},{"id":"seed:profession:tecnico_eletromecanico","code":"tecnico_eletromecanico","area_code":"automacao","label_pt":"Técnico Eletromecânico","label_de":"Elektromechaniker","sort_order":352,"seed":true},{"id":"seed:profession:instrumentista","code":"instrumentista","area_code":"automacao","label_pt":"Instrumentista","label_de":"Messtechniker","sort_order":353,"seed":true},{"id":"seed:profession:programador_cnc","code":"programador_cnc","area_code":"automacao","label_pt":"Programador CNC","label_de":"CNC-Programmierer","sort_order":354,"seed":true},{"id":"seed:profession:tecnico_robotica","code":"tecnico_robotica","area_code":"automacao","label_pt":"Técnico em Robótica","label_de":"Robotertechniker","sort_order":355,"seed":true},{"id":"seed:profession:tecnico_manutencao","code":"tecnico_manutencao","area_code":"manutencao","label_pt":"Técnico de Manutenção","label_de":"Instandhaltungstechniker","sort_order":381,"seed":true},{"id":"seed:profession:manutentor_predial","code":"manutentor_predial","area_code":"manutencao","label_pt":"Manutentor Predial","label_de":"Haustechniker","sort_order":382,"seed":true},{"id":"seed:profession:manutentor_mecanico","code":"manutentor_mecanico","area_code":"manutencao","label_pt":"Manutentor Mecânico","label_de":"Mechanischer Instandhalter","sort_order":383,"seed":true},{"id":"seed:profession:manutentor_eletrico","code":"manutentor_eletrico","area_code":"manutencao","label_pt":"Manutentor Elétrico","label_de":"Elektrischer Instandhalter","sort_order":384,"seed":true},{"id":"seed:profession:lubrificador_industrial","code":"lubrificador_industrial","area_code":"manutencao","label_pt":"Lubrificador Industrial","label_de":"Industrieschmierer","sort_order":385,"seed":true},{"id":"seed:profession:soldador","code":"soldador","area_code":"metalurgia","label_pt":"Soldador","label_de":"Schweißer","sort_order":401,"seed":true},{"id":"seed:profession:serralheiro","code":"serralheiro","area_code":"metalurgia","label_pt":"Serralheiro","label_de":"Schlosser","sort_order":402,"seed":true},{"id":"seed:profession:caldeireiro","code":"caldeireiro","area_code":"metalurgia","label_pt":"Caldeireiro","label_de":"Kesselbauer","sort_order":403,"seed":true},{"id":"seed:profession:operador_cnc","code":"operador_cnc","area_code":"metalurgia","label_pt":"Operador CNC","label_de":"CNC-Bediener","sort_order":404,"seed":true},{"id":"seed:profession:operador_ponte_rolante","code":"operador_ponte_rolante","area_code":"metalurgia","label_pt":"Operador de Ponte Rolante","label_de":"Brückenkranführer","sort_order":405,"seed":true},{"id":"seed:profession:auxiliar_logistica","code":"auxiliar_logistica","area_code":"logistica","label_pt":"Auxiliar de Logística","label_de":"Logistikhelfer","sort_order":501,"seed":true},{"id":"seed:profession:conferente","code":"conferente","area_code":"logistica","label_pt":"Conferente","label_de":"Wareneingangsprüfer","sort_order":502,"seed":true},{"id":"seed:profession:almoxarife","code":"almoxarife","area_code":"logistica","label_pt":"Almoxarife","label_de":"Lagerist","sort_order":503,"seed":true},{"id":"seed:profession:operador_empilhadeira","code":"operador_empilhadeira","area_code":"logistica","label_pt":"Operador de Empilhadeira","label_de":"Gabelstaplerfahrer","sort_order":504,"seed":true},{"id":"seed:profession:separador_pedidos","code":"separador_pedidos","area_code":"logistica","label_pt":"Separador de Pedidos","label_de":"Kommissionierer","sort_order":505,"seed":true},{"id":"seed:profession:motorista_logistico","code":"motorista_logistico","area_code":"logistica","label_pt":"Motorista Logístico","label_de":"Logistikfahrer","sort_order":506,"seed":true},{"id":"seed:profession:pedreiro","code":"pedreiro","area_code":"construcao","label_pt":"Pedreiro","label_de":"Maurer","sort_order":601,"seed":true},{"id":"seed:profession:servente_obra","code":"servente_obra","area_code":"construcao","label_pt":"Servente de Obra","label_de":"Bauhelfer","sort_order":602,"seed":true},{"id":"seed:profession:carpinteiro","code":"carpinteiro","area_code":"construcao","label_pt":"Carpinteiro","label_de":"Zimmermann","sort_order":603,"seed":true},{"id":"seed:profession:armador","code":"armador","area_code":"construcao","label_pt":"Armador","label_de":"Eisenflechter","sort_order":604,"seed":true},{"id":"seed:profession:azulejista","code":"azulejista","area_code":"construcao","label_pt":"Azulejista","label_de":"Fliesenleger","sort_order":605,"seed":true},{"id":"seed:profession:operador_betoneira","code":"operador_betoneira","area_code":"construcao","label_pt":"Operador de Betoneira","label_de":"Betonmischerfahrer","sort_order":606,"seed":true},{"id":"seed:profession:encanador","code":"encanador","area_code":"construcao","label_pt":"Encanador","label_de":"Installateur","sort_order":607,"seed":true},{"id":"seed:profession:pintor_obra","code":"pintor_obra","area_code":"construcao","label_pt":"Pintor de Obra","label_de":"Maler","sort_order":608,"seed":true},{"id":"seed:profession:enfermeiro","code":"enfermeiro","area_code":"enfermagem","label_pt":"Enfermeiro","label_de":"Pflegefachkraft","sort_order":701,"seed":true},{"id":"seed:profession:tecnico_enfermagem","code":"tecnico_enfermagem","area_code":"enfermagem","label_pt":"Técnico de Enfermagem","label_de":"Pflegefachassistent","sort_order":702,"seed":true},{"id":"seed:profession:auxiliar_enfermagem","code":"auxiliar_enfermagem","area_code":"enfermagem","label_pt":"Auxiliar de Enfermagem","label_de":"Pflegehelfer","sort_order":703,"seed":true},{"id":"seed:profession:cuidador_idosos","code":"cuidador_idosos","area_code":"enfermagem","label_pt":"Cuidador de Idosos","label_de":"Altenpflegehelfer","sort_order":704,"seed":true},{"id":"seed:profession:instrumentador_cirurgico","code":"instrumentador_cirurgico","area_code":"enfermagem","label_pt":"Instrumentador Cirúrgico","label_de":"OP-Assistenz","sort_order":705,"seed":true},{"id":"seed:profession:fisioterapeuta","code":"fisioterapeuta","area_code":"saude","label_pt":"Fisioterapeuta","label_de":"Physiotherapeut","sort_order":751,"seed":true},{"id":"seed:profession:farmaceutico","code":"farmaceutico","area_code":"saude","label_pt":"Farmacêutico","label_de":"Apotheker","sort_order":752,"seed":true},{"id":"seed:profession:tecnico_radiologia","code":"tecnico_radiologia","area_code":"saude","label_pt":"Técnico em Radiologia","label_de":"Radiologietechnologe","sort_order":753,"seed":true},{"id":"seed:profession:tecnico_laboratorio","code":"tecnico_laboratorio","area_code":"saude","label_pt":"Técnico de Laboratório","label_de":"Labortechniker","sort_order":754,"seed":true},{"id":"seed:profession:cuidador_geral","code":"cuidador_geral","area_code":"saude","label_pt":"Cuidador","label_de":"Betreuungskraft","sort_order":755,"seed":true},{"id":"seed:profession:assistente_administrativo","code":"assistente_administrativo","area_code":"administrativa","label_pt":"Assistente Administrativo","label_de":"Verwaltungsassistent","sort_order":801,"seed":true},{"id":"seed:profession:recepcionista","code":"recepcionista","area_code":"administrativa","label_pt":"Recepcionista","label_de":"Empfangskraft","sort_order":802,"seed":true},{"id":"seed:profession:auxiliar_escritorio","code":"auxiliar_escritorio","area_code":"administrativa","label_pt":"Auxiliar de Escritório","label_de":"Bürohilfe","sort_order":803,"seed":true},{"id":"seed:profession:backoffice","code":"backoffice","area_code":"administrativa","label_pt":"Backoffice","label_de":"Backoffice","sort_order":804,"seed":true},{"id":"seed:profession:assistente_rh","code":"assistente_rh","area_code":"administrativa","label_pt":"Assistente de RH","label_de":"HR-Assistent","sort_order":805,"seed":true},{"id":"seed:profession:assistente_financeiro","code":"assistente_financeiro","area_code":"financeira","label_pt":"Assistente Financeiro","label_de":"Finanzassistent","sort_order":851,"seed":true},{"id":"seed:profession:analista_financeiro","code":"analista_financeiro","area_code":"financeira","label_pt":"Analista Financeiro","label_de":"Finanzanalyst","sort_order":852,"seed":true},{"id":"seed:profession:faturista","code":"faturista","area_code":"financeira","label_pt":"Faturista","label_de":"Sachbearbeiter Faktura","sort_order":853,"seed":true},{"id":"seed:profession:contas_pagar_receber","code":"contas_pagar_receber","area_code":"financeira","label_pt":"Contas a Pagar e Receber","label_de":"Sachbearbeiter Debitoren/Kreditoren","sort_order":854,"seed":true},{"id":"seed:profession:auxiliar_contabil","code":"auxiliar_contabil","area_code":"financeira","label_pt":"Auxiliar Contábil","label_de":"Buchhaltungsassistenz","sort_order":855,"seed":true},{"id":"seed:profession:vendedor_interno","code":"vendedor_interno","area_code":"comercial","label_pt":"Vendedor Interno","label_de":"Innendienstmitarbeiter Vertrieb","sort_order":901,"seed":true},{"id":"seed:profession:vendedor_externo","code":"vendedor_externo","area_code":"comercial","label_pt":"Vendedor Externo","label_de":"Außendienstmitarbeiter Vertrieb","sort_order":902,"seed":true},{"id":"seed:profession:representante_comercial","code":"representante_comercial","area_code":"comercial","label_pt":"Representante Comercial","label_de":"Handelsvertreter","sort_order":903,"seed":true},{"id":"seed:profession:atendente_comercial","code":"atendente_comercial","area_code":"comercial","label_pt":"Atendente Comercial","label_de":"Vertriebsassistenz","sort_order":904,"seed":true},{"id":"seed:profession:pos_venda","code":"pos_venda","area_code":"comercial","label_pt":"Pós-venda","label_de":"After-Sales-Sachbearbeiter","sort_order":905,"seed":true},{"id":"seed:profession:suporte_ti","code":"suporte_ti","area_code":"ti","label_pt":"Suporte de TI","label_de":"IT-Support","sort_order":1001,"seed":true},{"id":"seed:profession:tecnico_informatica","code":"tecnico_informatica","area_code":"ti","label_pt":"Técnico em Informática","label_de":"IT-Techniker","sort_order":1002,"seed":true},{"id":"seed:profession:analista_sistemas","code":"analista_sistemas","area_code":"ti","label_pt":"Analista de Sistemas","label_de":"Systemanalyst","sort_order":1003,"seed":true},{"id":"seed:profession:desenvolvedor","code":"desenvolvedor","area_code":"ti","label_pt":"Desenvolvedor","label_de":"Entwickler","sort_order":1004,"seed":true},{"id":"seed:profession:infraestrutura_rede","code":"infraestrutura_rede","area_code":"ti","label_pt":"Infraestrutura e Redes","label_de":"Netzwerkadministrator","sort_order":1005,"seed":true},{"id":"seed:profession:advogado","code":"advogado","area_code":"juridico","label_pt":"Advogado","label_de":"Rechtsanwalt","sort_order":1101,"seed":true},{"id":"seed:profession:assistente_juridico","code":"assistente_juridico","area_code":"juridico","label_pt":"Assistente Jurídico","label_de":"Rechtsassistenz","sort_order":1102,"seed":true},{"id":"seed:profession:jurista_corporativo","code":"jurista_corporativo","area_code":"juridico","label_pt":"Jurista Corporativo","label_de":"Syndikusjurist","sort_order":1103,"seed":true},{"id":"seed:profession:paralegal","code":"paralegal","area_code":"juridico","label_pt":"Paralegal","label_de":"Paralegal","sort_order":1104,"seed":true},{"id":"seed:profession:inspetor_qualidade","code":"inspetor_qualidade","area_code":"qualidade","label_pt":"Inspetor de Qualidade","label_de":"Qualitätsprüfer","sort_order":1201,"seed":true},{"id":"seed:profession:analista_qualidade","code":"analista_qualidade","area_code":"qualidade","label_pt":"Analista de Qualidade","label_de":"Qualitätsanalyst","sort_order":1202,"seed":true},{"id":"seed:profession:metrologista","code":"metrologista","area_code":"qualidade","label_pt":"Metrologista","label_de":"Messtechniker","sort_order":1203,"seed":true},{"id":"seed:profession:auditor_qualidade","code":"auditor_qualidade","area_code":"qualidade","label_pt":"Auditor de Qualidade","label_de":"Qualitätsauditor","sort_order":1204,"seed":true},{"id":"seed:profession:cozinheiro","code":"cozinheiro","area_code":"hotelaria_gastronomia","label_pt":"Cozinheiro","label_de":"Koch","sort_order":1301,"seed":true},{"id":"seed:profession:auxiliar_cozinha","code":"auxiliar_cozinha","area_code":"hotelaria_gastronomia","label_pt":"Auxiliar de Cozinha","label_de":"Küchenhilfe","sort_order":1302,"seed":true},{"id":"seed:profession:camareira","code":"camareira","area_code":"hotelaria_gastronomia","label_pt":"Camareira","label_de":"Zimmermädchen","sort_order":1303,"seed":true},{"id":"seed:profession:atendente_restaurante","code":"atendente_restaurante","area_code":"hotelaria_gastronomia","label_pt":"Atendente de Restaurante","label_de":"Servicekraft Restaurant","sort_order":1304,"seed":true},{"id":"seed:profession:recepcionista_hotel","code":"recepcionista_hotel","area_code":"hotelaria_gastronomia","label_pt":"Recepcionista de Hotel","label_de":"Hotelempfangskraft","sort_order":1305,"seed":true},{"id":"seed:profession:motorista_caminhao","code":"motorista_caminhao","area_code":"transporte","label_pt":"Motorista de Caminhão","label_de":"LKW-Fahrer","sort_order":1401,"seed":true},{"id":"seed:profession:motorista_categoria_b","code":"motorista_categoria_b","area_code":"transporte","label_pt":"Motorista Categoria B","label_de":"Fahrer Klasse B","sort_order":1402,"seed":true},{"id":"seed:profession:ajudante_entrega","code":"ajudante_entrega","area_code":"transporte","label_pt":"Ajudante de Entrega","label_de":"Lieferhelfer","sort_order":1403,"seed":true},{"id":"seed:profession:operador_transporte","code":"operador_transporte","area_code":"transporte","label_pt":"Operador de Transporte","label_de":"Transportmitarbeiter","sort_order":1404,"seed":true},{"id":"seed:profession:despachante_logistico","code":"despachante_logistico","area_code":"transporte","label_pt":"Despachante Logístico","label_de":"Disponent","sort_order":1405,"seed":true}],"subareas":[{"id":"seed:subarea:operador_producao_1","code":"operador_producao_1","profession_code":"operador_producao","label_pt":"Produção fabril","label_de":"Fabrikproduktion","sort_order":1001,"seed":true},{"id":"seed:subarea:operador_producao_2","code":"operador_producao_2","profession_code":"operador_producao","label_pt":"Linha de montagem","label_de":"Montagelinie","sort_order":1002,"seed":true},{"id":"seed:subarea:operador_producao_3","code":"operador_producao_3","profession_code":"operador_producao","label_pt":"Produção seriada","label_de":"Serienproduktion","sort_order":1003,"seed":true},{"id":"seed:subarea:auxiliar_producao_1","code":"auxiliar_producao_1","profession_code":"auxiliar_producao","label_pt":"Abastecimento de linha","label_de":"Linienversorgung","sort_order":1001,"seed":true},{"id":"seed:subarea:auxiliar_producao_2","code":"auxiliar_producao_2","profession_code":"auxiliar_producao","label_pt":"Apoio fabril","label_de":"Produktionsunterstützung","sort_order":1002,"seed":true},{"id":"seed:subarea:operador_maquina_1","code":"operador_maquina_1","profession_code":"operador_maquina","label_pt":"Máquina industrial","label_de":"Industriemaschine","sort_order":1001,"seed":true},{"id":"seed:subarea:operador_maquina_2","code":"operador_maquina_2","profession_code":"operador_maquina","label_pt":"Setup básico","label_de":"Grundsetup","sort_order":1002,"seed":true},{"id":"seed:subarea:montador_industrial_1","code":"montador_industrial_1","profession_code":"montador_industrial","label_pt":"Montagem industrial","label_de":"Industriemontage","sort_order":1001,"seed":true},{"id":"seed:subarea:montador_industrial_2","code":"montador_industrial_2","profession_code":"montador_industrial","label_pt":"Montagem final","label_de":"Endmontage","sort_order":1002,"seed":true},{"id":"seed:subarea:inspetor_producao_1","code":"inspetor_producao_1","profession_code":"inspetor_producao","label_pt":"Inspeção final","label_de":"Endkontrolle","sort_order":1001,"seed":true},{"id":"seed:subarea:inspetor_producao_2","code":"inspetor_producao_2","profession_code":"inspetor_producao","label_pt":"Controle visual","label_de":"Sichtprüfung","sort_order":1002,"seed":true},{"id":"seed:subarea:operador_linha_1","code":"operador_linha_1","profession_code":"operador_linha","label_pt":"Linha contínua","label_de":"Kontinuierliche Linie","sort_order":1501,"seed":true},{"id":"seed:subarea:operador_linha_2","code":"operador_linha_2","profession_code":"operador_linha","label_pt":"Linha seriada","label_de":"Serienlinie","sort_order":1502,"seed":true},{"id":"seed:subarea:abastecedor_linha_1","code":"abastecedor_linha_1","profession_code":"abastecedor_linha","label_pt":"Abastecimento","label_de":"Versorgung","sort_order":1501,"seed":true},{"id":"seed:subarea:abastecedor_linha_2","code":"abastecedor_linha_2","profession_code":"abastecedor_linha","label_pt":"Movimentação interna","label_de":"Interne Bewegung","sort_order":1502,"seed":true},{"id":"seed:subarea:preparador_materiais_1","code":"preparador_materiais_1","profession_code":"preparador_materiais","label_pt":"Separação de material","label_de":"Materialtrennung","sort_order":1501,"seed":true},{"id":"seed:subarea:preparador_materiais_2","code":"preparador_materiais_2","profession_code":"preparador_materiais","label_pt":"Preparação de insumos","label_de":"Vorbereitung der Materialien","sort_order":1502,"seed":true},{"id":"seed:subarea:embalador_industrial_1","code":"embalador_industrial_1","profession_code":"embalador_industrial","label_pt":"Embalagem final","label_de":"Endverpackung","sort_order":1501,"seed":true},{"id":"seed:subarea:embalador_industrial_2","code":"embalador_industrial_2","profession_code":"embalador_industrial","label_pt":"Paletização","label_de":"Palettierung","sort_order":1502,"seed":true},{"id":"seed:subarea:lider_producao_1","code":"lider_producao_1","profession_code":"lider_producao","label_pt":"Coordenação de linha","label_de":"Linienkoordination","sort_order":1501,"seed":true},{"id":"seed:subarea:lider_producao_2","code":"lider_producao_2","profession_code":"lider_producao","label_pt":"Acompanhamento de produção","label_de":"Produktionsbegleitung","sort_order":1502,"seed":true},{"id":"seed:subarea:mecanico_industrial_1","code":"mecanico_industrial_1","profession_code":"mecanico_industrial","label_pt":"Manutenção mecânica","label_de":"Mechanische Instandhaltung","sort_order":2001,"seed":true},{"id":"seed:subarea:mecanico_industrial_2","code":"mecanico_industrial_2","profession_code":"mecanico_industrial","label_pt":"Máquinas industriais","label_de":"Industriemaschinen","sort_order":2002,"seed":true},{"id":"seed:subarea:torneiro_mecanico_1","code":"torneiro_mecanico_1","profession_code":"torneiro_mecanico","label_pt":"Torno convencional","label_de":"Konventionelle Drehmaschine","sort_order":2001,"seed":true},{"id":"seed:subarea:torneiro_mecanico_2","code":"torneiro_mecanico_2","profession_code":"torneiro_mecanico","label_pt":"Usinagem","label_de":"Zerspanung","sort_order":2002,"seed":true},{"id":"seed:subarea:fresador_1","code":"fresador_1","profession_code":"fresador","label_pt":"Fresa convencional","label_de":"Konventionelle Fräsmaschine","sort_order":2001,"seed":true},{"id":"seed:subarea:fresador_2","code":"fresador_2","profession_code":"fresador","label_pt":"Usinagem","label_de":"Zerspanung","sort_order":2002,"seed":true},{"id":"seed:subarea:ajustador_mecanico_1","code":"ajustador_mecanico_1","profession_code":"ajustador_mecanico","label_pt":"Ajuste fino","label_de":"Feineinstellung","sort_order":2001,"seed":true},{"id":"seed:subarea:ajustador_mecanico_2","code":"ajustador_mecanico_2","profession_code":"ajustador_mecanico","label_pt":"Montagem mecânica","label_de":"Mechanische Montage","sort_order":2002,"seed":true},{"id":"seed:subarea:usinador_1","code":"usinador_1","profession_code":"usinador","label_pt":"CNC","label_de":"CNC","sort_order":2001,"seed":true},{"id":"seed:subarea:usinador_2","code":"usinador_2","profession_code":"usinador","label_pt":"Usinagem geral","label_de":"Allgemeine Zerspanung","sort_order":2002,"seed":true},{"id":"seed:subarea:eletricista_industrial_1","code":"eletricista_industrial_1","profession_code":"eletricista_industrial","label_pt":"Instalações industriais","label_de":"Industrieinstallationen","sort_order":3001,"seed":true},{"id":"seed:subarea:eletricista_industrial_2","code":"eletricista_industrial_2","profession_code":"eletricista_industrial","label_pt":"Manutenção elétrica","label_de":"Elektrische Instandhaltung","sort_order":3002,"seed":true},{"id":"seed:subarea:eletrotecnico_1","code":"eletrotecnico_1","profession_code":"eletrotecnico","label_pt":"Comandos elétricos","label_de":"Elektrische Steuerungen","sort_order":3001,"seed":true},{"id":"seed:subarea:eletrotecnico_2","code":"eletrotecnico_2","profession_code":"eletrotecnico","label_pt":"Leitura de esquemas","label_de":"Lesen von Schaltplänen","sort_order":3002,"seed":true},{"id":"seed:subarea:montador_eletrico_1","code":"montador_eletrico_1","profession_code":"montador_eletrico","label_pt":"Painéis","label_de":"Schaltschränke","sort_order":3001,"seed":true},{"id":"seed:subarea:montador_eletrico_2","code":"montador_eletrico_2","profession_code":"montador_eletrico","label_pt":"Chicotes e montagem","label_de":"Kabelbäume und Montage","sort_order":3002,"seed":true},{"id":"seed:subarea:instalador_eletrico_1","code":"instalador_eletrico_1","profession_code":"instalador_eletrico","label_pt":"Instalação predial","label_de":"Gebäudeinstallation","sort_order":3001,"seed":true},{"id":"seed:subarea:instalador_eletrico_2","code":"instalador_eletrico_2","profession_code":"instalador_eletrico","label_pt":"Infraestrutura elétrica","label_de":"Elektrische Infrastruktur","sort_order":3002,"seed":true},{"id":"seed:subarea:painelista_eletrico_1","code":"painelista_eletrico_1","profession_code":"painelista_eletrico","label_pt":"Montagem de painéis","label_de":"Schaltschrankmontage","sort_order":3001,"seed":true},{"id":"seed:subarea:painelista_eletrico_2","code":"painelista_eletrico_2","profession_code":"painelista_eletrico","label_pt":"Cabeamento","label_de":"Verkabelung","sort_order":3002,"seed":true},{"id":"seed:subarea:tecnico_automacao_1","code":"tecnico_automacao_1","profession_code":"tecnico_automacao","label_pt":"PLC","label_de":"SPS","sort_order":3501,"seed":true},{"id":"seed:subarea:tecnico_automacao_2","code":"tecnico_automacao_2","profession_code":"tecnico_automacao","label_pt":"Automação industrial","label_de":"Industrieautomatisierung","sort_order":3502,"seed":true},{"id":"seed:subarea:tecnico_eletromecanico_1","code":"tecnico_eletromecanico_1","profession_code":"tecnico_eletromecanico","label_pt":"Integração eletromecânica","label_de":"Elektromechanische Integration","sort_order":3501,"seed":true},{"id":"seed:subarea:tecnico_eletromecanico_2","code":"tecnico_eletromecanico_2","profession_code":"tecnico_eletromecanico","label_pt":"Máquinas especiais","label_de":"Sondermaschinen","sort_order":3502,"seed":true},{"id":"seed:subarea:instrumentista_1","code":"instrumentista_1","profession_code":"instrumentista","label_pt":"Instrumentação","label_de":"Instrumentierung","sort_order":3501,"seed":true},{"id":"seed:subarea:instrumentista_2","code":"instrumentista_2","profession_code":"instrumentista","label_pt":"Calibração","label_de":"Kalibrierung","sort_order":3502,"seed":true},{"id":"seed:subarea:programador_cnc_1","code":"programador_cnc_1","profession_code":"programador_cnc","label_pt":"Programação CAM","label_de":"CAM-Programmierung","sort_order":3501,"seed":true},{"id":"seed:subarea:programador_cnc_2","code":"programador_cnc_2","profession_code":"programador_cnc","label_pt":"Programação de usinagem","label_de":"Bearbeitungsprogrammierung","sort_order":3502,"seed":true},{"id":"seed:subarea:tecnico_robotica_1","code":"tecnico_robotica_1","profession_code":"tecnico_robotica","label_pt":"Células robotizadas","label_de":"Roboterzellen","sort_order":3501,"seed":true},{"id":"seed:subarea:tecnico_robotica_2","code":"tecnico_robotica_2","profession_code":"tecnico_robotica","label_pt":"Programação básica","label_de":"Grundprogrammierung","sort_order":3502,"seed":true},{"id":"seed:subarea:tecnico_manutencao_1","code":"tecnico_manutencao_1","profession_code":"tecnico_manutencao","label_pt":"Corretiva","label_de":"Korrektiv","sort_order":3801,"seed":true},{"id":"seed:subarea:tecnico_manutencao_2","code":"tecnico_manutencao_2","profession_code":"tecnico_manutencao","label_pt":"Preventiva","label_de":"Präventiv","sort_order":3802,"seed":true},{"id":"seed:subarea:manutentor_predial_1","code":"manutentor_predial_1","profession_code":"manutentor_predial","label_pt":"Predial","label_de":"Gebäudetechnik","sort_order":3801,"seed":true},{"id":"seed:subarea:manutentor_predial_2","code":"manutentor_predial_2","profession_code":"manutentor_predial","label_pt":"Infraestrutura","label_de":"Infrastruktur","sort_order":3802,"seed":true},{"id":"seed:subarea:manutentor_mecanico_1","code":"manutentor_mecanico_1","profession_code":"manutentor_mecanico","label_pt":"Mecânica","label_de":"Mechanik","sort_order":3801,"seed":true},{"id":"seed:subarea:manutentor_mecanico_2","code":"manutentor_mecanico_2","profession_code":"manutentor_mecanico","label_pt":"Preventiva","label_de":"Präventiv","sort_order":3802,"seed":true},{"id":"seed:subarea:manutentor_eletrico_1","code":"manutentor_eletrico_1","profession_code":"manutentor_eletrico","label_pt":"Elétrica","label_de":"Elektrik","sort_order":3801,"seed":true},{"id":"seed:subarea:manutentor_eletrico_2","code":"manutentor_eletrico_2","profession_code":"manutentor_eletrico","label_pt":"Preventiva","label_de":"Präventiv","sort_order":3802,"seed":true},{"id":"seed:subarea:lubrificador_industrial_1","code":"lubrificador_industrial_1","profession_code":"lubrificador_industrial","label_pt":"Lubrificação","label_de":"Schmierung","sort_order":3801,"seed":true},{"id":"seed:subarea:lubrificador_industrial_2","code":"lubrificador_industrial_2","profession_code":"lubrificador_industrial","label_pt":"Rota de inspeção","label_de":"Inspektionsroute","sort_order":3802,"seed":true},{"id":"seed:subarea:soldador_1","code":"soldador_1","profession_code":"soldador","label_pt":"MIG/MAG","label_de":"MIG/MAG","sort_order":4001,"seed":true},{"id":"seed:subarea:soldador_2","code":"soldador_2","profession_code":"soldador","label_pt":"TIG","label_de":"WIG","sort_order":4002,"seed":true},{"id":"seed:subarea:soldador_3","code":"soldador_3","profession_code":"soldador","label_pt":"Eletrodo revestido","label_de":"Elektrode","sort_order":4003,"seed":true},{"id":"seed:subarea:serralheiro_1","code":"serralheiro_1","profession_code":"serralheiro","label_pt":"Serralheria leve","label_de":"Leichte Schlosserei","sort_order":4001,"seed":true},{"id":"seed:subarea:serralheiro_2","code":"serralheiro_2","profession_code":"serralheiro","label_pt":"Estruturas metálicas","label_de":"Metallkonstruktionen","sort_order":4002,"seed":true},{"id":"seed:subarea:caldeireiro_1","code":"caldeireiro_1","profession_code":"caldeireiro","label_pt":"Caldeiraria","label_de":"Kesselbau","sort_order":4001,"seed":true},{"id":"seed:subarea:caldeireiro_2","code":"caldeireiro_2","profession_code":"caldeireiro","label_pt":"Tubulação","label_de":"Rohrleitungsbau","sort_order":4002,"seed":true},{"id":"seed:subarea:operador_cnc_1","code":"operador_cnc_1","profession_code":"operador_cnc","label_pt":"Operação CNC","label_de":"CNC-Bedienung","sort_order":4001,"seed":true},{"id":"seed:subarea:operador_cnc_2","code":"operador_cnc_2","profession_code":"operador_cnc","label_pt":"Setups","label_de":"Einrichtungen","sort_order":4002,"seed":true},{"id":"seed:subarea:operador_ponte_rolante_1","code":"operador_ponte_rolante_1","profession_code":"operador_ponte_rolante","label_pt":"Ponte rolante","label_de":"Brückenkran","sort_order":4001,"seed":true},{"id":"seed:subarea:operador_ponte_rolante_2","code":"operador_ponte_rolante_2","profession_code":"operador_ponte_rolante","label_pt":"Movimentação pesada","label_de":"Schwere Bewegung","sort_order":4002,"seed":true},{"id":"seed:subarea:auxiliar_logistica_1","code":"auxiliar_logistica_1","profession_code":"auxiliar_logistica","label_pt":"Separação","label_de":"Kommissionierung","sort_order":5001,"seed":true},{"id":"seed:subarea:auxiliar_logistica_2","code":"auxiliar_logistica_2","profession_code":"auxiliar_logistica","label_pt":"Conferência","label_de":"Kontrolle","sort_order":5002,"seed":true},{"id":"seed:subarea:conferente_1","code":"conferente_1","profession_code":"conferente","label_pt":"Recebimento","label_de":"Wareneingang","sort_order":5001,"seed":true},{"id":"seed:subarea:conferente_2","code":"conferente_2","profession_code":"conferente","label_pt":"Expedição","label_de":"Versand","sort_order":5002,"seed":true},{"id":"seed:subarea:almoxarife_1","code":"almoxarife_1","profession_code":"almoxarife","label_pt":"Estoque","label_de":"Lager","sort_order":5001,"seed":true},{"id":"seed:subarea:almoxarife_2","code":"almoxarife_2","profession_code":"almoxarife","label_pt":"Armazenagem","label_de":"Lagerhaltung","sort_order":5002,"seed":true},{"id":"seed:subarea:operador_empilhadeira_1","code":"operador_empilhadeira_1","profession_code":"operador_empilhadeira","label_pt":"Empilhadeira","label_de":"Gabelstapler","sort_order":5001,"seed":true},{"id":"seed:subarea:operador_empilhadeira_2","code":"operador_empilhadeira_2","profession_code":"operador_empilhadeira","label_pt":"Movimentação interna","label_de":"Interne Bewegung","sort_order":5002,"seed":true},{"id":"seed:subarea:separador_pedidos_1","code":"separador_pedidos_1","profession_code":"separador_pedidos","label_pt":"Picking","label_de":"Picking","sort_order":5001,"seed":true},{"id":"seed:subarea:separador_pedidos_2","code":"separador_pedidos_2","profession_code":"separador_pedidos","label_pt":"Packing","label_de":"Packing","sort_order":5002,"seed":true},{"id":"seed:subarea:motorista_logistico_1","code":"motorista_logistico_1","profession_code":"motorista_logistico","label_pt":"Entrega","label_de":"Lieferung","sort_order":5001,"seed":true},{"id":"seed:subarea:motorista_logistico_2","code":"motorista_logistico_2","profession_code":"motorista_logistico","label_pt":"Coleta","label_de":"Probenentnahme","sort_order":5002,"seed":true},{"id":"seed:subarea:pedreiro_1","code":"pedreiro_1","profession_code":"pedreiro","label_pt":"Alvenaria","label_de":"Mauerwerk","sort_order":6001,"seed":true},{"id":"seed:subarea:pedreiro_2","code":"pedreiro_2","profession_code":"pedreiro","label_pt":"Acabamento","label_de":"Ausbau","sort_order":6002,"seed":true},{"id":"seed:subarea:servente_obra_1","code":"servente_obra_1","profession_code":"servente_obra","label_pt":"Apoio de obra","label_de":"Baustellenhilfe","sort_order":6001,"seed":true},{"id":"seed:subarea:servente_obra_2","code":"servente_obra_2","profession_code":"servente_obra","label_pt":"Carga e descarga","label_de":"Be- und Entladung","sort_order":6002,"seed":true},{"id":"seed:subarea:carpinteiro_1","code":"carpinteiro_1","profession_code":"carpinteiro","label_pt":"Forma","label_de":"Schalung","sort_order":6001,"seed":true},{"id":"seed:subarea:carpinteiro_2","code":"carpinteiro_2","profession_code":"carpinteiro","label_pt":"Estrutura","label_de":"Struktur","sort_order":6002,"seed":true},{"id":"seed:subarea:armador_1","code":"armador_1","profession_code":"armador","label_pt":"Ferragem","label_de":"Bewehrung","sort_order":6001,"seed":true},{"id":"seed:subarea:armador_2","code":"armador_2","profession_code":"armador","label_pt":"Estrutura","label_de":"Struktur","sort_order":6002,"seed":true},{"id":"seed:subarea:azulejista_1","code":"azulejista_1","profession_code":"azulejista","label_pt":"Revestimento","label_de":"Verkleidung","sort_order":6001,"seed":true},{"id":"seed:subarea:azulejista_2","code":"azulejista_2","profession_code":"azulejista","label_pt":"Acabamento","label_de":"Ausbau","sort_order":6002,"seed":true},{"id":"seed:subarea:operador_betoneira_1","code":"operador_betoneira_1","profession_code":"operador_betoneira","label_pt":"Betonagem","label_de":"Betonieren","sort_order":6001,"seed":true},{"id":"seed:subarea:operador_betoneira_2","code":"operador_betoneira_2","profession_code":"operador_betoneira","label_pt":"Mistura","label_de":"Mischen","sort_order":6002,"seed":true},{"id":"seed:subarea:encanador_1","code":"encanador_1","profession_code":"encanador","label_pt":"Hidráulica","label_de":"Sanitär","sort_order":6001,"seed":true},{"id":"seed:subarea:encanador_2","code":"encanador_2","profession_code":"encanador","label_pt":"Instalação","label_de":"Installation","sort_order":6002,"seed":true},{"id":"seed:subarea:pintor_obra_1","code":"pintor_obra_1","profession_code":"pintor_obra","label_pt":"Pintura interna","label_de":"Innenanstrich","sort_order":6001,"seed":true},{"id":"seed:subarea:pintor_obra_2","code":"pintor_obra_2","profession_code":"pintor_obra","label_pt":"Pintura externa","label_de":"Außenanstrich","sort_order":6002,"seed":true},{"id":"seed:subarea:enfermeiro_1","code":"enfermeiro_1","profession_code":"enfermeiro","label_pt":"Hospitalar","label_de":"Krankenhaus","sort_order":7001,"seed":true},{"id":"seed:subarea:enfermeiro_2","code":"enfermeiro_2","profession_code":"enfermeiro","label_pt":"Clínica médica","label_de":"Medizinische Klinik","sort_order":7002,"seed":true},{"id":"seed:subarea:enfermeiro_3","code":"enfermeiro_3","profession_code":"enfermeiro","label_pt":"Geriatria","label_de":"Geriatrie","sort_order":7003,"seed":true},{"id":"seed:subarea:tecnico_enfermagem_1","code":"tecnico_enfermagem_1","profession_code":"tecnico_enfermagem","label_pt":"Hospitalar","label_de":"Krankenhaus","sort_order":7001,"seed":true},{"id":"seed:subarea:tecnico_enfermagem_2","code":"tecnico_enfermagem_2","profession_code":"tecnico_enfermagem","label_pt":"Geriatria","label_de":"Geriatrie","sort_order":7002,"seed":true},{"id":"seed:subarea:tecnico_enfermagem_3","code":"tecnico_enfermagem_3","profession_code":"tecnico_enfermagem","label_pt":"Cuidados gerais","label_de":"Allgemeine Pflege","sort_order":7003,"seed":true},{"id":"seed:subarea:auxiliar_enfermagem_1","code":"auxiliar_enfermagem_1","profession_code":"auxiliar_enfermagem","label_pt":"Apoio assistencial","label_de":"Pflegeunterstützung","sort_order":7001,"seed":true},{"id":"seed:subarea:auxiliar_enfermagem_2","code":"auxiliar_enfermagem_2","profession_code":"auxiliar_enfermagem","label_pt":"Cuidados básicos","label_de":"Grundpflege","sort_order":7002,"seed":true},{"id":"seed:subarea:cuidador_idosos_1","code":"cuidador_idosos_1","profession_code":"cuidador_idosos","label_pt":"Cuidados domiciliares","label_de":"Häusliche Pflege","sort_order":7001,"seed":true},{"id":"seed:subarea:cuidador_idosos_2","code":"cuidador_idosos_2","profession_code":"cuidador_idosos","label_pt":"Instituição de longa permanência","label_de":"Pflegeheim","sort_order":7002,"seed":true},{"id":"seed:subarea:instrumentador_cirurgico_1","code":"instrumentador_cirurgico_1","profession_code":"instrumentador_cirurgico","label_pt":"Centro cirúrgico","label_de":"OP-Bereich","sort_order":7001,"seed":true},{"id":"seed:subarea:instrumentador_cirurgico_2","code":"instrumentador_cirurgico_2","profession_code":"instrumentador_cirurgico","label_pt":"Apoio operatório","label_de":"OP-Unterstützung","sort_order":7002,"seed":true},{"id":"seed:subarea:fisioterapeuta_1","code":"fisioterapeuta_1","profession_code":"fisioterapeuta","label_pt":"Reabilitação","label_de":"Rehabilitation","sort_order":7501,"seed":true},{"id":"seed:subarea:fisioterapeuta_2","code":"fisioterapeuta_2","profession_code":"fisioterapeuta","label_pt":"Ortopedia","label_de":"Orthopädie","sort_order":7502,"seed":true},{"id":"seed:subarea:farmaceutico_1","code":"farmaceutico_1","profession_code":"farmaceutico","label_pt":"Farmácia clínica","label_de":"Klinische Pharmazie","sort_order":7501,"seed":true},{"id":"seed:subarea:farmaceutico_2","code":"farmaceutico_2","profession_code":"farmaceutico","label_pt":"Dispensação","label_de":"Abgabe","sort_order":7502,"seed":true},{"id":"seed:subarea:tecnico_radiologia_1","code":"tecnico_radiologia_1","profession_code":"tecnico_radiologia","label_pt":"Imagem","label_de":"Bildgebung","sort_order":7501,"seed":true},{"id":"seed:subarea:tecnico_radiologia_2","code":"tecnico_radiologia_2","profession_code":"tecnico_radiologia","label_pt":"Diagnóstico","label_de":"Diagnostik","sort_order":7502,"seed":true},{"id":"seed:subarea:tecnico_laboratorio_1","code":"tecnico_laboratorio_1","profession_code":"tecnico_laboratorio","label_pt":"Coleta","label_de":"Probenentnahme","sort_order":7501,"seed":true},{"id":"seed:subarea:tecnico_laboratorio_2","code":"tecnico_laboratorio_2","profession_code":"tecnico_laboratorio","label_pt":"Análises clínicas","label_de":"Laboranalysen","sort_order":7502,"seed":true},{"id":"seed:subarea:cuidador_geral_1","code":"cuidador_geral_1","profession_code":"cuidador_geral","label_pt":"Cuidado domiciliar","label_de":"Häusliche Betreuung","sort_order":7501,"seed":true},{"id":"seed:subarea:cuidador_geral_2","code":"cuidador_geral_2","profession_code":"cuidador_geral","label_pt":"Acompanhamento","label_de":"Begleitung","sort_order":7502,"seed":true},{"id":"seed:subarea:assistente_administrativo_1","code":"assistente_administrativo_1","profession_code":"assistente_administrativo","label_pt":"Rotina administrativa","label_de":"Verwaltungsroutine","sort_order":8001,"seed":true},{"id":"seed:subarea:assistente_administrativo_2","code":"assistente_administrativo_2","profession_code":"assistente_administrativo","label_pt":"Suporte operacional","label_de":"Operative Unterstützung","sort_order":8002,"seed":true},{"id":"seed:subarea:recepcionista_1","code":"recepcionista_1","profession_code":"recepcionista","label_pt":"Atendimento","label_de":"Empfang","sort_order":8001,"seed":true},{"id":"seed:subarea:recepcionista_2","code":"recepcionista_2","profession_code":"recepcionista","label_pt":"Recepção","label_de":"Empfang","sort_order":8002,"seed":true},{"id":"seed:subarea:auxiliar_escritorio_1","code":"auxiliar_escritorio_1","profession_code":"auxiliar_escritorio","label_pt":"Arquivo","label_de":"Ablage","sort_order":8001,"seed":true},{"id":"seed:subarea:auxiliar_escritorio_2","code":"auxiliar_escritorio_2","profession_code":"auxiliar_escritorio","label_pt":"Apoio administrativo","label_de":"Verwaltungsunterstützung","sort_order":8002,"seed":true},{"id":"seed:subarea:backoffice_1","code":"backoffice_1","profession_code":"backoffice","label_pt":"Processos internos","label_de":"Interne Prozesse","sort_order":8001,"seed":true},{"id":"seed:subarea:backoffice_2","code":"backoffice_2","profession_code":"backoffice","label_pt":"Suporte operacional","label_de":"Operative Unterstützung","sort_order":8002,"seed":true},{"id":"seed:subarea:assistente_rh_1","code":"assistente_rh_1","profession_code":"assistente_rh","label_pt":"Recrutamento","label_de":"Recruiting","sort_order":8001,"seed":true},{"id":"seed:subarea:assistente_rh_2","code":"assistente_rh_2","profession_code":"assistente_rh","label_pt":"Departamento pessoal","label_de":"Personalwesen","sort_order":8002,"seed":true},{"id":"seed:subarea:assistente_financeiro_1","code":"assistente_financeiro_1","profession_code":"assistente_financeiro","label_pt":"Tesouraria","label_de":"Treasury","sort_order":8501,"seed":true},{"id":"seed:subarea:assistente_financeiro_2","code":"assistente_financeiro_2","profession_code":"assistente_financeiro","label_pt":"Apoio financeiro","label_de":"Finanzunterstützung","sort_order":8502,"seed":true},{"id":"seed:subarea:analista_financeiro_1","code":"analista_financeiro_1","profession_code":"analista_financeiro","label_pt":"Fluxo de caixa","label_de":"Cashflow","sort_order":8501,"seed":true},{"id":"seed:subarea:analista_financeiro_2","code":"analista_financeiro_2","profession_code":"analista_financeiro","label_pt":"Análise financeira","label_de":"Finanzanalyse","sort_order":8502,"seed":true},{"id":"seed:subarea:faturista_1","code":"faturista_1","profession_code":"faturista","label_pt":"Emissão de notas","label_de":"Rechnungsstellung","sort_order":8501,"seed":true},{"id":"seed:subarea:faturista_2","code":"faturista_2","profession_code":"faturista","label_pt":"Faturamento","label_de":"Fakturierung","sort_order":8502,"seed":true},{"id":"seed:subarea:contas_pagar_receber_1","code":"contas_pagar_receber_1","profession_code":"contas_pagar_receber","label_pt":"Contas a pagar","label_de":"Kreditoren","sort_order":8501,"seed":true},{"id":"seed:subarea:contas_pagar_receber_2","code":"contas_pagar_receber_2","profession_code":"contas_pagar_receber","label_pt":"Contas a receber","label_de":"Debitoren","sort_order":8502,"seed":true},{"id":"seed:subarea:auxiliar_contabil_1","code":"auxiliar_contabil_1","profession_code":"auxiliar_contabil","label_pt":"Lançamentos","label_de":"Buchungen","sort_order":8501,"seed":true},{"id":"seed:subarea:auxiliar_contabil_2","code":"auxiliar_contabil_2","profession_code":"auxiliar_contabil","label_pt":"Conciliação","label_de":"Abstimmung","sort_order":8502,"seed":true},{"id":"seed:subarea:vendedor_interno_1","code":"vendedor_interno_1","profession_code":"vendedor_interno","label_pt":"Inside sales","label_de":"Inside Sales","sort_order":9001,"seed":true},{"id":"seed:subarea:vendedor_interno_2","code":"vendedor_interno_2","profession_code":"vendedor_interno","label_pt":"Atendimento comercial","label_de":"Vertriebssupport","sort_order":9002,"seed":true},{"id":"seed:subarea:vendedor_externo_1","code":"vendedor_externo_1","profession_code":"vendedor_externo","label_pt":"Visitas","label_de":"Besuche","sort_order":9001,"seed":true},{"id":"seed:subarea:vendedor_externo_2","code":"vendedor_externo_2","profession_code":"vendedor_externo","label_pt":"Prospecção externa","label_de":"Außenakquise","sort_order":9002,"seed":true},{"id":"seed:subarea:representante_comercial_1","code":"representante_comercial_1","profession_code":"representante_comercial","label_pt":"Representação","label_de":"Vertretung","sort_order":9001,"seed":true},{"id":"seed:subarea:representante_comercial_2","code":"representante_comercial_2","profession_code":"representante_comercial","label_pt":"Canal indireto","label_de":"Indirekter Kanal","sort_order":9002,"seed":true},{"id":"seed:subarea:atendente_comercial_1","code":"atendente_comercial_1","profession_code":"atendente_comercial","label_pt":"Atendimento comercial","label_de":"Vertriebssupport","sort_order":9001,"seed":true},{"id":"seed:subarea:atendente_comercial_2","code":"atendente_comercial_2","profession_code":"atendente_comercial","label_pt":"Suporte de vendas","label_de":"Verkaufsunterstützung","sort_order":9002,"seed":true},{"id":"seed:subarea:pos_venda_1","code":"pos_venda_1","profession_code":"pos_venda","label_pt":"Suporte pós-venda","label_de":"After-Sales-Support","sort_order":9001,"seed":true},{"id":"seed:subarea:pos_venda_2","code":"pos_venda_2","profession_code":"pos_venda","label_pt":"Relacionamento","label_de":"Beziehungsmanagement","sort_order":9002,"seed":true},{"id":"seed:subarea:suporte_ti_1","code":"suporte_ti_1","profession_code":"suporte_ti","label_pt":"Help desk","label_de":"Helpdesk","sort_order":10001,"seed":true},{"id":"seed:subarea:suporte_ti_2","code":"suporte_ti_2","profession_code":"suporte_ti","label_pt":"Suporte ao usuário","label_de":"Anwendersupport","sort_order":10002,"seed":true},{"id":"seed:subarea:tecnico_informatica_1","code":"tecnico_informatica_1","profession_code":"tecnico_informatica","label_pt":"Hardware","label_de":"Hardware","sort_order":10001,"seed":true},{"id":"seed:subarea:tecnico_informatica_2","code":"tecnico_informatica_2","profession_code":"tecnico_informatica","label_pt":"Suporte técnico","label_de":"Technischer Support","sort_order":10002,"seed":true},{"id":"seed:subarea:analista_sistemas_1","code":"analista_sistemas_1","profession_code":"analista_sistemas","label_pt":"Requisitos","label_de":"Anforderungen","sort_order":10001,"seed":true},{"id":"seed:subarea:analista_sistemas_2","code":"analista_sistemas_2","profession_code":"analista_sistemas","label_pt":"Processos","label_de":"Prozesse","sort_order":10002,"seed":true},{"id":"seed:subarea:desenvolvedor_1","code":"desenvolvedor_1","profession_code":"desenvolvedor","label_pt":"Frontend","label_de":"Frontend","sort_order":10001,"seed":true},{"id":"seed:subarea:desenvolvedor_2","code":"desenvolvedor_2","profession_code":"desenvolvedor","label_pt":"Backend","label_de":"Backend","sort_order":10002,"seed":true},{"id":"seed:subarea:infraestrutura_rede_1","code":"infraestrutura_rede_1","profession_code":"infraestrutura_rede","label_pt":"Redes","label_de":"Netzwerke","sort_order":10001,"seed":true},{"id":"seed:subarea:infraestrutura_rede_2","code":"infraestrutura_rede_2","profession_code":"infraestrutura_rede","label_pt":"Infraestrutura","label_de":"Infrastruktur","sort_order":10002,"seed":true},{"id":"seed:subarea:advogado_1","code":"advogado_1","profession_code":"advogado","label_pt":"Cível","label_de":"Zivilrecht","sort_order":11001,"seed":true},{"id":"seed:subarea:advogado_2","code":"advogado_2","profession_code":"advogado","label_pt":"Trabalhista","label_de":"Arbeitsrecht","sort_order":11002,"seed":true},{"id":"seed:subarea:advogado_3","code":"advogado_3","profession_code":"advogado","label_pt":"Corporativo","label_de":"Unternehmensrecht","sort_order":11003,"seed":true},{"id":"seed:subarea:assistente_juridico_1","code":"assistente_juridico_1","profession_code":"assistente_juridico","label_pt":"Controladoria jurídica","label_de":"Juristische Steuerung","sort_order":11001,"seed":true},{"id":"seed:subarea:assistente_juridico_2","code":"assistente_juridico_2","profession_code":"assistente_juridico","label_pt":"Prazos","label_de":"Fristen","sort_order":11002,"seed":true},{"id":"seed:subarea:jurista_corporativo_1","code":"jurista_corporativo_1","profession_code":"jurista_corporativo","label_pt":"Contratos","label_de":"Verträge","sort_order":11001,"seed":true},{"id":"seed:subarea:jurista_corporativo_2","code":"jurista_corporativo_2","profession_code":"jurista_corporativo","label_pt":"Compliance","label_de":"Compliance","sort_order":11002,"seed":true},{"id":"seed:subarea:paralegal_1","code":"paralegal_1","profession_code":"paralegal","label_pt":"Documentação","label_de":"Dokumentation","sort_order":11001,"seed":true},{"id":"seed:subarea:paralegal_2","code":"paralegal_2","profession_code":"paralegal","label_pt":"Apoio jurídico","label_de":"Juristische Unterstützung","sort_order":11002,"seed":true},{"id":"seed:subarea:inspetor_qualidade_1","code":"inspetor_qualidade_1","profession_code":"inspetor_qualidade","label_pt":"Inspeção visual","label_de":"Sichtprüfung","sort_order":12001,"seed":true},{"id":"seed:subarea:inspetor_qualidade_2","code":"inspetor_qualidade_2","profession_code":"inspetor_qualidade","label_pt":"Controle final","label_de":"Endkontrolle","sort_order":12002,"seed":true},{"id":"seed:subarea:analista_qualidade_1","code":"analista_qualidade_1","profession_code":"analista_qualidade","label_pt":"Processos","label_de":"Prozesse","sort_order":12001,"seed":true},{"id":"seed:subarea:analista_qualidade_2","code":"analista_qualidade_2","profession_code":"analista_qualidade","label_pt":"Indicadores","label_de":"Kennzahlen","sort_order":12002,"seed":true},{"id":"seed:subarea:metrologista_1","code":"metrologista_1","profession_code":"metrologista","label_pt":"Medição","label_de":"Messtechnik","sort_order":12001,"seed":true},{"id":"seed:subarea:metrologista_2","code":"metrologista_2","profession_code":"metrologista","label_pt":"Instrumentos","label_de":"Instrumente","sort_order":12002,"seed":true},{"id":"seed:subarea:auditor_qualidade_1","code":"auditor_qualidade_1","profession_code":"auditor_qualidade","label_pt":"Sistema de gestão","label_de":"Managementsystem","sort_order":12001,"seed":true},{"id":"seed:subarea:auditor_qualidade_2","code":"auditor_qualidade_2","profession_code":"auditor_qualidade","label_pt":"Auditoria interna","label_de":"Internes Audit","sort_order":12002,"seed":true},{"id":"seed:subarea:cozinheiro_1","code":"cozinheiro_1","profession_code":"cozinheiro","label_pt":"Cozinha quente","label_de":"Warme Küche","sort_order":13001,"seed":true},{"id":"seed:subarea:cozinheiro_2","code":"cozinheiro_2","profession_code":"cozinheiro","label_pt":"Produção","label_de":"Produktion","sort_order":13002,"seed":true},{"id":"seed:subarea:auxiliar_cozinha_1","code":"auxiliar_cozinha_1","profession_code":"auxiliar_cozinha","label_pt":"Pré-preparo","label_de":"Vorbereitung","sort_order":13001,"seed":true},{"id":"seed:subarea:auxiliar_cozinha_2","code":"auxiliar_cozinha_2","profession_code":"auxiliar_cozinha","label_pt":"Limpeza de praça","label_de":"Arbeitsplatzreinigung","sort_order":13002,"seed":true},{"id":"seed:subarea:camareira_1","code":"camareira_1","profession_code":"camareira","label_pt":"Arrumação","label_de":"Zimmerpflege","sort_order":13001,"seed":true},{"id":"seed:subarea:camareira_2","code":"camareira_2","profession_code":"camareira","label_pt":"Limpeza","label_de":"Reinigung","sort_order":13002,"seed":true},{"id":"seed:subarea:atendente_restaurante_1","code":"atendente_restaurante_1","profession_code":"atendente_restaurante","label_pt":"Atendimento ao salão","label_de":"Service im Gastraum","sort_order":13001,"seed":true},{"id":"seed:subarea:atendente_restaurante_2","code":"atendente_restaurante_2","profession_code":"atendente_restaurante","label_pt":"Serviço","label_de":"Service","sort_order":13002,"seed":true},{"id":"seed:subarea:recepcionista_hotel_1","code":"recepcionista_hotel_1","profession_code":"recepcionista_hotel","label_pt":"Recepção","label_de":"Empfang","sort_order":13001,"seed":true},{"id":"seed:subarea:recepcionista_hotel_2","code":"recepcionista_hotel_2","profession_code":"recepcionista_hotel","label_pt":"Reservas","label_de":"Reservierungen","sort_order":13002,"seed":true},{"id":"seed:subarea:motorista_caminhao_1","code":"motorista_caminhao_1","profession_code":"motorista_caminhao","label_pt":"Entrega rodoviária","label_de":"Straßentransport","sort_order":14001,"seed":true},{"id":"seed:subarea:motorista_caminhao_2","code":"motorista_caminhao_2","profession_code":"motorista_caminhao","label_pt":"Coleta","label_de":"Probenentnahme","sort_order":14002,"seed":true},{"id":"seed:subarea:motorista_categoria_b_1","code":"motorista_categoria_b_1","profession_code":"motorista_categoria_b","label_pt":"Entregas leves","label_de":"Leichte Lieferungen","sort_order":14001,"seed":true},{"id":"seed:subarea:motorista_categoria_b_2","code":"motorista_categoria_b_2","profession_code":"motorista_categoria_b","label_pt":"Apoio logístico","label_de":"Logistikunterstützung","sort_order":14002,"seed":true},{"id":"seed:subarea:ajudante_entrega_1","code":"ajudante_entrega_1","profession_code":"ajudante_entrega","label_pt":"Carga e descarga","label_de":"Be- und Entladung","sort_order":14001,"seed":true},{"id":"seed:subarea:ajudante_entrega_2","code":"ajudante_entrega_2","profession_code":"ajudante_entrega","label_pt":"Apoio em rota","label_de":"Apoio em rota","sort_order":14002,"seed":true},{"id":"seed:subarea:operador_transporte_1","code":"operador_transporte_1","profession_code":"operador_transporte","label_pt":"Controle de frota","label_de":"Flottensteuerung","sort_order":14001,"seed":true},{"id":"seed:subarea:operador_transporte_2","code":"operador_transporte_2","profession_code":"operador_transporte","label_pt":"Operação","label_de":"Betrieb","sort_order":14002,"seed":true},{"id":"seed:subarea:despachante_logistico_1","code":"despachante_logistico_1","profession_code":"despachante_logistico","label_pt":"Programação de rotas","label_de":"Tourenplanung","sort_order":14001,"seed":true},{"id":"seed:subarea:despachante_logistico_2","code":"despachante_logistico_2","profession_code":"despachante_logistico","label_pt":"Expedição","label_de":"Versand","sort_order":14002,"seed":true}]};
+function taxonomySeedClone() { return JSON.parse(JSON.stringify(STATIC_TAXONOMY_SEED)); }
 function taxonomyEnabled() {
   return Array.isArray(S?.taxonomy?.areas) && S.taxonomy.areas.length > 0 && Array.isArray(S?.taxonomy?.professions) && S.taxonomy.professions.length > 0;
 }
@@ -9633,6 +9642,55 @@ function taxonomyDisplay(item) {
   if (!item) return '';
   const lang = uiCurrentLang ? uiCurrentLang() : 'pt-BR';
   return String((lang === 'de-DE' ? item?.label_de : item?.label_pt) || item?.label_pt || item?.label_de || item?.code || '').trim();
+}
+function isPersistableTaxonomyId(id) {
+  return /^\d+$/.test(String(id ?? '').trim());
+}
+function mergeTaxonomyCatalog(seed, db) {
+  const merged = { areas: [], professions: [], subareas: [] };
+  const areaDbByCode = new Map((db.areas || []).map(row => [String(row.code || '').trim().toLowerCase(), row]));
+  const areaByCode = new Map();
+  const seedAreas = seed.areas || [];
+  const dbAreas = db.areas || [];
+  [...dbAreas, ...seedAreas].forEach(row => {
+    const code = String(row?.code || '').trim().toLowerCase();
+    if (!code || areaByCode.has(code)) return;
+    const dbRow = areaDbByCode.get(code);
+    const source = dbRow || row;
+    const mergedRow = { ...source, id: dbRow?.id || row.id, code: row.code || dbRow?.code, label_pt: dbRow?.label_pt || row.label_pt, label_de: dbRow?.label_de || row.label_de, seed: !dbRow };
+    areaByCode.set(code, mergedRow);
+    merged.areas.push(mergedRow);
+  });
+  const profDbByCode = new Map((db.professions || []).map(row => [String(row.code || '').trim().toLowerCase(), row]));
+  const profByCode = new Map();
+  [...(db.professions || []), ...(seed.professions || [])].forEach(row => {
+    const code = String(row?.code || '').trim().toLowerCase();
+    if (!code || profByCode.has(code)) return;
+    const dbRow = profDbByCode.get(code);
+    const source = dbRow || row;
+    const areaCode = String(source.area_code || row.area_code || '').trim().toLowerCase();
+    const areaRow = areaByCode.get(areaCode);
+    const mergedRow = { ...source, id: dbRow?.id || row.id, code: row.code || dbRow?.code, area_id: dbRow?.area_id || areaRow?.id || row.area_id, area_code: areaCode, label_pt: dbRow?.label_pt || row.label_pt, label_de: dbRow?.label_de || row.label_de, seed: !dbRow };
+    profByCode.set(code, mergedRow);
+    merged.professions.push(mergedRow);
+  });
+  const subDbByCode = new Map((db.subareas || []).map(row => [String(row.code || '').trim().toLowerCase(), row]));
+  const subByCode = new Map();
+  [...(db.subareas || []), ...(seed.subareas || [])].forEach(row => {
+    const code = String(row?.code || '').trim().toLowerCase();
+    if (!code || subByCode.has(code)) return;
+    const dbRow = subDbByCode.get(code);
+    const source = dbRow || row;
+    const professionCode = String(source.profession_code || row.profession_code || '').trim().toLowerCase();
+    const profRow = profByCode.get(professionCode);
+    const mergedRow = { ...source, id: dbRow?.id || row.id, code: row.code || dbRow?.code, profession_id: dbRow?.profession_id || profRow?.id || row.profession_id, profession_code: professionCode, label_pt: dbRow?.label_pt || row.label_pt, label_de: dbRow?.label_de || row.label_de, seed: !dbRow };
+    subByCode.set(code, mergedRow);
+    merged.subareas.push(mergedRow);
+  });
+  merged.areas.sort((a,b)=>(a.sort_order||999)-(b.sort_order||999)||String(a.label_pt||'').localeCompare(String(b.label_pt||''),'pt-BR'));
+  merged.professions.sort((a,b)=>(a.sort_order||9999)-(b.sort_order||9999)||String(a.label_pt||'').localeCompare(String(b.label_pt||''),'pt-BR'));
+  merged.subareas.sort((a,b)=>(a.sort_order||99999)-(b.sort_order||99999)||String(a.label_pt||'').localeCompare(String(b.label_pt||''),'pt-BR'));
+  return merged;
 }
 function candidateAreaLabel(c) {
   const areaId = fv(c,'area_id') || c?.area_id;
@@ -9665,6 +9723,41 @@ function currentTaxonomySubareas(professionId='') {
   if (!professionId) return list;
   return list.filter(s => String(s?.profession_id ?? '') === String(professionId));
 }
+function taxonomyRowsFor(kind, areaId='', professionId='') {
+  if (kind === 'area') return [...(S?.taxonomy?.areas || [])];
+  if (kind === 'profession') return currentTaxonomyProfessions(areaId);
+  if (kind === 'subarea') return currentTaxonomySubareas(professionId);
+  return [];
+}
+function syncNewTaxonomySearch(kind) {
+  const idMap = { area:'n-area', profession:'n-prof', subarea:'n-subarea' };
+  const searchMap = { area:'n-area-search', profession:'n-prof-search', subarea:'n-subarea-search' };
+  const selectEl = document.getElementById(idMap[kind]);
+  const searchEl = document.getElementById(searchMap[kind]);
+  if (!searchEl || !selectEl) return;
+  const row = taxonomyFindById(kind === 'area' ? S.taxonomy.areas : kind === 'profession' ? S.taxonomy.professions : S.taxonomy.subareas, selectEl.value);
+  if (row) searchEl.value = taxonomyDisplay(row);
+}
+function filterNewTaxonomySelect(kind) {
+  if (!taxonomyEnabled()) return;
+  const idMap = { area:'n-area', profession:'n-prof', subarea:'n-subarea' };
+  const searchMap = { area:'n-area-search', profession:'n-prof-search', subarea:'n-subarea-search' };
+  const areaId = document.getElementById('n-area')?.value || '';
+  const profId = document.getElementById('n-prof')?.value || '';
+  const searchEl = document.getElementById(searchMap[kind]);
+  const selectEl = document.getElementById(idMap[kind]);
+  if (!searchEl || !selectEl) return;
+  const q = String(searchEl.value || '').trim().toLowerCase();
+  const selected = selectEl.value || '';
+  let rows = taxonomyRowsFor(kind, areaId, profId);
+  if (q) rows = rows.filter(row => taxonomyDisplay(row).toLowerCase().includes(q));
+  loadTaxonomySelect(selectEl, rows, selected);
+}
+function markNewTaxonomySelection(kind) {
+  if (kind === 'area') onNewCandidateAreaChange();
+  else if (kind === 'profession') onNewCandidateProfessionChange();
+  else syncNewTaxonomySearch('subarea');
+}
 function onNewCandidateAreaChange() {
   if (!taxonomyEnabled()) return;
   const areaId = document.getElementById('n-area')?.value || '';
@@ -9673,6 +9766,8 @@ function onNewCandidateAreaChange() {
   const allowedProf = currentTaxonomyProfessions(areaId);
   loadTaxonomySelect(profSel, allowedProf, currentProf);
   if (currentProf && !allowedProf.some(p => String(p.id) === String(currentProf)) && profSel) profSel.value = '';
+  syncNewTaxonomySearch('area');
+  filterNewTaxonomySelect('profession');
   onNewCandidateProfessionChange();
 }
 function onNewCandidateProfessionChange() {
@@ -9680,7 +9775,7 @@ function onNewCandidateProfessionChange() {
   const profId = document.getElementById('n-prof')?.value || '';
   const prof = taxonomyFindById(S?.taxonomy?.professions || [], profId);
   const areaSel = document.getElementById('n-area');
-  if (prof?.area_id && areaSel && !areaSel.value) areaSel.value = String(prof.area_id);
+  if (prof?.area_id && areaSel && (!areaSel.value || String(areaSel.value) !== String(prof.area_id))) areaSel.value = String(prof.area_id);
   const subSel = document.getElementById('n-subarea');
   const currentSub = subSel?.value || '';
   const allowedSub = currentTaxonomySubareas(profId);
@@ -9689,8 +9784,12 @@ function onNewCandidateProfessionChange() {
     subSel.disabled = !allowedSub.length;
     if (currentSub && !allowedSub.some(s => String(s.id) === String(currentSub))) subSel.value = '';
   }
+  syncNewTaxonomySearch('area');
+  syncNewTaxonomySearch('profession');
+  filterNewTaxonomySelect('subarea');
 }
 async function loadTaxonomyCatalog(supa) {
+  const seed = taxonomySeedClone();
   try {
     const [{ data: areas, error: areasErr }, { data: professions, error: professionsErr }, { data: subareas, error: subareasErr }] = await Promise.all([
       supa.from('areas_master').select('*').eq('active', true).order('sort_order').order('label_pt'),
@@ -9698,14 +9797,11 @@ async function loadTaxonomyCatalog(supa) {
       supa.from('profession_subareas_master').select('*').eq('active', true).order('sort_order').order('label_pt'),
     ]);
     if (areasErr || professionsErr || subareasErr) throw (areasErr || professionsErr || subareasErr);
-    S.taxonomy = {
-      areas: areas || [],
-      professions: professions || [],
-      subareas: subareas || [],
-      requestsEnabled: true,
-    };
+    const merged = mergeTaxonomyCatalog(seed, { areas: areas || [], professions: professions || [], subareas: subareas || [] });
+    S.taxonomy = { ...merged, requestsEnabled: true, hasDbCatalog: true };
   } catch (e) {
-    S.taxonomy = { areas: [], professions: [], subareas: [], requestsEnabled: false };
+    const merged = mergeTaxonomyCatalog(seed, { areas: [], professions: [], subareas: [] });
+    S.taxonomy = { ...merged, requestsEnabled: false, hasDbCatalog: false };
   }
 }
 async function requestTaxonomyOption(kind) {
@@ -9748,7 +9844,101 @@ function applyTaxonomyClassification(fields = {}) {
   if (profSel && prof?.id && !profSel.value) { profSel.value = String(prof.id); changed = true; }
   onNewCandidateProfessionChange();
   if (subSel && sub?.id && !subSel.value) { subSel.value = String(sub.id); changed = true; }
+  syncNewTaxonomySearch('area');
+  syncNewTaxonomySearch('profession');
+  syncNewTaxonomySearch('subarea');
   return changed;
+}
+function getTaxonomyFieldState(c, kind) {
+  const isArea = kind === 'area';
+  const isProf = kind === 'profession';
+  const idField = isArea ? 'area_id' : isProf ? 'profession_id' : 'subarea_id';
+  const labelField = isArea ? 'Área profissional' : isProf ? 'Profissão principal' : 'subarea_label';
+  const pendingId = Object.prototype.hasOwnProperty.call(S.pendingEdits, idField) ? S.pendingEdits[idField] : undefined;
+  const pendingLabel = Object.prototype.hasOwnProperty.call(S.pendingEdits, labelField) ? S.pendingEdits[labelField] : undefined;
+  const currentId = pendingId !== undefined ? pendingId : (fv(c,idField) || c?.[idField] || '');
+  let currentLabel = pendingLabel !== undefined ? pendingLabel : (isArea ? candidateAreaLabel(c) : isProf ? candidateProfessionLabel(c) : candidateSubareaLabel(c));
+  const row = taxonomyFindById(isArea ? S.taxonomy.areas : isProf ? S.taxonomy.professions : S.taxonomy.subareas, currentId);
+  if (row) currentLabel = taxonomyDisplay(row);
+  return { id: currentId ? String(currentId) : '', label: String(currentLabel || '') };
+}
+function renderCandidateTaxonomyField(c, kind, label) {
+  const areaState = getTaxonomyFieldState(c, 'area');
+  const profState = getTaxonomyFieldState(c, 'profession');
+  const state = getTaxonomyFieldState(c, kind);
+  const rows = taxonomyRowsFor(kind, areaState.id, profState.id);
+  const options = rows.map(row => `<option value="${esc(String(row.id))}" ${String(state.id)===String(row.id)?'selected':''}>${esc(taxonomyDisplay(row))}</option>`).join('');
+  return `<div class="field-group"><label class="field-lbl">${esc(label)}</label><div class="field-taxonomy"><input class="field-input field-taxonomy-search" type="text" data-tax-scope="candidate" data-tax-kind="${esc(kind)}" value="${esc(state.label)}" placeholder="${esc(uiTranslate('Digite para filtrar e selecione abaixo'))}" oninput="filterCandidateTaxonomySelect('${esc(kind)}', this)"><div class="field-select-wrap"><select class="field-select" data-tax-scope="candidate" data-tax-kind="${esc(kind)}" onchange="onCandidateTaxonomyFieldChange('${esc(kind)}', this)"><option value="">— ${esc(uiTranslate('Selecionar'))} —</option>${options}</select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('${esc(kind)}')" title="${esc(uiTranslate('Sugerir nova opção'))}">+</button></div><div class="field-taxonomy-hint">${esc(kind==='subarea' ? uiTranslate('Opcional. Vinculada à profissão selecionada.') : uiTranslate('Use a busca para filtrar e depois selecione a opção oficial.'))}</div></div></div>`;
+}
+function filterCandidateTaxonomySelect(kind, inputEl) {
+  const wrap = inputEl?.closest('.field-taxonomy');
+  const selectEl = wrap?.querySelector('select[data-tax-kind]');
+  if (!selectEl) return;
+  const panel = document.getElementById('t-profissional');
+  const c = S.currentCand;
+  if (!c || !panel) return;
+  const areaState = getTaxonomyFieldState(c, 'area');
+  const profState = getTaxonomyFieldState(c, 'profession');
+  let rows = taxonomyRowsFor(kind, areaState.id, profState.id);
+  const q = String(inputEl.value || '').trim().toLowerCase();
+  if (q) rows = rows.filter(row => taxonomyDisplay(row).toLowerCase().includes(q));
+  const selected = selectEl.value || '';
+  loadTaxonomySelect(selectEl, rows, selected);
+}
+function updateCandidateSaveUi() {
+  const n = Object.keys(S.pendingEdits).length + (S.rhInterviewDirty ? 1 : 0);
+  const btn = document.getElementById('cm-save');
+  if (btn) {
+    btn.textContent = `💾 Salvar (${n})`;
+    btn.classList.add('has-changes');
+  }
+}
+function onCandidateTaxonomyFieldChange(kind, selectEl) {
+  const c = S.currentCand;
+  if (!c) return;
+  const value = String(selectEl?.value || '').trim();
+  const source = kind === 'area' ? (S.taxonomy.areas || []) : kind === 'profession' ? (S.taxonomy.professions || []) : (S.taxonomy.subareas || []);
+  const row = taxonomyFindById(source, value);
+  const persistId = isPersistableTaxonomyId(value) ? value : null;
+  const label = row ? row.label_pt : '';
+  if (kind === 'area') {
+    S.pendingEdits['area_id'] = persistId;
+    S.pendingEdits['Área profissional'] = label || '';
+    S.pendingEdits['profession_id'] = null;
+    S.pendingEdits['Profissão principal'] = '';
+    S.pendingEdits['subarea_id'] = null;
+    S.pendingEdits['subarea_label'] = '';
+  } else if (kind === 'profession') {
+    S.pendingEdits['profession_id'] = persistId;
+    S.pendingEdits['Profissão principal'] = label || '';
+    if (row?.area_id) {
+      const areaRow = taxonomyFindById(S.taxonomy.areas || [], row.area_id);
+      S.pendingEdits['area_id'] = isPersistableTaxonomyId(row.area_id) ? String(row.area_id) : null;
+      S.pendingEdits['Área profissional'] = areaRow?.label_pt || S.pendingEdits['Área profissional'] || '';
+    }
+    S.pendingEdits['subarea_id'] = null;
+    S.pendingEdits['subarea_label'] = '';
+  } else {
+    S.pendingEdits['subarea_id'] = persistId;
+    S.pendingEdits['subarea_label'] = label || '';
+    if (row?.profession_id) {
+      const profRow = taxonomyFindById(S.taxonomy.professions || [], row.profession_id);
+      if (profRow) {
+        S.pendingEdits['profession_id'] = isPersistableTaxonomyId(profRow.id) ? String(profRow.id) : null;
+        S.pendingEdits['Profissão principal'] = profRow.label_pt || S.pendingEdits['Profissão principal'] || '';
+        const areaRow = taxonomyFindById(S.taxonomy.areas || [], profRow.area_id);
+        if (areaRow) {
+          S.pendingEdits['area_id'] = isPersistableTaxonomyId(areaRow.id) ? String(areaRow.id) : null;
+          S.pendingEdits['Área profissional'] = areaRow.label_pt || S.pendingEdits['Área profissional'] || '';
+        }
+      }
+    }
+  }
+  S.pendingEdits['taxonomy_status'] = row ? (persistId ? 'mapped' : 'seed_selected') : 'pending_review';
+  S.pendingEdits['taxonomy_confidence'] = row ? (persistId ? 1 : 0.78) : null;
+  updateCandidateSaveUi();
+  const panel = document.getElementById('t-profissional');
+  if (panel) panel.innerHTML = buildPanel('t-profissional', c);
 }
 // ══════════════════════════════════════════════════════════════
 // NEW CANDIDATE
@@ -9766,15 +9956,8 @@ function populateNewForm() {
     loadTaxonomySelect(document.getElementById('n-subarea'), []);
     const subSel = document.getElementById('n-subarea');
     if (subSel) subSel.disabled = true;
+    ['area','profession','subarea'].forEach(syncNewTaxonomySearch);
   } else {
-    fillSelect('n-prof','Profissão principal',[
-      'Assistente Administrativo','Analista Financeiro','Operador Logístico','Logística','Técnico de Enfermagem',
-      'Enfermeiro','Farmácia','Recepcionista','Operador de Produção','Cuidador de Idosos',
-      'Fisioterapeuta','Eletrotécnica','Outros'
-    ]);
-    fillSelect('n-area','Área profissional',[
-      'Administrativa','Financeira','Logística','Saúde','Industrial','Comercial','Tecnologia','Educação','Outros'
-    ]);
     const subSel = document.getElementById('n-subarea');
     if (subSel) {
       subSel.innerHTML = '<option value="">Selecionar</option>';
@@ -10551,7 +10734,7 @@ function clearCurriculumFill() {
       el.classList.remove('doc-field-filled');
     }
   });
-  ['n-prof','n-area','n-subarea','n-alemao','n-status'].forEach(id => {
+  ['n-prof','n-area','n-subarea','n-area-search','n-prof-search','n-subarea-search','n-alemao','n-status'].forEach(id => {
     const el = document.getElementById(id);
     if (el && el.classList.contains('doc-field-filled')) {
       el.value = '';
@@ -10576,24 +10759,30 @@ async function submitNew() {
   btn.textContent = '⏳ Criando...'; btn.disabled = true;
   const sess = getSession();
   try {
+    const areaVal = document.getElementById('n-area').value || '';
+    const profVal = document.getElementById('n-prof').value || '';
+    const subVal = document.getElementById('n-subarea').value || '';
+    const areaRow = taxonomyFindById(S?.taxonomy?.areas || [], areaVal);
+    const profRow = taxonomyFindById(S?.taxonomy?.professions || [], profVal);
+    const subRow = taxonomyFindById(S?.taxonomy?.subareas || [], subVal);
     const r = await apiPost({
       action: 'createCandidate',
       actor: sess?.nome || 'web',
       fields: {
-        // ── CRÍTICO: 'Nome completo' DEVE estar em fields para o toSnake() mapear
-        // para nome_completo. Antes estava em body.nome (top-level) e era ignorado.
         'Nome completo':        nome,
         'STATUS PIPELINE':      document.getElementById('n-status').value || 'Novo candidato',
         'E-mail':               document.getElementById('n-email').value.trim(),
         'Telefone':             document.getElementById('n-tel').value.trim(),
         'País de origem':       document.getElementById('n-pais').value.trim(),
         'Cidade atual':         document.getElementById('n-cidade').value.trim(),
-        'Profissão principal':  (taxonomyFindById(S?.taxonomy?.professions || [], document.getElementById('n-prof').value)?.label_pt) || document.getElementById('n-prof').value.trim(),
-        'Área profissional':    (taxonomyFindById(S?.taxonomy?.areas || [], document.getElementById('n-area').value)?.label_pt) || document.getElementById('n-area').value.trim(),
-        'subarea_label':        (taxonomyFindById(S?.taxonomy?.subareas || [], document.getElementById('n-subarea').value)?.label_pt) || null,
-        'area_id':              document.getElementById('n-area').value || null,
-        'profession_id':        document.getElementById('n-prof').value || null,
-        'subarea_id':           document.getElementById('n-subarea').value || null,
+        'Profissão principal':  (profRow?.label_pt) || document.getElementById('n-prof-search').value.trim() || null,
+        'Área profissional':    (areaRow?.label_pt) || document.getElementById('n-area-search').value.trim() || null,
+        'subarea_label':        (subRow?.label_pt) || document.getElementById('n-subarea-search').value.trim() || null,
+        'area_id':              isPersistableTaxonomyId(areaVal) ? areaVal : null,
+        'profession_id':        isPersistableTaxonomyId(profVal) ? profVal : null,
+        'subarea_id':           isPersistableTaxonomyId(subVal) ? subVal : null,
+        'taxonomy_status':      (areaRow || profRow || subRow) ? ((isPersistableTaxonomyId(areaVal) || isPersistableTaxonomyId(profVal) || isPersistableTaxonomyId(subVal)) ? 'mapped' : 'seed_selected') : null,
+        'taxonomy_confidence':  (areaRow || profRow || subRow) ? ((isPersistableTaxonomyId(areaVal) || isPersistableTaxonomyId(profVal) || isPersistableTaxonomyId(subVal)) ? 1 : 0.78) : null,
         'Nível alemão':         document.getElementById('n-alemao').value,
         'Referência':           document.getElementById('n-origem').value.trim(),
         'Responsável interno':  document.getElementById('n-resp').value.trim(),
@@ -10607,7 +10796,7 @@ async function submitNew() {
     _pendingCurriculumFile = null;
     closeNew();
     btn.textContent = '✓ Criar Candidato'; btn.disabled = false;
-    ['n-nome','n-email','n-tel','n-cidade','n-prof','n-area','n-subarea','n-origem','n-resp','n-obs'].forEach(id=>{
+    ['n-nome','n-email','n-tel','n-cidade','n-prof','n-area','n-subarea','n-area-search','n-prof-search','n-subarea-search','n-origem','n-resp','n-obs'].forEach(id=>{
       const el = document.getElementById(id); if (el) el.value = '';
     });
     await loadAll(); renderView();
@@ -11967,6 +12156,12 @@ function agNav(dir) {
     'Conflitos detectados':'Erkannte Konflikte',
     'Campos preservados':'Beibehaltene Felder',
     'Resumo operacional':'Operative Zusammenfassung',
+    'Detalhe do candidato selecionado':'Detail des ausgewählten Kandidaten',
+    'Clique em um candidato na lista acima para abrir o painel detalhado abaixo.':'Klicken Sie in der Liste oben auf einen Kandidaten, um das Detailfeld unten zu öffnen.',
+    'Digite para filtrar e selecione abaixo':'Zum Filtern tippen und unten auswählen',
+    'Sugerir nova opção':'Neue Option vorschlagen',
+    'Use a busca para filtrar e depois selecione a opção oficial.':'Mit der Suche filtern und danach die offizielle Option auswählen.',
+    'Opcional. Vinculada à profissão selecionada.':'Optional. Mit dem gewählten Beruf verknüpft.',
     'Histórico de alterações':'Änderungsverlauf',
     'Metadados básicos':'Grundlegende Metadaten',
     'Data da entrevista':'Interviewdatum',
@@ -12206,6 +12401,12 @@ function agNav(dir) {
     'Clique para expandir':'Zum Erweitern klicken',
     'Clique para recolher':'Zum Einklappen klicken',
     'Resumo operacional':'Operative Zusammenfassung',
+    'Detalhe do candidato selecionado':'Detail des ausgewählten Kandidaten',
+    'Clique em um candidato na lista acima para abrir o painel detalhado abaixo.':'Klicken Sie in der Liste oben auf einen Kandidaten, um das Detailfeld unten zu öffnen.',
+    'Digite para filtrar e selecione abaixo':'Zum Filtern tippen und unten auswählen',
+    'Sugerir nova opção':'Neue Option vorschlagen',
+    'Use a busca para filtrar e depois selecione a opção oficial.':'Mit der Suche filtern und danach die offizielle Option auswählen.',
+    'Opcional. Vinculada à profissão selecionada.':'Optional. Mit dem gewählten Beruf verknüpft.',
     'Clique em um candidato para visualizar.':'Klicken Sie auf einen Bewerber, um die Übersicht zu sehen.',
     'Dados da entrevista':'Interviewdaten',
     'Empresa / Cliente':'Unternehmen / Kunde',
