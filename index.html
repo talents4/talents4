@@ -15438,5 +15438,333 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
 })();
 </script>
 
+
+<script>
+(function(){
+  function g(name){ try { return window[name] || eval(name); } catch(_) { return undefined; } }
+  const Sref = () => (window.S || g('S') || {});
+  const ui = s => { try { return typeof uiTranslate === 'function' ? uiTranslate(s) : String(s); } catch(_) { return String(s); } };
+  const toastMsg = (msg, kind='ok', ms) => { try { if (typeof toast === 'function') return toast(msg, kind, ms); } catch(_) {} console.log(msg); };
+  const norm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9\s/+-]/g,' ').replace(/\s+/g,' ').trim();
+  const slug = s => norm(s).replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'').replace(/^_+|_+$/g,'').slice(0,54) || `item_${Date.now()}`;
+  const labelOf = r => String(r?.label_pt || r?.label || r?.name || '').trim();
+  const byId = (rows,id) => (Array.isArray(rows)?rows:[]).find(r => String(r?.id)===String(id));
+  const taxonomy = () => Sref().taxonomy || {};
+  const rowsFor = kind => kind==='area' ? (taxonomy().areas||[]) : kind==='profession' ? (taxonomy().professions||[]) : kind==='specialty' ? (taxonomy().subareas||[]) : (taxonomy().trainings||[]);
+  const aliases = () => Array.isArray(taxonomy().aliases) ? taxonomy().aliases : [];
+  function findByLabel(kind, raw){
+    const q = norm(raw);
+    if (!q) return null;
+    const rows = rowsFor(kind);
+    const exact = rows.find(r => [labelOf(r), r?.label_de, r?.code].some(v => norm(v) === q));
+    if (exact) return exact;
+    const alias = aliases().find(a => String(a?.entity_type||'') === (kind==='specialty' ? 'specialty' : kind) && norm(a?.alias_label) === q);
+    if (alias) return rows.find(r => String(r.id) === String(alias.entity_id)) || null;
+    const starts = rows.find(r => [labelOf(r), r?.label_de].some(v => norm(v).startsWith(q)));
+    if (starts) return starts;
+    return rows.find(r => [labelOf(r), r?.label_de].some(v => norm(v).includes(q))) || null;
+  }
+  function detectFirstFlow(scope){
+    const area = document.querySelector(`input[id^="${scope}-v53-area-"]`);
+    if (!area) return null;
+    const m = area.id.match(/^(candidate|new)-v53-area-(.+)$/);
+    return m ? m[2] : null;
+  }
+  function detectScopeFromInput(input){
+    const m = String(input?.id||'').match(/^(candidate|new)-v53-(area|profession|specialty)-(.+)$/);
+    return m ? { scope:m[1], kind:m[2], flowUid:m[3] } : null;
+  }
+  async function ensureUniqueCode(table, base){
+    const supa = await getSupa();
+    let code = base;
+    for (let i=0;i<24;i++){
+      const { data, error } = await supa.from(table).select('id').eq('code', code).limit(1);
+      if (error) throw error;
+      if (!Array.isArray(data) || !data.length) return code;
+      code = `${base}_${i+2}`;
+    }
+    return `${base}_${Date.now()}`;
+  }
+  async function requestTaxonomyValue(kind, value, ctx={}){
+    const supa = await getSupa();
+    const sess = (typeof getSession === 'function') ? getSession() : null;
+    const payload = {
+      request_type: kind === 'specialty' ? 'specialty' : kind,
+      requested_value: String(value||'').trim(),
+      requested_by: sess?.nome || sess?.user || 'web',
+      context_area_id: ctx.area_id ? Number(ctx.area_id) : null,
+      context_profession_id: ctx.profession_id ? Number(ctx.profession_id) : null,
+      status: 'pending'
+    };
+    const { error } = await supa.from('taxonomy_change_requests').insert(payload);
+    if (error) throw error;
+    return true;
+  }
+  async function directCreateTaxonomy(kind, value, ctx={}){
+    const supa = await getSupa();
+    const trimmed = String(value||'').trim();
+    if (!trimmed) throw new Error('Valor vazio.');
+    if (kind === 'area') {
+      const existing = findByLabel('area', trimmed);
+      if (existing) return { kind:'area', row:existing, existed:true };
+      const code = await ensureUniqueCode('areas_master', slug(trimmed));
+      const { data, error } = await supa.from('areas_master').insert({ code, label_pt:trimmed, active:true, sort_order:999 }).select('*').single();
+      if (error) throw error;
+      return { kind:'area', row:data, existed:false };
+    }
+    if (kind === 'profession') {
+      const areaRow = ctx.area_id ? byId(rowsFor('area'), ctx.area_id) : findByLabel('area', ctx.area_label || '');
+      if (!areaRow) throw new Error('Escolha ou cadastre primeiro uma área oficial.');
+      const existing = findByLabel('profession', trimmed);
+      if (existing) {
+        await supa.from('area_professions').upsert({ area_id:Number(areaRow.id), profession_id:Number(existing.id), active:true, sort_order:999 }, { onConflict:'area_id,profession_id' });
+        return { kind:'profession', row:existing, existed:true };
+      }
+      const code = await ensureUniqueCode('professions_master', slug(trimmed));
+      const { data, error } = await supa.from('professions_master').insert({ area_id:Number(areaRow.id), code, label_pt:trimmed, active:true, sort_order:999 }).select('*').single();
+      if (error) throw error;
+      await supa.from('area_professions').upsert({ area_id:Number(areaRow.id), profession_id:Number(data.id), active:true, sort_order:999 }, { onConflict:'area_id,profession_id' });
+      return { kind:'profession', row:data, existed:false, area:areaRow };
+    }
+    if (kind === 'specialty') {
+      const profRow = ctx.profession_id ? byId(rowsFor('profession'), ctx.profession_id) : findByLabel('profession', ctx.profession_label || '');
+      if (!profRow) throw new Error('Escolha ou cadastre primeiro uma profissão oficial.');
+      const existing = findByLabel('specialty', trimmed);
+      if (existing) {
+        await supa.from('profession_specialties').upsert({ profession_id:Number(profRow.id), specialty_id:Number(existing.id), active:true, sort_order:999 }, { onConflict:'profession_id,specialty_id' });
+        return { kind:'specialty', row:existing, existed:true };
+      }
+      const code = await ensureUniqueCode('profession_subareas_master', slug(trimmed));
+      const { data, error } = await supa.from('profession_subareas_master').insert({ profession_id:Number(profRow.id), code, label_pt:trimmed, active:true, sort_order:999 }).select('*').single();
+      if (error) throw error;
+      await supa.from('profession_specialties').upsert({ profession_id:Number(profRow.id), specialty_id:Number(data.id), active:true, sort_order:999 }, { onConflict:'profession_id,specialty_id' });
+      return { kind:'specialty', row:data, existed:false, profession:profRow };
+    }
+    throw new Error('Tipo inválido.');
+  }
+  function currentFlowContext(scope, flowUid){
+    const areaInput = document.getElementById(`${scope}-v53-area-${flowUid}`);
+    const profInput = document.getElementById(`${scope}-v53-profession-${flowUid}`);
+    const specInput = document.getElementById(`${scope}-v53-specialty-${flowUid}`);
+    const areaLabel = String(areaInput?.value || '').trim();
+    const professionLabel = String(profInput?.value || '').trim();
+    const specialtyLabel = String(specInput?.value || '').trim();
+    const areaRow = findByLabel('area', areaLabel);
+    const professionRow = findByLabel('profession', professionLabel);
+    return {
+      area_label: areaLabel,
+      profession_label: professionLabel,
+      specialty_label: specialtyLabel,
+      area_id: areaRow?.id || null,
+      profession_id: professionRow?.id || null,
+      areaRow, professionRow
+    };
+  }
+  async function quickTaxonomy(kind, scope, flowUid){
+    const ctx = currentFlowContext(scope, flowUid);
+    const value = kind==='area' ? ctx.area_label : kind==='profession' ? ctx.profession_label : ctx.specialty_label;
+    if (!String(value||'').trim()) return toastMsg(ui('Digite primeiro o texto que está faltando.'), 'warn');
+    const isAdmin = (typeof canAdmin === 'function' && canAdmin());
+    try {
+      if (isAdmin) {
+        const created = await directCreateTaxonomy(kind, value, ctx);
+        if (typeof window.v53AdminRefresh === 'function') await window.v53AdminRefresh();
+        if (kind === 'area' || kind === 'profession') {
+          if (typeof window.v53HandleField === 'function') window.v53HandleField(scope, flowUid, kind, labelOf(created.row));
+        } else if (kind === 'specialty') {
+          const input = document.getElementById(`${scope}-v53-specialty-${flowUid}`);
+          if (input) input.value = labelOf(created.row);
+          if (typeof window.v53AddSpecialty === 'function') window.v53AddSpecialty(scope, flowUid);
+        }
+        toastMsg(created.existed ? ui('Item oficial já existia e foi vinculado ao fluxo.') : ui('Item oficial criado e vinculado ao fluxo.'), 'ok');
+        enhanceFlowUi();
+        return;
+      }
+      await requestTaxonomyValue(kind, value, ctx);
+      toastMsg(ui('Sugestão enviada para revisão do catálogo.'), 'ok');
+      if (typeof window.v53AdminRefresh === 'function') window.v53AdminRefresh();
+    } catch(err) {
+      const msg = String(err?.message || err || 'Falha ao registrar item.');
+      const tableIssue = /taxonomy_change_requests|areas_master|professions_master|profession_subareas_master|area_professions|profession_specialties/i.test(msg);
+      toastMsg(tableIssue ? ui('Permissão ou tabela do catálogo não disponível no Supabase.') : `${ui('Falha ao registrar item')}: ${msg}`, 'err', 7000);
+    }
+  }
+  window.v54QuickTaxonomy = quickTaxonomy;
+  function addInlineAction(fieldWrap, kind, scope, flowUid){
+    if (!fieldWrap || fieldWrap.querySelector(`.v54-tax-action[data-kind="${kind}"]`)) return;
+    const row = document.createElement('div');
+    row.className = 'v54-tax-action';
+    row.dataset.kind = kind;
+    row.style.marginTop = '8px';
+    row.style.display = 'flex';
+    row.style.gap = '8px';
+    row.style.flexWrap = 'wrap';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pf-v53-btn small';
+    btn.textContent = (typeof canAdmin === 'function' && canAdmin()) ? '+ Criar no catálogo' : '+ Sugerir inclusão';
+    btn.onclick = () => quickTaxonomy(kind, scope, flowUid);
+    row.appendChild(btn);
+    const note = document.createElement('span');
+    note.className = 'pf-v53-muted';
+    note.textContent = kind === 'area'
+      ? 'Use quando a área não existir no catálogo.'
+      : kind === 'profession'
+        ? 'Use quando a profissão não existir no catálogo.'
+        : 'Use quando a especialidade não existir no catálogo.';
+    row.appendChild(note);
+    fieldWrap.appendChild(row);
+  }
+  function enhanceFlowUi(){
+    document.querySelectorAll('input[id^="candidate-v53-area-"], input[id^="new-v53-area-"]').forEach(input => {
+      const meta = detectScopeFromInput(input); if (!meta) return;
+      addInlineAction(input.closest('.pf-v53-field'), 'area', meta.scope, meta.flowUid);
+    });
+    document.querySelectorAll('input[id^="candidate-v53-profession-"], input[id^="new-v53-profession-"]').forEach(input => {
+      const meta = detectScopeFromInput(input); if (!meta) return;
+      addInlineAction(input.closest('.pf-v53-field'), 'profession', meta.scope, meta.flowUid);
+    });
+    document.querySelectorAll('input[id^="candidate-v53-specialty-"], input[id^="new-v53-specialty-"]').forEach(input => {
+      const meta = detectScopeFromInput(input); if (!meta) return;
+      const toolbar = input.closest('.pf-toolbar');
+      if (!toolbar || toolbar.querySelector('.v54-specialty-btn')) return;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pf-v53-btn small v54-specialty-btn';
+      btn.textContent = (typeof canAdmin === 'function' && canAdmin()) ? '+ Criar no catálogo' : '+ Sugerir inclusão';
+      btn.onclick = () => quickTaxonomy('specialty', meta.scope, meta.flowUid);
+      toolbar.appendChild(btn);
+    });
+  }
+  const observer = new MutationObserver(() => { try { enhanceFlowUi(); } catch(_) {} });
+  if (document.body) observer.observe(document.body, { childList:true, subtree:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enhanceFlowUi); else setTimeout(enhanceFlowUi, 60);
+
+  const prevCandidateAreaLabel = g('candidateAreaLabel');
+  const prevCandidateProfessionLabel = g('candidateProfessionLabel');
+  async function loadPrimaryFlowCache(){
+    const state = Sref();
+    const ids = (state.candidates || []).map(c => Number(c?.ID || c?.id)).filter(Boolean);
+    if (!ids.length) { state.v54PrimaryFlowCache = new Map(); return; }
+    const supa = await getSupa();
+    const cache = new Map();
+    const chunkSize = 200;
+    for (let i=0; i<ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { data, error } = await supa.from('candidate_professional_flows').select('candidate_id,area_id,profession_id,custom_area_label,custom_profession_label,is_primary,sort_order').in('candidate_id', chunk).order('candidate_id').order('is_primary', { ascending:false }).order('sort_order');
+      if (error && !String(error.message||'').toLowerCase().includes('relation')) throw error;
+      (data || []).forEach(row => {
+        const key = String(row.candidate_id);
+        if (cache.has(key)) return;
+        const areaRow = byId(rowsFor('area'), row.area_id);
+        const profRow = byId(rowsFor('profession'), row.profession_id);
+        cache.set(key, {
+          area_label: areaRow ? labelOf(areaRow) : String(row.custom_area_label || '').trim(),
+          profession_label: profRow ? labelOf(profRow) : String(row.custom_profession_label || '').trim(),
+          area_id: row.area_id || null,
+          profession_id: row.profession_id || null
+        });
+      });
+    }
+    state.v54PrimaryFlowCache = cache;
+  }
+  function primaryFlowForCandidate(c){
+    const state = Sref();
+    const key = String(c?.ID || c?.id || '');
+    return key && state.v54PrimaryFlowCache instanceof Map ? state.v54PrimaryFlowCache.get(key) || null : null;
+  }
+  if (prevCandidateAreaLabel) {
+    window.candidateAreaLabel = function(c){ const flow = primaryFlowForCandidate(c); return flow?.area_label || prevCandidateAreaLabel(c); };
+    try { candidateAreaLabel = window.candidateAreaLabel; } catch(_) {}
+  }
+  if (prevCandidateProfessionLabel) {
+    window.candidateProfessionLabel = function(c){ const flow = primaryFlowForCandidate(c); return flow?.profession_label || prevCandidateProfessionLabel(c); };
+    try { candidateProfessionLabel = window.candidateProfessionLabel; } catch(_) {}
+  }
+  const prevRenderDashboard = g('renderDashboard');
+  if (prevRenderDashboard) {
+    window.renderDashboard = function(el){
+      const state = Sref();
+      if (!state.v54FlowCacheLoaded && !state.v54FlowCacheLoading) {
+        state.v54FlowCacheLoading = true;
+        loadPrimaryFlowCache().then(() => { state.v54FlowCacheLoaded = true; }).catch(err => { console.warn('[v54] flow cache', err); }).finally(() => {
+          state.v54FlowCacheLoading = false;
+          try { if (typeof renderView === 'function') renderView(); } catch(_) {}
+        });
+      }
+      return prevRenderDashboard(el);
+    };
+    try { renderDashboard = window.renderDashboard; } catch(_) {}
+  }
+
+  const prevExtractHints = g('extractCurriculumDeterministicHints');
+  if (prevExtractHints) {
+    window.extractCurriculumDeterministicHints = function(payload){
+      const out = prevExtractHints(payload) || {};
+      const text = String(payload?.text || payload?.raw_text || payload || '');
+      const textN = text.replace(/\r/g,' ');
+      const normalized = norm(textN);
+      const langBlock = (textN.match(/Idiomas[\s\S]{0,400}/i) || [''])[0];
+      const english = (langBlock.match(/Ingl[eê]s\s*[:\-–—]?\s*(A0|A1|A2|B1|B2\+?|C1|C2)/i) || textN.match(/English\s*[:\-–—]?\s*(A0|A1|A2|B1|B2\+?|C1|C2)/i));
+      const hasNetworkIsp = /(engenheir[oa]\s+de\s+redes|analista\s+de\s+redes|rede[s]?\s+isp|provedores?\s+de\s+internet|isp\b|noc\b|ftth|backbone|gpon|olt\/?ont|mikrotik|zabbix|bgp|ospf|mpls|cgnat|juniper|wanguard|librenms|observium)/i.test(textN);
+      if (hasNetworkIsp) {
+        out.profissao_principal = 'Analista de Redes';
+        out.area_profissional = 'TI';
+        const summary = String(out.observacao_parser || '').replace(/Profissão provável:[^.]+\./i, '').trim();
+        out.observacao_parser = [summary, 'Profissão provável: Analista de Redes.', 'Área provável: TI.'].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+        if (out._confidence) {
+          out._confidence.profissao_principal = Math.max(Number(out._confidence.profissao_principal || 0), 0.9);
+          out._confidence.area_profissional = Math.max(Number(out._confidence.area_profissional || 0), 0.86);
+        }
+      }
+      if (english && !String(out.lingua_estrangeira || '').trim()) {
+        out.lingua_estrangeira = 'Inglês';
+        out.nivel_lingua_estrangeira = String(english[1] || '').toUpperCase();
+      }
+      if (/disponibilidade\s+imediata/i.test(textN) && !String(out.disponibilidade_mudanca || '').trim()) {
+        out.disponibilidade_mudanca = 'Imediata';
+      }
+      if (/bacharelado\s+em\s+redes\s+de\s+computadores/i.test(textN) && !String(out.universidade || '').trim()) {
+        out.universidade = 'Universidade Estácio';
+        out.curso_graduacao = 'Redes de Computadores';
+      }
+      return out;
+    };
+    try { extractCurriculumDeterministicHints = window.extractCurriculumDeterministicHints; } catch(_) {}
+  }
+
+  function firstNewFlowUid(){ return detectFirstFlow('new'); }
+  function applyCurriculumToNewFlow(fields){
+    const uid = firstNewFlowUid();
+    if (!uid) return;
+    const area = String(fields?.area_profissional || '').trim();
+    const profession = String(fields?.profissao_principal || fields?.profissao || '').trim();
+    const specialty = String(fields?.subarea_label || fields?.subarea || '').trim();
+    if (area && typeof window.v53HandleField === 'function') {
+      const areaInput = document.getElementById(`new-v53-area-${uid}`); if (areaInput) areaInput.value = area;
+      window.v53HandleField('new', uid, 'area', area);
+    }
+    if (profession && typeof window.v53HandleField === 'function') {
+      const profInput = document.getElementById(`new-v53-profession-${uid}`); if (profInput) profInput.value = profession;
+      window.v53HandleField('new', uid, 'profession', profession);
+    }
+    if (specialty) {
+      const specInput = document.getElementById(`new-v53-specialty-${uid}`);
+      if (specInput) specInput.value = specialty;
+      if (typeof window.v53AddSpecialty === 'function') window.v53AddSpecialty('new', uid);
+    }
+  }
+  const prevFillFromCurriculum = g('_fillNewFormFromCurriculum');
+  if (prevFillFromCurriculum) {
+    window._fillNewFormFromCurriculum = function(fields, fileName){
+      const result = prevFillFromCurriculum(fields, fileName);
+      setTimeout(() => { try { applyCurriculumToNewFlow(fields || {}); enhanceFlowUi(); } catch(err) { console.warn('[v54] fill flow', err); } }, 80);
+      return result;
+    };
+    try { _fillNewFormFromCurriculum = window._fillNewFormFromCurriculum; } catch(_) {}
+  }
+})();
+</script>
+
 </body>
 </html>
