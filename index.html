@@ -15766,5 +15766,777 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
 })();
 </script>
 
+
+<style id="v55-bi-taxonomy-style">
+#v55-taxonomy-insights{grid-column:1 / -1}
+.v55-tax-grid{display:grid;grid-template-columns:1.15fr .95fr;gap:14px}
+.v55-tax-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.v55-tax-box{border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025);padding:12px}
+.v55-tax-k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px}
+.v55-tax-v{font-size:20px;font-weight:800;color:var(--txt1)}
+.v55-tax-sub{font-size:12px;color:var(--txt3);line-height:1.45;margin-top:4px}
+.v55-tax-list{display:flex;flex-direction:column;gap:8px}
+.v55-tax-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.018);cursor:pointer}
+.v55-tax-row:hover{border-color:rgba(96,165,250,.25);background:rgba(96,165,250,.06)}
+.v55-tax-row strong{color:var(--txt1)}
+.v55-tax-row small{color:var(--txt3)}
+.v55-tax-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.v55-tax-tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);font-size:12px;color:var(--txt2);cursor:pointer}
+.v55-tax-tag:hover{border-color:rgba(0,194,130,.3);color:var(--txt1)}
+@media (max-width: 1120px){
+  .v55-tax-grid{grid-template-columns:1fr}
+  .v55-tax-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 720px){
+  .v55-tax-summary{grid-template-columns:1fr}
+}
+</style>
+<script id="v55-bi-taxonomy-patch">
+(()=>{
+  const g = name => window[name];
+  const Sref = () => window.S || {};
+  const norm = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const escFn = window.esc || (s => String(s ?? '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])));
+  const htmlEscFn = window.htmlEsc || escFn;
+
+  function flowScopePool(){
+    const S = Sref();
+    const cands = Array.isArray(S.candidates) ? S.candidates : [];
+    const ativos = cands.filter(c => typeof isActiveCand === 'function' ? isActiveCand(c) : true);
+    const scope = S.dashboardUi?.scope || 'all';
+    if (scope === 'talents') return ativos.filter(c => typeof isTalentCandidate === 'function' ? isTalentCandidate(c) : true);
+    if (scope === 'employers') return typeof getEmployerHubBase === 'function' ? getEmployerHubBase() : ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE','status_pipeline')));
+    if (scope === 'course') return ativos.filter(c => typeof isCourseCandidate === 'function' ? isCourseCandidate(c) : false);
+    if (scope === 'rh') return ativos.filter(c => (typeof hasInterviewData === 'function' && hasInterviewData(c)) || fv(c,'decisao_operacional_rh','Decisão operacional RH') || fv(c,'resumo_rh_curto','Resumo RH curto'));
+    return ativos;
+  }
+
+  async function loadPrimaryFlowAnalyticsCache(){
+    const S = Sref();
+    const ids = (Array.isArray(S.candidates) ? S.candidates : []).map(c => Number(c?.ID || c?.id)).filter(Boolean);
+    if (!ids.length) { S.v55PrimaryFlowAnalyticsCache = new Map(); return; }
+    const supa = await getSupa();
+    const cache = new Map();
+    const chunkSize = 200;
+    for (let i=0; i<ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { data: flowRows, error: flowErr } = await supa
+        .from('candidate_professional_flows')
+        .select('id,candidate_id,area_id,profession_id,custom_area_label,custom_profession_label,source_type,is_primary,sort_order')
+        .in('candidate_id', chunk)
+        .order('candidate_id')
+        .order('is_primary', { ascending:false })
+        .order('sort_order');
+      if (flowErr && !String(flowErr.message || '').toLowerCase().includes('relation')) throw flowErr;
+      const primaryRows = [];
+      (flowRows || []).forEach(row => {
+        const key = String(row.candidate_id);
+        if (cache.has(key)) return;
+        primaryRows.push(row);
+        const areaRow = typeof byId === 'function' ? byId(rowsFor('area'), row.area_id) : null;
+        const profRow = typeof byId === 'function' ? byId(rowsFor('profession'), row.profession_id) : null;
+        cache.set(key, {
+          flow_id: row.id,
+          area_id: row.area_id || null,
+          profession_id: row.profession_id || null,
+          area_label: areaRow ? labelOf(areaRow) : String(row.custom_area_label || '').trim(),
+          profession_label: profRow ? labelOf(profRow) : String(row.custom_profession_label || '').trim(),
+          area_source: row.area_id ? 'official' : String(row.source_type || 'pending'),
+          profession_source: row.profession_id ? 'official' : String(row.source_type || 'pending'),
+          specialty_label: '',
+          specialty_labels: [],
+          specialty_source: 'pending',
+          specialty_ids: [],
+          pending: !row.area_id || !row.profession_id,
+          pending_parts: []
+        });
+      });
+      const flowIds = primaryRows.map(r => Number(r.id)).filter(Boolean);
+      if (flowIds.length) {
+        const { data: specRows, error: specErr } = await supa
+          .from('candidate_flow_specialties')
+          .select('flow_id,specialty_id,custom_specialty_label,source_type,is_primary')
+          .in('flow_id', flowIds)
+          .order('is_primary', { ascending:false });
+        if (specErr && !String(specErr.message || '').toLowerCase().includes('relation')) throw specErr;
+        const grouped = new Map();
+        (specRows || []).forEach(row => {
+          const arr = grouped.get(String(row.flow_id)) || [];
+          const specRow = typeof byId === 'function' ? byId(rowsFor('specialty'), row.specialty_id) : null;
+          arr.push({
+            specialty_id: row.specialty_id || null,
+            specialty_label: specRow ? labelOf(specRow) : String(row.custom_specialty_label || '').trim(),
+            source_type: row.specialty_id ? 'official' : String(row.source_type || 'pending'),
+            is_primary: !!row.is_primary
+          });
+          grouped.set(String(row.flow_id), arr);
+        });
+        for (const info of cache.values()) {
+          const specs = grouped.get(String(info.flow_id)) || [];
+          const labels = specs.map(s => String(s.specialty_label || '').trim()).filter(Boolean);
+          info.specialty_labels = labels;
+          info.specialty_label = labels[0] || '';
+          info.specialty_source = specs[0]?.source_type || 'pending';
+          info.specialty_ids = specs.map(s => s.specialty_id).filter(Boolean);
+          const pendingParts = [];
+          if (!info.area_id && info.area_label) pendingParts.push('área');
+          if (!info.profession_id && info.profession_label) pendingParts.push('profissão');
+          if (labels.some((_, idx) => !specs[idx]?.specialty_id)) pendingParts.push('especialidade');
+          if (!labels.length) pendingParts.push('especialidade ausente');
+          info.pending_parts = pendingParts;
+          info.pending = pendingParts.length > 0;
+        }
+      }
+    }
+    S.v55PrimaryFlowAnalyticsCache = cache;
+  }
+
+  function primaryFlowAnalytics(c){
+    const key = String(c?.ID || c?.id || '');
+    const cache = Sref().v55PrimaryFlowAnalyticsCache;
+    if (key && cache instanceof Map && cache.has(key)) return cache.get(key) || null;
+    const specialtyFallback = String(fv(c,'subarea_label','Subárea','subarea') || '').trim();
+    const areaFallback = typeof candidateAreaLabel === 'function' ? candidateAreaLabel(c) : String(fv(c,'Área profissional','area_profissional') || '').trim();
+    const profFallback = typeof candidateProfessionLabel === 'function' ? candidateProfessionLabel(c) : String(fv(c,'Profissão principal','profissao_principal') || '').trim();
+    return {
+      area_label: areaFallback,
+      profession_label: profFallback,
+      specialty_label: specialtyFallback,
+      specialty_labels: specialtyFallback ? [specialtyFallback] : [],
+      pending: false,
+      pending_parts: specialtyFallback ? [] : ['especialidade ausente']
+    };
+  }
+  window.v55PrimaryFlowAnalytics = primaryFlowAnalytics;
+
+  function decorateQuickButtons(){
+    document.querySelectorAll('.v54-tax-action .pf-v53-btn, .v54-specialty-btn').forEach(btn => {
+      if (!btn.dataset.v55Labeled) {
+        btn.dataset.v55Labeled = '1';
+        btn.textContent = 'Faltou? adicionar agora';
+      }
+    });
+  }
+
+  function groupCount(list, fn){
+    const map = new Map();
+    (list || []).forEach(item => {
+      const key = String(fn(item) || '').trim();
+      if (!key) return;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return [...map.entries()].map(([label,count]) => ({ label, count })).sort((a,b) => b.count - a.count || a.label.localeCompare(b.label,'pt-BR'));
+  }
+
+  function injectTaxonomyInsights(el){
+    decorateQuickButtons();
+    const root = el && el.querySelector ? el : document;
+    const grid = root.querySelector('.bi-grid');
+    if (!grid) return;
+    const old = root.querySelector('#v55-taxonomy-insights');
+    if (old) old.remove();
+    const pool = flowScopePool();
+    const items = pool.map(c => ({ candidate:c, flow: primaryFlowAnalytics(c) }));
+    const mapped = items.filter(x => x.flow && (x.flow.area_label || x.flow.profession_label));
+    const pending = items.filter(x => x.flow?.pending);
+    const noSpecialty = items.filter(x => !(x.flow?.specialty_labels || []).length);
+    const topAreas = groupCount(mapped, x => x.flow.area_label).slice(0,6);
+    const topProfs = groupCount(mapped, x => x.flow.profession_label).slice(0,6);
+    const topSpecs = groupCount(mapped.flatMap(x => (x.flow.specialty_labels || []).map(label => ({ label }))), x => x.label).slice(0,8);
+    const pendingBuckets = groupCount(pending.flatMap(x => x.flow.pending_parts || []), x => x).slice(0,5);
+    const section = document.createElement('section');
+    section.className = 'bi-card';
+    section.id = 'v55-taxonomy-insights';
+    section.innerHTML = `
+      <div class="bi-card-head">
+        <div>
+          <div class="bi-card-title">Taxonomia operacional</div>
+          <div class="bi-card-sub">O BI agora lê área, profissão e especialidade a partir do fluxo principal salvo. Isso reduz KPI falso quando o campo legado está desatualizado.</div>
+        </div>
+        <span class="bi-card-badge">${mapped.length} candidatos com fluxo mapeado</span>
+      </div>
+      <div class="v55-tax-summary">
+        <div class="v55-tax-box" onclick="dashboardDrill('taxonomy_mapped')"><div class="v55-tax-k">Fluxo principal mapeado</div><div class="v55-tax-v">${mapped.length}</div><div class="v55-tax-sub">candidatos cuja leitura vem do fluxo profissional</div></div>
+        <div class="v55-tax-box" onclick="dashboardDrill('taxonomy_pending')"><div class="v55-tax-k">Itens pendentes</div><div class="v55-tax-v">${pending.length}</div><div class="v55-tax-sub">candidatos com área, profissão ou especialidade ainda fora do catálogo oficial</div></div>
+        <div class="v55-tax-box" onclick="dashboardDrill('taxonomy_no_specialty')"><div class="v55-tax-k">Sem especialidade</div><div class="v55-tax-v">${noSpecialty.length}</div><div class="v55-tax-sub">perfis com área/profissão mas sem especialidade operacional salva</div></div>
+        <div class="v55-tax-box" onclick="dashboardDrill('taxonomy_official')"><div class="v55-tax-k">100% oficiais</div><div class="v55-tax-v">${Math.max(0, mapped.length - pending.length)}</div><div class="v55-tax-sub">fluxos cuja trilha principal está toda oficial no catálogo</div></div>
+      </div>
+      <div class="v55-tax-grid">
+        <div>
+          <div class="v55-tax-box" style="margin-bottom:12px">
+            <div class="v55-tax-k">Top áreas</div>
+            <div class="v55-tax-list">
+              ${topAreas.length ? topAreas.map(row => `<div class="v55-tax-row" onclick="dashboardDrill('area_exact','${htmlEscFn(row.label).replace(/'/g,"&#39;")}')"><div><strong>${htmlEscFn(row.label)}</strong><br><small>área do fluxo principal</small></div><strong>${row.count}</strong></div>`).join('') : '<div class="pf-v53-empty">Sem áreas suficientes ainda.</div>'}
+            </div>
+          </div>
+          <div class="v55-tax-box">
+            <div class="v55-tax-k">Top profissões</div>
+            <div class="v55-tax-list">
+              ${topProfs.length ? topProfs.map(row => `<div class="v55-tax-row" onclick="dashboardDrill('profession_exact','${htmlEscFn(row.label).replace(/'/g,"&#39;")}')"><div><strong>${htmlEscFn(row.label)}</strong><br><small>profissão do fluxo principal</small></div><strong>${row.count}</strong></div>`).join('') : '<div class="pf-v53-empty">Sem profissões suficientes ainda.</div>'}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="v55-tax-box" style="margin-bottom:12px">
+            <div class="v55-tax-k">Top especialidades</div>
+            <div class="v55-tax-list">
+              ${topSpecs.length ? topSpecs.map(row => `<div class="v55-tax-row" onclick="dashboardDrill('specialty_exact','${htmlEscFn(row.label).replace(/'/g,"&#39;")}')"><div><strong>${htmlEscFn(row.label)}</strong><br><small>especialidade do fluxo principal</small></div><strong>${row.count}</strong></div>`).join('') : '<div class="pf-v53-empty">Sem especialidades suficientes ainda.</div>'}
+            </div>
+          </div>
+          <div class="v55-tax-box">
+            <div class="v55-tax-k">Governança pendente</div>
+            <div class="v55-tax-tags">
+              ${pendingBuckets.length ? pendingBuckets.map(row => `<span class="v55-tax-tag" onclick="dashboardDrill('taxonomy_pending_part','${htmlEscFn(row.label).replace(/'/g,"&#39;")}')">${htmlEscFn(row.label)} · ${row.count}</span>`).join('') : '<span class="pf-v53-empty">Nenhum pendente relevante.</span>'}
+            </div>
+            <div class="v55-tax-sub" style="margin-top:12px">Use o botão “Faltou? adicionar agora” dentro do fluxo para registrar área, profissão ou especialidade ausente no ponto exato da operação.</div>
+          </div>
+        </div>
+      </div>`;
+    grid.insertBefore(section, grid.firstChild);
+  }
+
+  const prevDashboardDrill = g('dashboardDrill');
+  if (prevDashboardDrill) {
+    window.dashboardDrill = function(key, extra=''){
+      const setAndRender = fn => {
+        clearFilters();
+        clearSort();
+        fn();
+        renderView();
+      };
+      if (key === 'area_exact') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => norm(primaryFlowAnalytics(c)?.area_label) === norm(extra); });
+      if (key === 'profession_exact') return setAndRender(() => { _navSetupUI('prioritarios'); S.filter._customFn = c => norm(primaryFlowAnalytics(c)?.profession_label) === norm(extra); });
+      if (key === 'specialty_exact') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => (primaryFlowAnalytics(c)?.specialty_labels || []).some(label => norm(label) === norm(extra)); });
+      if (key === 'taxonomy_mapped') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => !!(primaryFlowAnalytics(c)?.area_label || primaryFlowAnalytics(c)?.profession_label); });
+      if (key === 'taxonomy_pending') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => !!primaryFlowAnalytics(c)?.pending; });
+      if (key === 'taxonomy_official') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => { const info = primaryFlowAnalytics(c); return !!(info?.area_label || info?.profession_label) && !info?.pending; }; });
+      if (key === 'taxonomy_no_specialty') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => !(primaryFlowAnalytics(c)?.specialty_labels || []).length; });
+      if (key === 'taxonomy_pending_part') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => (primaryFlowAnalytics(c)?.pending_parts || []).some(part => norm(part) === norm(extra)); });
+      return prevDashboardDrill(key, extra);
+    };
+    try { dashboardDrill = window.dashboardDrill; } catch(_) {}
+  }
+
+  const prevRenderDashboard = g('renderDashboard');
+  if (prevRenderDashboard) {
+    window.renderDashboard = function(el){
+      const S = Sref();
+      if (!S.v55PrimaryFlowAnalyticsLoaded && !S.v55PrimaryFlowAnalyticsLoading) {
+        S.v55PrimaryFlowAnalyticsLoading = true;
+        loadPrimaryFlowAnalyticsCache().then(() => { S.v55PrimaryFlowAnalyticsLoaded = true; }).catch(err => console.warn('[v55] analytics cache', err)).finally(() => {
+          S.v55PrimaryFlowAnalyticsLoading = false;
+          try { if (typeof renderView === 'function') renderView(); } catch(_) {}
+        });
+      }
+      const out = prevRenderDashboard(el);
+      setTimeout(() => { try { injectTaxonomyInsights(el); } catch(err) { console.warn('[v55] taxonomy insights', err); } }, 20);
+      return out;
+    };
+    try { renderDashboard = window.renderDashboard; } catch(_) {}
+  }
+
+  const prevExtractHints = g('extractCurriculumDeterministicHints');
+  if (prevExtractHints) {
+    window.extractCurriculumDeterministicHints = function(payload){
+      const out = prevExtractHints(payload) || {};
+      const text = String(payload?.text || payload?.raw_text || payload || '');
+      const normalized = norm(text);
+      const hasTelecomCore = /(ftth|backbone|gpon|olt\/?ont|bgp|ospf|mpls|cgnat|noc|zabbix|librenms|observium|wanguard|mikrotik|juniper|datacom|ccr|provedores? de internet|ambiente isp|rede isp|roteamento core)/i.test(text);
+      if (hasTelecomCore) {
+        out.area_profissional = 'TI';
+        out.profissao_principal = 'Analista de Redes';
+        out.subarea_label = out.subarea_label || 'ISP / Backbone / NOC';
+        out.observacao_parser = String(out.observacao_parser || '')
+          .replace(/Profissão provável:[^.]+\./i,'')
+          .replace(/Área provável:[^.]+\./i,'')
+          .replace(/Especialidade provável:[^.]+\./i,'')
+          .trim();
+        out.observacao_parser = [
+          out.observacao_parser,
+          'Profissão provável: Analista de Redes.',
+          'Área provável: TI.',
+          'Especialidade provável: ISP / Backbone / NOC.'
+        ].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+        out._confidence = Object.assign({}, out._confidence || {}, {
+          profissao_principal: Math.max(Number(out._confidence?.profissao_principal || 0), 0.93),
+          area_profissional: Math.max(Number(out._confidence?.area_profissional || 0), 0.90),
+          subarea_label: Math.max(Number(out._confidence?.subarea_label || 0), 0.84)
+        });
+      }
+      const english = text.match(/Ingl[eê]s\s*[:\-–—]?\s*(A0|A1|A2|B1|B2\+?|C1|C2)/i) || text.match(/English\s*[:\-–—]?\s*(A0|A1|A2|B1|B2\+?|C1|C2)/i);
+      if (english) {
+        out.lingua_estrangeira = out.lingua_estrangeira || 'Inglês';
+        out.nivel_lingua_estrangeira = out.nivel_lingua_estrangeira || String(english[1] || '').toUpperCase();
+      }
+      if (/bacharelado\s+em\s+redes\s+de\s+computadores/i.test(text)) {
+        out.universidade = out.universidade || 'Universidade Estácio';
+        out.curso_graduacao = out.curso_graduacao || 'Redes de Computadores';
+      }
+      const certs = [];
+      if (/ccna/i.test(text)) certs.push('Cisco CCNA');
+      if (/hcia/i.test(text)) certs.push('Huawei HCIA');
+      if (/mtcna/i.test(text)) certs.push('MikroTik MTCNA');
+      if (certs.length) {
+        const certLine = `Certificações detectadas: ${certs.join(', ')}.`;
+        out.observacao_parser = [String(out.observacao_parser || '').trim(), certLine].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+      }
+      return out;
+    };
+    try { extractCurriculumDeterministicHints = window.extractCurriculumDeterministicHints; } catch(_) {}
+  }
+
+  const prevFillNewForm = g('_fillNewFormFromCurriculum');
+  if (prevFillNewForm) {
+    window._fillNewFormFromCurriculum = function(fields, fileName){
+      const result = prevFillNewForm(fields, fileName);
+      setTimeout(() => {
+        try {
+          const degree = String(fields?.curso_graduacao || '').trim();
+          const language = String(fields?.nivel_lingua_estrangeira || '').trim();
+          if (degree && typeof window.v53SetPrimaryTraining === 'function' && typeof trainingRows === 'function') {
+            const bach = trainingRows().find(r => norm((r.label_pt || r.label || '')) === 'bacharelado');
+            if (bach) window.v53SetPrimaryTraining('new', bach.id);
+          }
+          const obsEl = document.getElementById('n-obs');
+          if (obsEl && language && !/Ingl[eê]s/i.test(obsEl.value || '')) {
+            obsEl.value = [String(obsEl.value || '').trim(), `Inglês detectado: ${language}.`].filter(Boolean).join(' ').trim();
+          }
+        } catch(err) { console.warn('[v55] fill extra', err); }
+      }, 120);
+      return result;
+    };
+    try { _fillNewFormFromCurriculum = window._fillNewFormFromCurriculum; } catch(_) {}
+  }
+
+  const bodyObserver = new MutationObserver(() => {
+    try { decorateQuickButtons(); injectTaxonomyInsights(document); } catch(_) {}
+  });
+  if (document.body) bodyObserver.observe(document.body, { childList:true, subtree:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', decorateQuickButtons); else setTimeout(decorateQuickButtons, 80);
+})();
+</script>
+
+
+<style id="v56-flow-admin-style">
+.v56-field-action{margin-top:8px;display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.v56-field-action .pf-v53-btn{background:rgba(0,194,130,.08);border-color:rgba(0,194,130,.28)}
+.v56-field-action .pf-v53-btn:hover{background:rgba(0,194,130,.14)}
+.v56-flow-action-strip{display:flex;flex-wrap:wrap;gap:8px;padding:10px 12px;border:1px solid rgba(0,194,130,.18);border-radius:14px;background:linear-gradient(180deg,rgba(0,194,130,.08),rgba(255,255,255,.02));margin:-4px 0 4px}
+.v56-flow-action-strip .pf-v53-btn{background:rgba(255,255,255,.04)}
+.v56-flow-action-strip .v56-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);width:100%}
+.v56-flow-action-strip .v56-note{font-size:11px;color:var(--txt3);line-height:1.45;min-width:220px;flex:1}
+.v56-bi-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.v56-bi-summary{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.v56-bi-box{border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.025);padding:12px}
+.v56-bi-k{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px}
+.v56-bi-v{font-size:20px;font-weight:800;color:var(--txt1)}
+.v56-bi-sub{font-size:12px;color:var(--txt3);line-height:1.45;margin-top:4px}
+.v56-bi-list{display:flex;flex-direction:column;gap:8px}
+.v56-bi-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.07);border-radius:12px;background:rgba(255,255,255,.018);cursor:pointer}
+.v56-bi-row:hover{border-color:rgba(96,165,250,.25);background:rgba(96,165,250,.06)}
+.v56-bi-row strong{color:var(--txt1)}
+.v56-bi-row small{color:var(--txt3)}
+@media (max-width:1120px){.v56-bi-grid{grid-template-columns:1fr}.v56-bi-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:720px){.v56-bi-summary{grid-template-columns:1fr}}
+</style>
+<script id="v56-flow-admin-bi-parser-patch">
+(()=>{
+  const g = name => window[name];
+  const Sref = () => window.S || {};
+  const norm = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const htmlEsc = window.htmlEsc || window.esc || (s => String(s ?? '').replace(/[&<>\"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m])));
+  const labelSafe = value => String(value || '').replace(/'/g, '&#39;');
+
+  function isAdminMode(){ return typeof canAdmin === 'function' && canAdmin(); }
+  function detectFieldMetaFromInput(input){
+    const id = String(input?.id || '');
+    const m = id.match(/^(candidate|new)-v53-(area|profession|specialty)-(.+)$/);
+    return m ? { scope:m[1], kind:m[2], flowUid:m[3] } : null;
+  }
+  function fieldButtonLabel(kind){
+    if (!isAdminMode()) return kind === 'area' ? '+ Sugerir área' : kind === 'profession' ? '+ Sugerir profissão' : '+ Sugerir especialidade';
+    return kind === 'area' ? '+ Adicionar área faltante' : kind === 'profession' ? '+ Adicionar profissão faltante' : '+ Adicionar especialidade faltante';
+  }
+  function ensureFieldAction(input){
+    const meta = detectFieldMetaFromInput(input);
+    if (!meta) return;
+    const field = input.closest('.pf-v53-field');
+    if (!field || field.querySelector(`.v56-field-action[data-kind="${meta.kind}"]`)) return;
+    const row = document.createElement('div');
+    row.className = 'v56-field-action';
+    row.dataset.kind = meta.kind;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'pf-v53-btn small';
+    btn.textContent = fieldButtonLabel(meta.kind);
+    btn.onclick = () => { if (typeof window.v54QuickTaxonomy === 'function') window.v54QuickTaxonomy(meta.kind, meta.scope, meta.flowUid); };
+    const note = document.createElement('span');
+    note.className = 'pf-v53-muted';
+    note.textContent = meta.kind === 'area' ? 'Use quando a área correta não existir no catálogo.' : meta.kind === 'profession' ? 'Use quando a profissão correta não existir no catálogo.' : 'Use quando a especialidade correta não existir no catálogo.';
+    row.appendChild(btn);
+    row.appendChild(note);
+    field.appendChild(row);
+  }
+  function ensureFlowActionStrip(card){
+    if (!card || card.querySelector('.v56-flow-action-strip')) return;
+    const areaInput = card.querySelector('input[id^="candidate-v53-area-"], input[id^="new-v53-area-"]');
+    const meta = detectFieldMetaFromInput(areaInput);
+    if (!meta) return;
+    const strip = document.createElement('div');
+    strip.className = 'v56-flow-action-strip';
+    strip.innerHTML = `<div class="v56-title">Ação rápida do catálogo</div>
+      <button type="button" class="pf-v53-btn small" data-kind="area">${fieldButtonLabel('area')}</button>
+      <button type="button" class="pf-v53-btn small" data-kind="profession">${fieldButtonLabel('profession')}</button>
+      <button type="button" class="pf-v53-btn small" data-kind="specialty">${fieldButtonLabel('specialty')}</button>
+      <div class="v56-note">Cadastre ou sugira o item faltante no ponto exato da operação. Não precisa sair do fluxo.</div>`;
+    strip.querySelectorAll('button[data-kind]').forEach(btn => {
+      btn.onclick = () => { if (typeof window.v54QuickTaxonomy === 'function') window.v54QuickTaxonomy(btn.dataset.kind, meta.scope, meta.flowUid); };
+    });
+    const head = card.querySelector('.pf-v53-head');
+    if (head && head.nextSibling) card.insertBefore(strip, head.nextSibling);
+    else card.prepend(strip);
+  }
+  function enhanceCatalogButtons(){
+    document.querySelectorAll('input[id^="candidate-v53-area-"], input[id^="new-v53-area-"], input[id^="candidate-v53-profession-"], input[id^="new-v53-profession-"], input[id^="candidate-v53-specialty-"], input[id^="new-v53-specialty-"]').forEach(ensureFieldAction);
+    document.querySelectorAll('.pf-v53-card').forEach(card => {
+      if (card.querySelector('input[id^="candidate-v53-area-"], input[id^="new-v53-area-"]')) ensureFlowActionStrip(card);
+    });
+  }
+
+  function flowScopePool(){
+    const S = Sref();
+    const cands = Array.isArray(S.candidates) ? S.candidates : [];
+    const ativos = cands.filter(c => typeof isActiveCand === 'function' ? isActiveCand(c) : true);
+    const scope = S.dashboardUi?.scope || 'all';
+    if (scope === 'talents') return ativos.filter(c => typeof isTalentCandidate === 'function' ? isTalentCandidate(c) : true);
+    if (scope === 'employers') return typeof getEmployerHubBase === 'function' ? getEmployerHubBase() : ativos.filter(c => ['Employer / Matching','Matching Instituição'].includes(fv(c,'STATUS PIPELINE','status_pipeline')));
+    if (scope === 'course') return ativos.filter(c => typeof isCourseCandidate === 'function' ? isCourseCandidate(c) : false);
+    if (scope === 'rh') return ativos.filter(c => (typeof hasInterviewData === 'function' && hasInterviewData(c)) || fv(c,'decisao_operacional_rh','Decisão operacional RH') || fv(c,'resumo_rh_curto','Resumo RH curto'));
+    return ativos;
+  }
+  async function loadAllFlowAnalyticsCache(){
+    const S = Sref();
+    const ids = (Array.isArray(S.candidates) ? S.candidates : []).map(c => Number(c?.ID || c?.id)).filter(Boolean);
+    if (!ids.length) { S.v56AllFlowAnalyticsCache = new Map(); return; }
+    const supa = await getSupa();
+    const cache = new Map();
+    const chunkSize = 200;
+    for (let i=0; i<ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      const { data: flowRows, error: flowErr } = await supa
+        .from('candidate_professional_flows')
+        .select('id,candidate_id,area_id,profession_id,custom_area_label,custom_profession_label,source_type,is_primary,sort_order')
+        .in('candidate_id', chunk)
+        .order('candidate_id')
+        .order('is_primary', { ascending:false })
+        .order('sort_order');
+      if (flowErr && !String(flowErr.message || '').toLowerCase().includes('relation')) throw flowErr;
+      const grouped = new Map();
+      (flowRows || []).forEach(row => {
+        const areaRow = typeof byId === 'function' ? byId(rowsFor('area'), row.area_id) : null;
+        const profRow = typeof byId === 'function' ? byId(rowsFor('profession'), row.profession_id) : null;
+        const item = {
+          id: Number(row.id),
+          area_id: row.area_id || null,
+          profession_id: row.profession_id || null,
+          area_label: areaRow ? labelOf(areaRow) : String(row.custom_area_label || '').trim(),
+          profession_label: profRow ? labelOf(profRow) : String(row.custom_profession_label || '').trim(),
+          is_primary: !!row.is_primary,
+          source_type: String(row.source_type || ''),
+          specialties: []
+        };
+        const arr = grouped.get(String(row.candidate_id)) || [];
+        arr.push(item);
+        grouped.set(String(row.candidate_id), arr);
+      });
+      const flowIds = (flowRows || []).map(r => Number(r.id)).filter(Boolean);
+      const specByFlow = new Map();
+      if (flowIds.length) {
+        const { data: specRows, error: specErr } = await supa
+          .from('candidate_flow_specialties')
+          .select('flow_id,specialty_id,custom_specialty_label,source_type,is_primary,sort_order')
+          .in('flow_id', flowIds)
+          .order('flow_id')
+          .order('is_primary', { ascending:false })
+          .order('sort_order');
+        if (specErr && !String(specErr.message || '').toLowerCase().includes('relation')) throw specErr;
+        (specRows || []).forEach(row => {
+          const specRow = typeof byId === 'function' ? byId(rowsFor('specialty'), row.specialty_id) : null;
+          const item = {
+            specialty_id: row.specialty_id || null,
+            specialty_label: specRow ? labelOf(specRow) : String(row.custom_specialty_label || '').trim(),
+            source_type: row.specialty_id ? 'official' : String(row.source_type || 'pending')
+          };
+          const arr = specByFlow.get(String(row.flow_id)) || [];
+          arr.push(item);
+          specByFlow.set(String(row.flow_id), arr);
+        });
+      }
+      for (const [candidateId, flows] of grouped.entries()) {
+        const normalizedFlows = flows.map(flow => {
+          const specs = specByFlow.get(String(flow.id)) || [];
+          const pendingParts = [];
+          if (!flow.area_id && flow.area_label) pendingParts.push('área');
+          if (!flow.profession_id && flow.profession_label) pendingParts.push('profissão');
+          if (!specs.length) pendingParts.push('especialidade ausente');
+          if (specs.some(s => !s.specialty_id && s.specialty_label)) pendingParts.push('especialidade');
+          return {
+            ...flow,
+            specialties: specs,
+            specialty_labels: specs.map(s => String(s.specialty_label || '').trim()).filter(Boolean),
+            pending: pendingParts.length > 0,
+            pending_parts: [...new Set(pendingParts)]
+          };
+        });
+        cache.set(String(candidateId), {
+          flows: normalizedFlows,
+          flow_count: normalizedFlows.length,
+          specialty_count: normalizedFlows.reduce((sum, f) => sum + (f.specialties || []).length, 0),
+          has_pending_any: normalizedFlows.some(f => f.pending),
+          has_official_primary: normalizedFlows.some(f => f.is_primary && f.area_id && f.profession_id),
+          primary: normalizedFlows.find(f => f.is_primary) || normalizedFlows[0] || null
+        });
+      }
+      chunk.forEach(id => { if (!cache.has(String(id))) cache.set(String(id), { flows:[], flow_count:0, specialty_count:0, has_pending_any:false, has_official_primary:false, primary:null }); });
+    }
+    S.v56AllFlowAnalyticsCache = cache;
+  }
+  function allFlowAnalytics(c){
+    const key = String(c?.ID || c?.id || '');
+    const cache = Sref().v56AllFlowAnalyticsCache;
+    return key && cache instanceof Map && cache.has(key) ? cache.get(key) : { flows:[], flow_count:0, specialty_count:0, has_pending_any:false, has_official_primary:false, primary:null };
+  }
+  function groupCount(items){
+    const map = new Map();
+    (items || []).forEach(label => {
+      const key = String(label || '').trim();
+      if (!key) return;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return [...map.entries()].map(([label,count]) => ({ label, count })).sort((a,b) => b.count - a.count || a.label.localeCompare(b.label,'pt-BR'));
+  }
+  function injectMultiFlowInsights(root){
+    const holder = root && root.querySelector ? root : document;
+    const grid = holder.querySelector('.bi-grid');
+    if (!grid) return;
+    const old = holder.querySelector('#v56-multiflow-insights');
+    if (old) old.remove();
+    const pool = flowScopePool();
+    const rows = pool.map(c => ({ candidate:c, info: allFlowAnalytics(c) }));
+    const totalFlows = rows.reduce((sum, r) => sum + Number(r.info.flow_count || 0), 0);
+    const totalSpecs = rows.reduce((sum, r) => sum + Number(r.info.specialty_count || 0), 0);
+    const multi = rows.filter(r => Number(r.info.flow_count || 0) > 1);
+    const noFlow = rows.filter(r => Number(r.info.flow_count || 0) === 0);
+    const pendingAny = rows.filter(r => !!r.info.has_pending_any);
+    const avgFlows = rows.length ? (totalFlows / rows.length).toFixed(2) : '0.00';
+    const avgSpecs = totalFlows ? (totalSpecs / totalFlows).toFixed(2) : '0.00';
+    const allAreas = groupCount(rows.flatMap(r => (r.info.flows || []).map(f => f.area_label).filter(Boolean))).slice(0,8);
+    const allProfs = groupCount(rows.flatMap(r => (r.info.flows || []).map(f => f.profession_label).filter(Boolean))).slice(0,8);
+    const allSpecs = groupCount(rows.flatMap(r => (r.info.flows || []).flatMap(f => f.specialty_labels || []))).slice(0,10);
+    const section = document.createElement('section');
+    section.className = 'bi-card';
+    section.id = 'v56-multiflow-insights';
+    section.innerHTML = `
+      <div class="bi-card-head">
+        <div>
+          <div class="bi-card-title">Estrutura multi-fluxo do banco</div>
+          <div class="bi-card-sub">Auditoria do BI após a mudança de arquitetura. Aqui a leitura não usa só o fluxo principal. Ela considera todas as trilhas profissionais salvas.</div>
+        </div>
+        <span class="bi-card-badge">${totalFlows} fluxos salvos</span>
+      </div>
+      <div class="v56-bi-summary">
+        <div class="v56-bi-box" onclick="dashboardDrill('taxonomy_multiflow')"><div class="v56-bi-k">2+ fluxos</div><div class="v56-bi-v">${multi.length}</div><div class="v56-bi-sub">candidatos com mais de uma trilha profissional real</div></div>
+        <div class="v56-bi-box" onclick="dashboardDrill('taxonomy_no_flow')"><div class="v56-bi-k">Sem fluxo</div><div class="v56-bi-v">${noFlow.length}</div><div class="v56-bi-sub">candidatos ainda sem trilha salva na nova modelagem</div></div>
+        <div class="v56-bi-box" onclick="dashboardDrill('taxonomy_any_pending')"><div class="v56-bi-k">Pendência em qualquer fluxo</div><div class="v56-bi-v">${pendingAny.length}</div><div class="v56-bi-sub">catálogo incompleto em alguma trilha do candidato</div></div>
+        <div class="v56-bi-box"><div class="v56-bi-k">Média de fluxos</div><div class="v56-bi-v">${avgFlows}</div><div class="v56-bi-sub">por candidato no escopo atual</div></div>
+        <div class="v56-bi-box"><div class="v56-bi-k">Média de especialidades</div><div class="v56-bi-v">${avgSpecs}</div><div class="v56-bi-sub">por fluxo salvo</div></div>
+      </div>
+      <div class="v56-bi-grid">
+        <div class="v56-bi-box">
+          <div class="v56-bi-k">Top áreas em todos os fluxos</div>
+          <div class="v56-bi-list">${allAreas.length ? allAreas.map(row => `<div class="v56-bi-row" onclick="dashboardDrill('area_any_exact','${labelSafe(row.label)}')"><div><strong>${htmlEsc(row.label)}</strong><br><small>área presente em qualquer fluxo</small></div><strong>${row.count}</strong></div>`).join('') : '<div class="pf-v53-empty">Sem áreas suficientes ainda.</div>'}</div>
+        </div>
+        <div class="v56-bi-box">
+          <div class="v56-bi-k">Top profissões em todos os fluxos</div>
+          <div class="v56-bi-list">${allProfs.length ? allProfs.map(row => `<div class="v56-bi-row" onclick="dashboardDrill('profession_any_exact','${labelSafe(row.label)}')"><div><strong>${htmlEsc(row.label)}</strong><br><small>profissão presente em qualquer fluxo</small></div><strong>${row.count}</strong></div>`).join('') : '<div class="pf-v53-empty">Sem profissões suficientes ainda.</div>'}</div>
+        </div>
+      </div>
+      <div class="v56-bi-grid" style="margin-top:12px">
+        <div class="v56-bi-box" style="grid-column:1/-1">
+          <div class="v56-bi-k">Top especialidades em todos os fluxos</div>
+          <div class="v56-bi-list">${allSpecs.length ? allSpecs.map(row => `<div class="v56-bi-row" onclick="dashboardDrill('specialty_any_exact','${labelSafe(row.label)}')"><div><strong>${htmlEsc(row.label)}</strong><br><small>especialidade presente em qualquer fluxo</small></div><strong>${row.count}</strong></div>`).join('') : '<div class="pf-v53-empty">Sem especialidades suficientes ainda.</div>'}</div>
+        </div>
+      </div>`;
+    const anchor = holder.querySelector('#v55-taxonomy-insights');
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(section, anchor.nextSibling);
+    else grid.insertBefore(section, grid.firstChild);
+  }
+  const prevDashboardDrill = g('dashboardDrill');
+  if (prevDashboardDrill) {
+    window.dashboardDrill = function(key, extra=''){
+      const setAndRender = fn => {
+        clearFilters();
+        clearSort();
+        fn();
+        renderView();
+      };
+      if (key === 'taxonomy_multiflow') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => Number(allFlowAnalytics(c)?.flow_count || 0) > 1; });
+      if (key === 'taxonomy_no_flow') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => Number(allFlowAnalytics(c)?.flow_count || 0) === 0; });
+      if (key === 'taxonomy_any_pending') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => !!allFlowAnalytics(c)?.has_pending_any; });
+      if (key === 'area_any_exact') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => (allFlowAnalytics(c)?.flows || []).some(f => norm(f.area_label) === norm(extra)); });
+      if (key === 'profession_any_exact') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => (allFlowAnalytics(c)?.flows || []).some(f => norm(f.profession_label) === norm(extra)); });
+      if (key === 'specialty_any_exact') return setAndRender(() => { _navSetupUI('candidates'); S.filter._customFn = c => (allFlowAnalytics(c)?.flows || []).some(f => (f.specialty_labels || []).some(label => norm(label) === norm(extra))); });
+      return prevDashboardDrill(key, extra);
+    };
+    try { dashboardDrill = window.dashboardDrill; } catch(_) {}
+  }
+  const prevRenderDashboard = g('renderDashboard');
+  if (prevRenderDashboard) {
+    window.renderDashboard = function(el){
+      const S = Sref();
+      if (!S.v56AllFlowAnalyticsLoaded && !S.v56AllFlowAnalyticsLoading) {
+        S.v56AllFlowAnalyticsLoading = true;
+        loadAllFlowAnalyticsCache().then(() => { S.v56AllFlowAnalyticsLoaded = true; }).catch(err => console.warn('[v56] all flow analytics', err)).finally(() => {
+          S.v56AllFlowAnalyticsLoading = false;
+          try { if (typeof renderView === 'function') renderView(); } catch(_) {}
+        });
+      }
+      const out = prevRenderDashboard(el);
+      setTimeout(() => { try { injectMultiFlowInsights(el); } catch(err) { console.warn('[v56] BI inject', err); } }, 30);
+      return out;
+    };
+    try { renderDashboard = window.renderDashboard; } catch(_) {}
+  }
+
+  const prevExtractHints = g('extractCurriculumDeterministicHints');
+  if (prevExtractHints) {
+    window.extractCurriculumDeterministicHints = function(payload){
+      const out = prevExtractHints(payload) || {};
+      const text = String(payload?.text || payload?.raw_text || payload || '').replace(/\r/g,'\n');
+      const setIfEmpty = (key, value) => { if (!String(out[key] || '').trim() && String(value || '').trim()) out[key] = String(value).trim(); };
+      const name = text.match(/Nome\s*:\s*([^\n]+)/i);
+      const residence = text.match(/Resid[êe]ncia\s*:\s*([^\n]+)/i);
+      const phone = text.match(/Telefone\s*:\s*([^\n]+)/i);
+      const email = text.match(/E-?mail\s*:\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/i);
+      const german = text.match(/Alem[aã]o\s*:\s*(A0|A1|A2|B1|B2\+?|C1|C2)/i);
+      const english = text.match(/Ingl[êe]s\s*:\s*(A0|A1|A2|B1|B2\+?|C1|C2)/i);
+      const availability = text.match(/Disponibilidade\s+imediata/i);
+      const degree = text.match(/Bacharelado\s+em\s+([^\n]+)/i);
+      const university = text.match(/Universidade\s+([^\n]+)/i);
+      setIfEmpty('nome_completo', name && name[1]);
+      setIfEmpty('cidade_atual', residence && residence[1]);
+      setIfEmpty('telefone', phone && phone[1]);
+      setIfEmpty('email', email && email[1]);
+      setIfEmpty('nivel_alemao', german && String(german[1] || '').toUpperCase());
+      if (english) {
+        setIfEmpty('lingua_estrangeira', 'Inglês');
+        setIfEmpty('nivel_lingua_estrangeira', String(english[1] || '').toUpperCase());
+      }
+      if (availability) setIfEmpty('disponibilidade_mudanca', 'Imediata');
+      if (/Brasil/i.test(text)) setIfEmpty('pais_de_origem', 'BRASIL');
+      if (degree) setIfEmpty('curso_graduacao', degree[1]);
+      if (university) setIfEmpty('universidade', 'Universidade ' + university[1].trim());
+      const telecom = /(engenheir[oa]\s+de\s+redes\s+isp|analista\s+de\s+redes|provedores?\s+de\s+internet|ambiente isp|ftth|backbone|gpon|olt\/?ont|bgp|ospf|mpls|cgnat|noc|mikrotik|juniper|datacom|ccna|hcia|mtcna|librenms|observium|wanguard|zabbix)/i.test(text);
+      if (telecom) {
+        out.area_profissional = 'TI';
+        out.profissao_principal = 'Analista de Redes';
+        out.subarea_label = 'ISP / Backbone / NOC';
+        setIfEmpty('referencia_origem', 'Currículo PDF');
+        const certs = [];
+        if (/ccna/i.test(text)) certs.push('Cisco CCNA');
+        if (/hcia/i.test(text)) certs.push('Huawei HCIA');
+        if (/mtcna/i.test(text)) certs.push('MikroTik MTCNA');
+        const summaryBits = [
+          'Profissão provável: Analista de Redes.',
+          'Área provável: TI.',
+          'Especialidade provável: ISP / Backbone / NOC.'
+        ];
+        if (certs.length) summaryBits.push(`Certificações detectadas: ${certs.join(', ')}.`);
+        out.observacao_parser = [String(out.observacao_parser || '').replace(/Profissão provável:[^.]+\./gi,'').replace(/Área provável:[^.]+\./gi,'').replace(/Especialidade provável:[^.]+\./gi,'').trim(), ...summaryBits].filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+        out._confidence = Object.assign({}, out._confidence || {}, {
+          profissao_principal: Math.max(Number(out._confidence?.profissao_principal || 0), 0.95),
+          area_profissional: Math.max(Number(out._confidence?.area_profissional || 0), 0.93),
+          subarea_label: Math.max(Number(out._confidence?.subarea_label || 0), 0.88),
+          cidade_atual: Math.max(Number(out._confidence?.cidade_atual || 0), residence ? 0.92 : Number(out._confidence?.cidade_atual || 0)),
+          email: Math.max(Number(out._confidence?.email || 0), email ? 0.98 : Number(out._confidence?.email || 0)),
+          telefone: Math.max(Number(out._confidence?.telefone || 0), phone ? 0.96 : Number(out._confidence?.telefone || 0)),
+          nivel_alemao: Math.max(Number(out._confidence?.nivel_alemao || 0), german ? 0.95 : Number(out._confidence?.nivel_alemao || 0))
+        });
+      }
+      return out;
+    };
+    try { extractCurriculumDeterministicHints = window.extractCurriculumDeterministicHints; } catch(_) {}
+  }
+
+  function appendObs(text){
+    const el = document.getElementById('n-obs');
+    if (!el || !String(text || '').trim()) return;
+    const current = String(el.value || '').trim();
+    if (norm(current).includes(norm(text))) return;
+    el.value = [current, text].filter(Boolean).join(current ? ' ' : '').trim();
+  }
+  function addTrainingIfExists(scope, label){
+    if (typeof trainingRows !== 'function' || typeof window.v53AddTraining !== 'function') return;
+    const row = trainingRows().find(r => norm(typeof labelOf === 'function' ? labelOf(r) : (r.label_pt || r.label || '')) === norm(label));
+    if (!row) return;
+    const input = document.getElementById(`${scope}-v53-training-input`);
+    if (!input) return;
+    input.value = typeof labelOf === 'function' ? labelOf(row) : (row.label_pt || row.label || label);
+    try { window.v53AddTraining(scope); } catch(_) {}
+  }
+  const prevFillFromCurriculum = g('_fillNewFormFromCurriculum');
+  if (prevFillFromCurriculum) {
+    window._fillNewFormFromCurriculum = function(fields, fileName){
+      const result = prevFillFromCurriculum(fields, fileName);
+      setTimeout(() => {
+        try {
+          const source = fields || {};
+          if (String(source.area_profissional || '').trim() === 'TI' && typeof window.v53HandleField === 'function') {
+            const areaInput = document.querySelector('input[id^="new-v53-area-"]');
+            if (areaInput && !areaInput.value.trim()) {
+              areaInput.value = 'TI';
+              const m = detectFieldMetaFromInput(areaInput);
+              if (m) window.v53HandleField(m.scope, m.flowUid, 'area', 'TI');
+            }
+          }
+          if (String(source.profissao_principal || '').trim() === 'Analista de Redes' && typeof window.v53HandleField === 'function') {
+            const profInput = document.querySelector('input[id^="new-v53-profession-"]');
+            if (profInput && !profInput.value.trim()) {
+              profInput.value = 'Analista de Redes';
+              const m = detectFieldMetaFromInput(profInput);
+              if (m) window.v53HandleField(m.scope, m.flowUid, 'profession', 'Analista de Redes');
+            }
+          }
+          const spec = String(source.subarea_label || '').trim();
+          const specInput = document.querySelector('input[id^="new-v53-specialty-"]');
+          if (spec && specInput && !specInput.value.trim()) {
+            specInput.value = spec;
+            const m = detectFieldMetaFromInput(specInput);
+            if (m && typeof window.v53AddSpecialty === 'function') window.v53AddSpecialty(m.scope, m.flowUid);
+          }
+          if (/bacharelado\s+em\s+redes\s+de\s+computadores/i.test(String(source.curso_graduacao || '') + ' ' + String(source.observacao_parser || '')) && typeof window.v53SetPrimaryTraining === 'function' && typeof trainingRows === 'function') {
+            const bach = trainingRows().find(r => norm(typeof labelOf === 'function' ? labelOf(r) : (r.label_pt || r.label || '')) === 'bacharelado');
+            if (bach) window.v53SetPrimaryTraining('new', bach.id);
+          }
+          addTrainingIfExists('new', 'Cisco CCNA');
+          addTrainingIfExists('new', 'Huawei HCIA');
+          addTrainingIfExists('new', 'MikroTik MTCNA');
+          appendObs('Extração reforçada: perfil técnico classificado como TI → Analista de Redes → ISP / Backbone / NOC quando houver sinais de FTTH, GPON, BGP, OSPF, MPLS, NOC ou backbone.');
+          enhanceCatalogButtons();
+        } catch(err) { console.warn('[v56] fill curriculum', err); }
+      }, 140);
+      return result;
+    };
+    try { _fillNewFormFromCurriculum = window._fillNewFormFromCurriculum; } catch(_) {}
+  }
+
+  const observer = new MutationObserver(() => {
+    try { enhanceCatalogButtons(); } catch(_) {}
+  });
+  if (document.body) observer.observe(document.body, { childList:true, subtree:true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', enhanceCatalogButtons); else setTimeout(enhanceCatalogButtons, 80);
+})();
+</script>
+
 </body>
 </html>
