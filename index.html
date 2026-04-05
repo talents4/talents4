@@ -271,7 +271,7 @@ a{color:inherit;text-decoration:none}
 .data-tbl tr:last-child td{border-bottom:none}
 .data-tbl tr{transition:background .1s;cursor:pointer}.data-tbl tbody tr:nth-child(2n) td{background:color-mix(in srgb,var(--bg2) 90%, var(--bg3))}
 .data-tbl tr:hover td{background:var(--bg3)}
-.data-tbl td.td-name{color:var(--txt);font-weight:600;max-width:320px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;white-space:normal;line-height:1.35;overflow-wrap:anywhere;word-break:break-word}
+.data-tbl td.td-name{color:var(--txt);font-weight:600;min-width:210px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:table-cell;line-height:1.25}
 .data-tbl td.td-id{font-family:var(--mono);font-size:11px;color:var(--txt3);white-space:nowrap}
 .data-tbl td.td-center{text-align:center}
 .th-sort{display:inline-flex;align-items:center;gap:6px;background:none;border:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;cursor:pointer;padding:0}
@@ -9782,8 +9782,8 @@ function syncNewTaxonomySearch(kind) {
   const selectEl = document.getElementById(idMap[kind]);
   const searchEl = document.getElementById(searchMap[kind]);
   if (!searchEl || !selectEl) return;
-  const row = taxonomyFindById(kind === 'area' ? S.taxonomy.areas : kind === 'profession' ? S.taxonomy.professions : S.taxonomy.subareas, selectEl.value);
-  if (row) searchEl.value = taxonomyDisplay(row);
+  // Busca é só filtro visual. A opção oficial aparece apenas no select abaixo.
+  searchEl.value = '';
 }
 function filterNewTaxonomySelect(kind) {
   if (!taxonomyEnabled()) return;
@@ -9805,7 +9805,7 @@ function filterNewTaxonomySelect(kind) {
   if (q && rows.length === 1) {
     const row = rows[0];
     selectEl.value = String(row.id);
-    searchEl.value = taxonomyDisplay(row);
+    searchEl.value = '';
     if (kind === 'area') onNewCandidateAreaChange();
     else if (kind === 'profession') onNewCandidateProfessionChange();
     else syncNewTaxonomySearch('subarea');
@@ -9930,17 +9930,20 @@ function renderCandidateTaxonomyField(c, kind, label) {
   const rows = taxonomyRowsFor(kind, areaState.id, profState.id);
   const options = rows.map(row => `<option value="${esc(String(row.id))}" ${String(state.id)===String(row.id)?'selected':''}>${esc(taxonomyDisplay(row))}</option>`).join('');
   const disabled = kind === 'profession' ? !areaState.id : kind === 'subarea' ? !profState.id : false;
-  const placeholder = kind === 'area'
-    ? uiTranslate('Digite para filtrar áreas e selecione abaixo')
+  const searchPlaceholder = kind === 'area'
+    ? uiTranslate('Buscar área')
     : kind === 'profession'
-      ? uiTranslate('Selecione primeiro a área e depois a profissão')
-      : uiTranslate('Selecione primeiro a profissão e depois a subárea');
+      ? uiTranslate('Buscar profissão')
+      : uiTranslate('Buscar subárea');
   const hint = kind === 'area'
-    ? uiTranslate('Selecione uma área oficial para liberar as profissões relacionadas.')
+    ? uiTranslate('Escolha a área oficial no select abaixo.')
     : kind === 'subarea'
-      ? uiTranslate('Opcional. Vinculada à profissão selecionada.')
+      ? uiTranslate('Opcional. A lista depende da profissão selecionada.')
       : uiTranslate('A lista mostra apenas profissões oficiais da área selecionada.');
-  return `<div class="field-group"><label class="field-lbl">${esc(label)}</label><div class="field-taxonomy"><input class="field-input field-taxonomy-search" type="text" data-tax-scope="candidate" data-tax-kind="${esc(kind)}" value="${esc(state.label)}" placeholder="${esc(placeholder)}" oninput="filterCandidateTaxonomySelect('${esc(kind)}', this)"><div class="field-select-wrap"><select class="field-select" data-tax-scope="candidate" data-tax-kind="${esc(kind)}" onchange="onCandidateTaxonomyFieldChange('${esc(kind)}', this)" ${disabled ? 'disabled' : ''}><option value="">— ${esc(uiTranslate('Selecionar'))} —</option>${options}</select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('${esc(kind)}')" title="${esc(uiTranslate('Sugerir nova opção'))}">+</button></div><div class="field-taxonomy-hint">${esc(hint)}</div></div></div>`;
+  const selectPlaceholder = disabled
+    ? uiTranslate('Selecione a etapa anterior primeiro')
+    : uiTranslate('Selecionar');
+  return `<div class="field-group"><label class="field-lbl">${esc(label)}</label><div class="field-taxonomy"><input class="field-input field-taxonomy-search" type="text" data-tax-scope="candidate" data-tax-kind="${esc(kind)}" value="" placeholder="${esc(searchPlaceholder)}" oninput="filterCandidateTaxonomySelect('${esc(kind)}', this)"><div class="field-select-wrap"><select class="field-select" data-tax-scope="candidate" data-tax-kind="${esc(kind)}" onchange="onCandidateTaxonomyFieldChange('${esc(kind)}', this)" ${disabled ? 'disabled' : ''}><option value="">— ${esc(selectPlaceholder)} —</option>${options}</select><button type="button" class="field-select-add" onclick="requestTaxonomyOption('${esc(kind)}')" title="${esc(uiTranslate('Sugerir nova opção'))}">+</button></div><div class="field-taxonomy-hint">${esc(hint)}${state.label ? ' ' + esc(uiTranslate('Atual:')) + ' <strong style="color:var(--txt2)">' + esc(state.label) + '</strong>' : ''}</div></div></div>`;
 }
 function filterCandidateTaxonomySelect(kind, inputEl) {
   const wrap = inputEl?.closest('.field-taxonomy');
@@ -9962,7 +9965,7 @@ function filterCandidateTaxonomySelect(kind, inputEl) {
   if (q && rows.length === 1) {
     const row = rows[0];
     selectEl.value = String(row.id);
-    inputEl.value = taxonomyDisplay(row);
+    inputEl.value = '';
     onCandidateTaxonomyFieldChange(kind, selectEl);
   }
 }
@@ -12289,6 +12292,7 @@ function agNav(dir) {
     'Perfil (todos)':'Profil (alle)',
     'Profissão (todas)':'Beruf (alle)',
     'Nome':'Name',
+    'Atual:':'Aktuell:',
     'Alemão':'Deutsch',
     'Profissão':'Beruf',
     'Cidade':'Stadt',
