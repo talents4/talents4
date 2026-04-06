@@ -14676,7 +14676,7 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
 .pf-v53-chip-label{max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pf-v53-chip-row{display:flex;flex-wrap:wrap;gap:8px}
 .pf-v53-chip .pf-v53-btn{height:26px;padding:0 8px;border-radius:9px;font-size:11px}
-.pf-v53-summary{position:sticky;top:10px;z-index:4;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:linear-gradient(180deg,rgba(10,16,32,.96),rgba(9,13,27,.94));backdrop-filter:blur(10px);padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 24px rgba(0,0,0,.22)}
+.pf-v53-summary{position:relative;top:auto;z-index:1;border:1px solid rgba(255,255,255,.1);border-radius:16px;background:linear-gradient(180deg,rgba(10,16,32,.96),rgba(9,13,27,.94));backdrop-filter:blur(10px);padding:12px 14px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 24px rgba(0,0,0,.22);margin-bottom:14px}
 .pf-v53-summary-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .pf-v53-summary-title{font-size:13px;font-weight:800;color:var(--txt1);letter-spacing:.03em;text-transform:uppercase}
 .pf-v53-summary-sub{font-size:12px;color:var(--txt2)}
@@ -14691,7 +14691,7 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
 .pf-v53-summary-item-path{font-size:13px;color:var(--txt1);font-weight:700;line-height:1.35;word-break:break-word}
 .pf-v53-summary-item-meta{font-size:12px;color:var(--txt2)}
 @media (max-width: 720px){
-  .pf-v53-summary{top:6px;padding:10px 12px}
+  .pf-v53-summary{top:auto;padding:10px 12px;margin-bottom:12px}
   .pf-v53-summary-list{grid-template-columns:1fr}
 }
 
