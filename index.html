@@ -4337,7 +4337,7 @@ async function loadCandidateDetailById(candidateId, options = {}) {
   if (cached) return cached;
   const response = await apiGet({ route:'candidate', id: candidateId });
   const detail = response?.candidate || null;
-  if (!detail) throw new Error('Candidato nÃ£o encontrado.');
+  if (!detail) throw new Error('Candidato não encontrado.');
   detail.__partial = false;
   mergeCandidateIntoState(detail, { cacheDetail: true });
   return detail;
@@ -7189,7 +7189,7 @@ function renderEmployerHub(el) {
     S.candidateMatches = [];
   }
   if (!cacheStampFresh('matchesAt', CACHE_TTL.matches)) {
-    el.innerHTML = `<div class="ticket-empty">Carregando v nculos de employer sob demanda...</div>`;
+    el.innerHTML = `<div class="ticket-empty">Carregando vínculos de employer sob demanda...</div>`;
     if (!S.matchesPromise) {
       loadAllMatches({ force:false }).then(() => {
         if (S.view === 'employer') renderView();
@@ -7410,21 +7410,21 @@ function renderEmployerHub(el) {
   const rhDocUploadedAt = interviewMeta.drive_docx_uploaded_at || '';
   const rhDocDownloadUrl = (rhDocFileId || rhDocViewLink) ? _cvDownloadUrl(rhDocFileId, rhDocViewLink) : '';
   const rhDocLoading = !!(currentInterviewId && cachedInterview === undefined && S.candidateInterviewPromises?.[cid]);
-  const driveFilesSection = current && (cvDownloadUrl || currentInterviewId) ? section('?? Arquivos do candidato', `
+  const driveFilesSection = current && (cvDownloadUrl || currentInterviewId) ? section('Arquivos do candidato', `
         <div class="emp-summary-grid">
-          ${cvDownloadUrl ? box('Curr culo PDF', [cvFileName || 'Arquivo dispon vel no Drive', cvUploadedAt ? `Enviado em ${uiFormatDate(cvUploadedAt)}` : ''].filter(Boolean).join('   ')) : ''}
-          ${(rhDocDownloadUrl || currentInterviewId) ? box('Formul rio RH (Word)', rhDocDownloadUrl
-            ? [rhDocFileName || 'Arquivo DOCX dispon vel no Drive', rhDocUploadedAt ? `Enviado em ${uiFormatDate(rhDocUploadedAt)}` : ''].filter(Boolean).join('   ')
+          ${cvDownloadUrl ? box('Currículo PDF', [cvFileName || 'Arquivo disponível no Drive', cvUploadedAt ? `Enviado em ${uiFormatDate(cvUploadedAt)}` : ''].filter(Boolean).join(' • ')) : ''}
+          ${(rhDocDownloadUrl || currentInterviewId) ? box('Formulário RH (Word)', rhDocDownloadUrl
+            ? [rhDocFileName || 'Arquivo DOCX disponível no Drive', rhDocUploadedAt ? `Enviado em ${uiFormatDate(rhDocUploadedAt)}` : ''].filter(Boolean).join(' • ')
             : rhDocLoading
-              ? 'Carregando v nculo do formul rio no Drive...'
+              ? 'Carregando vínculo do formulário no Drive...'
               : 'Entrevista estruturada encontrada, mas ainda sem arquivo do Drive salvo.') : ''}
         </div>
         <div class="emp-actions" style="margin-top:10px">
-          ${cvDownloadUrl ? `<a class="emp-btn" href="${esc(cvDownloadUrl)}" target="_blank" rel="noopener" style="text-decoration:none">?? Baixar curr culo PDF</a>` : ''}
-          ${rhDocDownloadUrl ? `<a class="emp-btn" href="${esc(rhDocDownloadUrl)}" target="_blank" rel="noopener" style="text-decoration:none">?? Baixar formul rio Word</a>` : ''}
+          ${cvDownloadUrl ? `<a class="emp-btn" href="${esc(cvDownloadUrl)}" target="_blank" rel="noopener" style="text-decoration:none">Baixar currículo PDF</a>` : ''}
+          ${rhDocDownloadUrl ? `<a class="emp-btn" href="${esc(rhDocDownloadUrl)}" target="_blank" rel="noopener" style="text-decoration:none">Baixar formulário Word</a>` : ''}
           ${rhDocViewLink ? `<a class="emp-link" href="${esc(rhDocViewLink)}" target="_blank" rel="noopener">${esc(uiTranslate('Abrir no Drive'))}</a>` : ''}
         </div>
-      `, { subtitle:'Atalhos diretos para os arquivos j  enviados   pasta do candidato no Google Drive.' }) : '';
+      `, { subtitle:'Atalhos diretos para os arquivos já enviados à pasta do candidato no Google Drive.' }) : '';
 
   const currentDetailPanel = current ? `<div class="emp-inline-detail">
     <div class="emp-pane-hd">
@@ -8938,7 +8938,88 @@ function resetCandidateTicketDraft() {
   S.ticketDraft = ticketEmptyDraft();
   rerenderTicketPanel();
 }
-function upsertCandidateTicketDraft() {
+
+async function persistCurrentCandidateTicketHistory(nextHistory, successMessage = '✅ Ticket salvo com sucesso.') {
+  if (!S.currentCand) throw new Error('Nenhum candidato selecionado.');
+  const sess = getSession();
+  if (sess?.role === 'viewer') throw new Error('Visualizadores não podem editar tickets.');
+  const candidateId = String(S.currentCand?.ID || S.currentCand?.id || '').trim();
+  if (!candidateId) throw new Error('ID do candidato não encontrado.');
+  const actor = sess?.nome || 'web';
+
+  await apiPost({
+    action: 'updateCandidate',
+    id: candidateId,
+    fields: { historico_operacional: nextHistory },
+    actor,
+  });
+
+  S.currentCand.historico_operacional = nextHistory;
+  S.currentCand.__partial = false;
+  if (S.pendingEdits) delete S.pendingEdits['historico_operacional'];
+  mergeCandidateIntoState(S.currentCand, { cacheDetail:true });
+  invalidateCacheStamps('ticketsAt');
+  updateCandidateSaveUi();
+  rerenderTicketPanel();
+  _renderHistBlock(S.currentCand);
+  updateBadges();
+  try { await loadTicketBoardRows({ force:true, silent:true }); } catch (_) {}
+  if (S.view === 'tickets') renderView();
+  toast(successMessage, 'ok', 4000);
+}
+
+function findBestTicketCandidateMatch(query) {
+  const q = normalizeSearchToken(query || '');
+  if (!q) return null;
+  const list = Array.isArray(S.candidates) ? S.candidates : [];
+  const scored = list.map((candidate, idx) => {
+    const id = String(candidate?.ID || candidate?.id || '').trim();
+    const name = String(fv(candidate, 'Nome completo', 'nome_completo') || '').trim();
+    const idNorm = normalizeSearchToken(id);
+    const nameNorm = normalizeSearchToken(name);
+    let score = 0;
+    if (idNorm === q) score = 1000;
+    else if (nameNorm === q) score = 950;
+    else if (idNorm.startsWith(q)) score = 900;
+    else if (nameNorm.startsWith(q)) score = 850;
+    else if (nameNorm.includes(q)) score = 700;
+    else if (idNorm.includes(q)) score = 650;
+    else return null;
+    return { candidate, score: score - idx };
+  }).filter(Boolean).sort((a,b) => b.score - a.score);
+  return scored.length ? { best: scored[0].candidate, total: scored.length } : null;
+}
+
+async function promptNewTicketFromBoard() {
+  try {
+    if (!Array.isArray(S.candidates) || !S.candidates.length) {
+      await loadAll();
+    }
+    const query = String(window.prompt('Digite o nome ou ID do candidato para abrir um novo ticket:', '') || '').trim();
+    if (!query) return;
+    const match = findBestTicketCandidateMatch(query);
+    if (!match?.best) {
+      toast(`Nenhum candidato encontrado para "${query}".`, 'warn', 4000);
+      return;
+    }
+    const candidateId = String(match.best?.ID || match.best?.id || '').trim();
+    await openTicketBoardCandidate(candidateId, '', false);
+    resetCandidateTicketDraft();
+    if (match.total > 1) {
+      toast(`Abrindo o melhor resultado para "${query}". Revise o candidato antes de salvar o ticket.`, 'warn', 4500);
+    } else {
+      toast('Preencha o ticket e clique em Adicionar ticket.', 'ok', 3500);
+    }
+    setTimeout(() => {
+      const field = document.querySelector('#t-tickets [data-ticket-field="assunto"]');
+      field?.focus();
+    }, 180);
+  } catch (e) {
+    toast('Erro ao abrir a criação do ticket: ' + (e?.message || e), 'err', 5000);
+  }
+}
+
+async function upsertCandidateTicketDraft() {
   if (!S.currentCand) return;
   const sess = getSession();
   if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar tickets.', 'warn'); return; }
@@ -8967,14 +9048,19 @@ function upsertCandidateTicketDraft() {
     atualizado_por: actor,
   };
   const nextTickets = [ticket, ...tickets.filter(t => t.id !== ticket.id)].slice(0, 100);
-  S.pendingEdits['historico_operacional'] = histSerializeBundle({ ...bundle, tickets: nextTickets });
-  S.ticketDraft = ticketEmptyDraft();
-  updateCandidateSaveUi();
-  rerenderTicketPanel();
-  _renderHistBlock(S.currentCand);
-  toast(existing ? '✅ Ticket atualizado no rascunho. Clique em Salvar para persistir.' : '✅ Ticket adicionado ao rascunho. Clique em Salvar para persistir.', 'ok', 4500);
+  const nextHistory = histSerializeBundle({ ...bundle, tickets: nextTickets });
+  try {
+    await persistCurrentCandidateTicketHistory(
+      nextHistory,
+      existing ? '✅ Ticket atualizado com sucesso.' : '✅ Ticket criado com sucesso.'
+    );
+    S.ticketDraft = ticketEmptyDraft();
+    rerenderTicketPanel();
+  } catch (e) {
+    toast('Erro ao salvar ticket: ' + (e?.message || e), 'err', 5000);
+  }
 }
-function deleteCandidateTicket(ticketId) {
+async function deleteCandidateTicket(ticketId) {
   if (!S.currentCand || !ticketId) return;
   const sess = getSession();
   if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar tickets.', 'warn'); return; }
@@ -8982,12 +9068,14 @@ function deleteCandidateTicket(ticketId) {
   const bundle = histReadBundle(S.currentCand);
   const nextTickets = (bundle.tickets || []).filter(t => t.id !== ticketId);
   if (nextTickets.length === (bundle.tickets || []).length) return;
-  S.pendingEdits['historico_operacional'] = histSerializeBundle({ ...bundle, tickets: nextTickets });
-  if (S.ticketDraft?.id === ticketId) S.ticketDraft = ticketEmptyDraft();
-  updateCandidateSaveUi();
-  rerenderTicketPanel();
-  _renderHistBlock(S.currentCand);
-  toast('✅ Ticket removido do rascunho. Clique em Salvar para persistir.', 'ok', 4500);
+  const nextHistory = histSerializeBundle({ ...bundle, tickets: nextTickets });
+  try {
+    await persistCurrentCandidateTicketHistory(nextHistory, '✅ Ticket excluído com sucesso.');
+    if (S.ticketDraft?.id === ticketId) S.ticketDraft = ticketEmptyDraft();
+    rerenderTicketPanel();
+  } catch (e) {
+    toast('Erro ao excluir ticket: ' + (e?.message || e), 'err', 5000);
+  }
 }
 function buildTicketPanel(c) {
   const tickets = getCandidateTickets(c);
@@ -9155,7 +9243,7 @@ function buildTicketBoardRow(candidate, ticket) {
     candidateId,
     candidateName: displayCandidateName(candidate) || fv(candidate, 'Nome completo', 'nome_completo') || 'Candidato',
     stage: fv(candidate, 'STATUS PIPELINE', 'status_pipeline') || '',
-    responsavel: fv(candidate, 'Respons vel interno', 'responsavel_interno') || '',
+    responsavel: fv(candidate, 'Responsável interno', 'responsavel_interno') || '',
     prioridadeComercial: fv(candidate, 'Prioridade comercial', 'prioridade_comercial') || '',
     ticketId: ticket.id,
     assunto: ticket.assunto || '',
@@ -9301,13 +9389,13 @@ async function openTicketBoardCandidate(candidateId, ticketId = '', editMode = f
 }
 async function updateTicketFromBoard(candidateId, ticketId, patch) {
   const sess = getSession();
-  if (sess?.role === 'viewer') { toast('?? Visualizadores n o podem editar tickets.', 'warn'); return; }
+  if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar tickets.', 'warn'); return; }
   const actor = sess?.nome || 'web';
   const candidate = await loadCandidateDetailById(candidateId, { force:true });
   const bundle = histReadBundle(candidate);
   const currentTickets = Array.isArray(bundle.tickets) ? bundle.tickets.slice() : [];
   const ticket = currentTickets.find((row) => row.id === ticketId);
-  if (!ticket) throw new Error('Ticket n o encontrado.');
+  if (!ticket) throw new Error('Ticket não encontrado.');
   const nextTicket = {
     ...ticket,
     ...(patch || {}),
@@ -9359,7 +9447,7 @@ function renderTicketBoard(el) {
     loadTicketBoardRows({ force:false, silent:true }).then(() => {
       if (S.view === 'tickets') renderView();
     }).catch((e) => {
-      el.innerHTML = `<div class="ticket-empty">N o foi poss vel carregar os tickets: ${esc(e?.message || e || 'erro desconhecido')}</div>`;
+      el.innerHTML = `<div class="ticket-empty">Não foi possível carregar os tickets: ${esc(e?.message || e || 'erro desconhecido')}</div>`;
     });
     return;
   }
@@ -9376,7 +9464,7 @@ function renderTicketBoard(el) {
   const stageOptions = Array.from(new Set(rows.map((row) => String(row.stage || '').trim()).filter(Boolean))).sort((a,b) => a.localeCompare(b, 'pt-BR'));
   const toolbarNote = filtered.length === rows.length
     ? `${rows.length} ticket(s) carregados com payload reduzido.`
-    : `${filtered.length} de ${rows.length} ticket(s) ap s os filtros.`;
+    : `${filtered.length} de ${rows.length} ticket(s) após os filtros.`;
   const pagination = pages > 1 ? `<div class="pagination">
     <button class="pg-btn" onclick="setPage(${S.page-1})" ${S.page===1?'disabled':''}>‹</button>
     ${Array.from({length:Math.min(pages,7)},(_,i)=>{ const p=pages<=7?i+1:(S.page<=4?i+1:(S.page>=pages-3?pages-6+i:S.page-3+i)); return `<button class="pg-btn ${p===S.page?'active':''}" onclick="setPage(${p})">${p}</button>`; }).join('')}
@@ -9389,23 +9477,24 @@ function renderTicketBoard(el) {
         <div class="ticket-composer-head">
           <div>
             <div class="section-hdr" style="margin-top:0">Central de tickets</div>
-            <div class="ticket-composer-sub">Acompanhe as conversas de WhatsApp dos candidatos em uma fila  nica, com filtros vivos, abertura r pida do candidato e atualiza  o direta de status.</div>
+            <div class="ticket-composer-sub">Acompanhe as conversas de WhatsApp dos candidatos em uma fila única, com filtros vivos, abertura rápida do candidato e atualização direta de status.</div>
           </div>
           <div class="ticket-board-actions">
+            <button type="button" class="btn btn-ghost" onclick="promptNewTicketFromBoard()">Novo ticket</button>
             <button type="button" class="btn btn-ghost" onclick="clearTicketBoardFilters()">Limpar filtros</button>
             <button type="button" class="btn btn-primary" onclick="refreshTicketBoard(true)">Atualizar fila</button>
           </div>
         </div>
         <div class="ticket-board-grid">
           <div class="ticket-kpi"><div class="ticket-kpi-label">Total</div><div class="ticket-kpi-value">${stats.total}</div><div class="ticket-kpi-sub">tickets lidos sob demanda</div></div>
-          <div class="ticket-kpi"><div class="ticket-kpi-label">Em aberto</div><div class="ticket-kpi-value">${filteredStats.open}</div><div class="ticket-kpi-sub">necessitam a  o ou acompanhamento</div></div>
+          <div class="ticket-kpi"><div class="ticket-kpi-label">Em aberto</div><div class="ticket-kpi-value">${filteredStats.open}</div><div class="ticket-kpi-sub">necessitam ação ou acompanhamento</div></div>
           <div class="ticket-kpi"><div class="ticket-kpi-label">Aguardando</div><div class="ticket-kpi-value">${filteredStats.waiting}</div><div class="ticket-kpi-sub">retorno do candidato ou follow-up</div></div>
           <div class="ticket-kpi"><div class="ticket-kpi-label">Atrasados</div><div class="ticket-kpi-value">${filteredStats.overdue}</div><div class="ticket-kpi-sub">follow-up vencido</div></div>
         </div>
         <div class="ticket-board-filters" style="margin-top:14px">
           <div class="field-group">
             <label class="field-lbl">Buscar ticket ou candidato</label>
-            <input class="field-input" value="${esc(state.q)}" oninput="setTicketBoardSearch(this.value)" placeholder="Nome, assunto, conversa, pr xima a  o...">
+            <input class="field-input" value="${esc(state.q)}" oninput="setTicketBoardSearch(this.value)" placeholder="Nome, assunto, conversa, próxima ação...">
           </div>
           <div class="field-group">
             <label class="field-lbl">Status</label>
@@ -9422,7 +9511,7 @@ function renderTicketBoard(el) {
             </select>
           </div>
           <div class="field-group">
-            <label class="field-lbl">Respons vel</label>
+            <label class="field-lbl">Responsável</label>
             <select class="field-select" onchange="setTicketBoardFilter('responsavel', this.value)">
               <option value="">Todos</option>
               ${responsavelOptions.map((opt) => `<option value="${esc(opt)}" ${state.responsavel===opt?'selected':''}>${esc(opt)}</option>`).join('')}
@@ -9442,7 +9531,7 @@ function renderTicketBoard(el) {
               <option value="abertos" ${state.due==='abertos'?'selected':''}>Somente abertos</option>
               <option value="atrasados" ${state.due==='atrasados'?'selected':''}>Atrasados</option>
               <option value="hoje" ${state.due==='hoje'?'selected':''}>Hoje</option>
-              <option value="7dias" ${state.due==='7dias'?'selected':''}>Pr ximos 7 dias</option>
+              <option value="7dias" ${state.due==='7dias'?'selected':''}>Próximos 7 dias</option>
               <option value="sem_data" ${state.due==='sem_data'?'selected':''}>Sem data</option>
             </select>
           </div>
@@ -9450,9 +9539,9 @@ function renderTicketBoard(el) {
         <div class="ticket-board-toolbar" style="margin-top:12px">
           <div class="ticket-board-toolbar-note">${esc(toolbarNote)}</div>
           <div class="field-group" style="min-width:220px;max-width:260px">
-            <label class="field-lbl">Ordena  o</label>
+            <label class="field-lbl">Ordenação</label>
             <select class="field-select" onchange="setTicketBoardFilter('sort', this.value)">
-              <option value="followup_asc" ${state.sort==='followup_asc'?'selected':''}>Follow-up mais pr ximo</option>
+              <option value="followup_asc" ${state.sort==='followup_asc'?'selected':''}>Follow-up mais próximo</option>
               <option value="updated_desc" ${state.sort==='updated_desc'?'selected':''}>Atualizados recentemente</option>
               <option value="priority_desc" ${state.sort==='priority_desc'?'selected':''}>Prioridade mais alta</option>
             </select>
@@ -9465,11 +9554,11 @@ function renderTicketBoard(el) {
             <div class="ticket-board-candidate">
               <div class="ticket-board-candidate-main">
                 <div class="ticket-board-candidate-name">${esc(row.candidateName)}</div>
-                <div class="ticket-board-candidate-sub">${esc([row.stage || 'Sem etapa', row.responsavel || 'Sem respons vel'].filter(Boolean).join('   '))}</div>
+                <div class="ticket-board-candidate-sub">${esc([row.stage || 'Sem etapa', row.responsavel || 'Sem responsável'].filter(Boolean).join(' • '))}</div>
               </div>
               <div class="ticket-card-meta">
                 <span class="ticket-badge ${getTicketStatusClass(row.status)}">${esc(row.status || 'Aberto')}</span>
-                <span class="ticket-badge ${getTicketPriorityClass(row.prioridade)}">${esc(row.prioridade || 'M dia')}</span>
+                <span class="ticket-badge ${getTicketPriorityClass(row.prioridade)}">${esc(row.prioridade || 'Média')}</span>
                 <span class="ticket-badge status-open">${esc(row.canal || 'WhatsApp')}</span>
               </div>
             </div>
@@ -9484,15 +9573,15 @@ function renderTicketBoard(el) {
             <div class="ticket-card-body">
               <div class="ticket-card-block full">
                 <div class="ticket-card-lbl">O que o candidato falou no WhatsApp</div>
-                <div class="ticket-card-val">${esc(row.conversa || ' ')}</div>
+                <div class="ticket-card-val">${esc(row.conversa || '—')}</div>
               </div>
               <div class="ticket-card-block">
-                <div class="ticket-card-lbl">Pr xima a  o</div>
-                <div class="ticket-card-val">${esc(row.proxima_acao || 'Sem a  o definida')}</div>
+                <div class="ticket-card-lbl">Próxima ação</div>
+                <div class="ticket-card-val">${esc(row.proxima_acao || 'Sem ação definida')}</div>
               </div>
               <div class="ticket-card-block">
                 <div class="ticket-card-lbl">Follow-up</div>
-                <div class="ticket-card-val">${esc(ticketFormatDue(row.followup_em))}${ticketIsOverdue(row) ? '   Em atraso' : ''}</div>
+                <div class="ticket-card-val">${esc(ticketFormatDue(row.followup_em))}${ticketIsOverdue(row) ? ' • Em atraso' : ''}</div>
               </div>
             </div>
             <div class="ticket-card-foot">
@@ -10757,8 +10846,8 @@ async function saveRhInterviewDraft(candidateId, actor) {
       };
       draft.fileName = driveDocMeta.drive_docx_file_name || draft.fileName;
     } catch (uploadErr) {
-      console.warn('[RH DOCX] falha ao enviar formul rio ao Drive:', uploadErr);
-      toast(`? Formul rio RH salvo sem upload no Drive: ${uploadErr?.message || uploadErr}`, 'warn', 7000);
+      console.warn('[RH DOCX] falha ao enviar formulário ao Drive:', uploadErr);
+      toast(`? Formulário RH salvo sem upload no Drive: ${uploadErr?.message || uploadErr}`, 'warn', 7000);
     }
   }
   draft.meta = { ...(draft.meta || {}), ...Object.fromEntries(Object.entries(driveDocMeta).filter(([, value]) => !!value)) };
