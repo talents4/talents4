@@ -385,6 +385,165 @@ a{color:inherit;text-decoration:none}
 .hist-msg strong { color: var(--teal); font-weight: 600; }
 .hist-empty { padding: 8px 12px; font-size: 11px; color: var(--txt3); }
 
+/* ── Tickets do candidato ── */
+.ticket-shell { display:flex; flex-direction:column; gap:14px; }
+.ticket-composer {
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:rgba(255,255,255,.02);
+  padding:14px;
+}
+.ticket-composer-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  flex-wrap:wrap;
+}
+.ticket-composer-sub {
+  font-size:11px;
+  line-height:1.5;
+  color:var(--txt3);
+  margin-top:4px;
+  max-width:620px;
+}
+.ticket-stats { display:flex; gap:8px; flex-wrap:wrap; }
+.ticket-stat {
+  min-width:112px;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:var(--bg3);
+}
+.ticket-stat-lbl {
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--txt3);
+}
+.ticket-stat-val {
+  margin-top:6px;
+  font-size:20px;
+  font-weight:800;
+  color:var(--txt);
+}
+.ticket-actions {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.ticket-hint {
+  margin-right:auto;
+  font-size:10.5px;
+  color:var(--txt3);
+}
+.ticket-list {
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.ticket-card {
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:var(--bg2);
+  padding:13px 14px;
+}
+.ticket-card-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.ticket-card-title {
+  font-size:13px;
+  font-weight:800;
+  color:var(--txt);
+}
+.ticket-card-meta {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:8px;
+}
+.ticket-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:4px 9px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.03em;
+  border:1px solid transparent;
+}
+.ticket-badge.status-open { background:rgba(37,99,235,.10); color:#8fc3ff; border-color:rgba(37,99,235,.22); }
+.ticket-badge.status-wait { background:rgba(245,158,11,.10); color:#f5c000; border-color:rgba(245,158,11,.22); }
+.ticket-badge.status-done { background:rgba(34,197,94,.10); color:#4ade80; border-color:rgba(34,197,94,.22); }
+.ticket-badge.status-closed { background:rgba(148,163,184,.10); color:#cbd5e1; border-color:rgba(148,163,184,.22); }
+.ticket-badge.priority-high { background:rgba(239,68,68,.10); color:#ff8a8a; border-color:rgba(239,68,68,.22); }
+.ticket-badge.priority-medium { background:rgba(245,158,11,.10); color:#f5c000; border-color:rgba(245,158,11,.22); }
+.ticket-badge.priority-low { background:rgba(34,197,94,.10); color:#86efac; border-color:rgba(34,197,94,.22); }
+.ticket-card-body {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.ticket-card-block {
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--bg3);
+  padding:10px 11px;
+}
+.ticket-card-block.full { grid-column:1 / -1; }
+.ticket-card-lbl {
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--txt3);
+  margin-bottom:7px;
+}
+.ticket-card-val {
+  font-size:12px;
+  line-height:1.6;
+  color:var(--txt);
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.ticket-card-foot {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+}
+.ticket-card-updated {
+  font-size:10.5px;
+  color:var(--txt3);
+  font-family:var(--mono);
+}
+.ticket-empty {
+  border:1px dashed var(--border);
+  border-radius:16px;
+  padding:18px;
+  text-align:center;
+  color:var(--txt3);
+  font-size:12px;
+  background:rgba(255,255,255,.02);
+}
+@media (max-width: 820px){
+  .ticket-card-body { grid-template-columns:1fr; }
+  .ticket-stat { min-width:0; flex:1 1 140px; }
+}
+
 /* ── Alertas de Inconsistência (sprint 2) ── */
 .alerts-strip {
   display: flex;
@@ -533,6 +692,16 @@ a{color:inherit;text-decoration:none}
 .filter-chip.active{border-color:var(--accent);color:var(--accent2);background:var(--accent-bg)}
 .filter-select{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:12px;color:var(--txt2);cursor:pointer}
 .filter-select option{background:var(--bg2)}
+.active-filters-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:-4px 0 14px}
+.active-filters-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3)}
+.active-filter-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:color-mix(in srgb,var(--bg2) 82%, var(--accent-bg));border:1px solid var(--border2);font-size:11.5px;color:var(--txt2)}
+.active-filter-chip strong{color:var(--txt)}
+.active-filter-chip button{width:18px;height:18px;border:none;border-radius:999px;background:rgba(255,255,255,.06);color:var(--txt3);cursor:pointer;line-height:1;font-size:12px}
+.active-filter-chip button:hover{background:rgba(255,255,255,.12);color:var(--txt)}
+.table-empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:36px 18px;color:var(--txt3);text-align:center}
+.table-empty-state strong{font-size:15px;color:var(--txt)}
+.table-empty-state p{max-width:560px;font-size:12.5px;line-height:1.5}
+.table-empty-state .btn{margin-top:2px}
 .field-select-wrap{display:flex;gap:8px;align-items:center}.field-select-wrap .field-select{flex:1}.field-select-add,.field-select-searchbtn{min-width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:var(--bg3);color:var(--txt2);cursor:pointer;font-size:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.field-select-add:hover,.field-select-searchbtn:hover,.field-taxonomy.search-open .field-select-searchbtn{border-color:var(--accent);color:var(--txt)}
 .field-taxonomy{display:grid;gap:6px}.field-taxonomy-hint{font-size:10.5px;color:var(--txt3);line-height:1.35}.field-taxonomy-search-wrap{display:none}.field-taxonomy.search-open .field-taxonomy-search-wrap{display:block}.field-taxonomy-search{padding:8px 10px}.field-taxonomy-search::placeholder{color:var(--txt3)}
 .pagination{display:flex;align-items:center;justify-content:center;gap:6px;padding:14px 0 0}
@@ -2403,6 +2572,53 @@ function clearSession(){ try { sessionStorage.removeItem('t4_session'); } catch(
 const VIEW_KEY = 't4_last_view';
 const DASHBOARD_SCOPE_KEY = 't4_dashboard_scope';
 const EMPLOYER_HUB_KEY = 't4_employer_hub';
+const FILTERS_KEY = 't4_candidate_filters';
+const TICKET_STATUS_OPTIONS = ['Aberto', 'Aguardando candidato', 'Follow-up agendado', 'Resolvido', 'Encerrado'];
+const TICKET_PRIORITY_OPTIONS = ['Alta', 'Média', 'Baixa'];
+const INACTIVATION_REASON_OPTIONS = [
+  'Sem retorno do candidato',
+  'Desistiu do processo',
+  'Perfil não aderente',
+  'Idioma insuficiente',
+  'Documentação pendente',
+  'Reprovado na entrevista',
+  'Mudança de planos',
+  'Duplicado',
+  'Arquivamento estratégico',
+  'Outro'
+];
+function defaultCandidateFilterState() {
+  return {
+    status:'',
+    q:'',
+    perfil:'',
+    alemao:'',
+    profissao:'',
+    empregador:'',
+    substatus:'',
+    prioridade:'',
+    _customFn: null,
+    _customLabel: '',
+    _nlpProfissao: null,
+    _nlpAlemao: null,
+    _nlpCidade: null,
+    _nlpIdadeMax: null,
+    _nlpIdadeMin: null,
+    _nlpQuery: '',
+  };
+}
+function normalizeCandidateFilterState(raw) {
+  const next = { ...defaultCandidateFilterState(), ...(raw || {}) };
+  next._customFn = null;
+  next._customLabel = '';
+  next._nlpProfissao = next._nlpProfissao || null;
+  next._nlpAlemao = next._nlpAlemao || null;
+  next._nlpCidade = next._nlpCidade || null;
+  next._nlpIdadeMax = next._nlpIdadeMax === null || next._nlpIdadeMax === '' || next._nlpIdadeMax === undefined ? null : Number(next._nlpIdadeMax);
+  next._nlpIdadeMin = next._nlpIdadeMin === null || next._nlpIdadeMin === '' || next._nlpIdadeMin === undefined ? null : Number(next._nlpIdadeMin);
+  next._nlpQuery = String(next._nlpQuery || '').trim();
+  return next;
+}
 function persistUiState(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch(_) {} }
 function readUiState(key, fallback) {
   try {
@@ -2802,6 +3018,7 @@ async function doLogout() {
   } catch(e) {
     console.warn('[Logout] signOut falhou (não crítico):', e.message);
   }
+  await stopRealtime().catch(e => console.warn('[Realtime] cleanup falhou no logout:', e?.message || e));
   clearSession();
   if (S.syncTimer) { clearInterval(S.syncTimer); S.syncTimer = null; }
   document.getElementById('app').style.display = 'none';
@@ -2831,13 +3048,17 @@ const S = {
   rhInterviewDirty: false,
   currentInterview: null,
   page: 1, pageSize: 80,
-  filter: { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null },
+  filter: normalizeCandidateFilterState(readUiState(FILTERS_KEY, defaultCandidateFilterState())),
   sort: { view:'', key:'', dir:'' },
   syncTimer: null,
   lastSync: null,
   parserAuditLogs: [],
   parserAuditError: '',
   taxonomy: { areas: [], professions: [], subareas: [], requestsEnabled: false },
+  ticketDraft: null,
+  realtimeChannels: [],
+  realtimeFlushTimer: null,
+  lastRealtimeToastAt: 0,
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -3213,9 +3434,14 @@ async function apiPost(body) {
   }
 
   if (action === 'setActive') {
+    const exitDate = body.date || new Date().toISOString().split('T')[0];
     const { error } = await supa.from('candidatos').update({
       ativo: body.active ? 'SIM' : 'NÃO',
-      motivo_inativacao: body.reason || '',
+      motivo_inativacao: body.active ? null : (body.reason || ''),
+      data_inativacao: body.active ? null : exitDate,
+      etapa_de_saida: body.active ? null : (body.exitStage || ''),
+      reativavel: body.active ? null : (body.reativavel || 'SIM'),
+      observacao_final_de_saida: body.active ? null : (body.detail || null),
       ultima_atualizacao: new Date().toISOString(),
       atualizado_por: actor
     }).eq('id', body.id);
@@ -3611,11 +3837,49 @@ function _driveUpdateSettingsUI() {
        <button class="btn btn-xs btn-ghost" onclick="driveGetToken().then(_driveUpdateSettingsUI).catch(e=>toast('❌ '+e.message,'err'))" style="margin-left:8px">Conectar agora</button>`;
 }
 
+function syncTopbarSearchInputs() {
+  const globalSearch = document.getElementById('global-search');
+  if (globalSearch) globalSearch.value = S.filter.q || '';
+  const nlpSearch = document.getElementById('nlp-search-input');
+  if (nlpSearch) nlpSearch.value = S.filter._nlpQuery || '';
+}
+async function stopRealtime() {
+  if (S.realtimeFlushTimer) {
+    clearTimeout(S.realtimeFlushTimer);
+    S.realtimeFlushTimer = null;
+  }
+  const channels = Array.isArray(S.realtimeChannels) ? S.realtimeChannels.filter(Boolean) : [];
+  if (!channels.length) return;
+  S.realtimeChannels = [];
+  try {
+    const supa = await getSupa();
+    await Promise.all(channels.map(ch => supa.removeChannel(ch).catch(() => null)));
+  } catch (e) {
+    console.warn('[Realtime] falha ao remover canais antigos:', e?.message || e);
+  }
+}
+function scheduleRealtimeCandidateRefresh(opts = {}) {
+  if (S.realtimeFlushTimer) clearTimeout(S.realtimeFlushTimer);
+  S.realtimeFlushTimer = setTimeout(() => {
+    S.realtimeFlushTimer = null;
+    S.dashboard = buildDashboardPayload(S.candidates);
+    updateBadges();
+    renderView();
+    const now = Date.now();
+    if (opts.toast !== false && !document.hidden && now - (S.lastRealtimeToastAt || 0) > 8000) {
+      S.lastRealtimeToastAt = now;
+      toast('Atualizacao em tempo real concluida', 'ok', 1800);
+      return;
+      toast('â†» Dados atualizados em tempo real', 'ok', 1800);
+    }
+  }, opts.delay || 180);
+}
 async function startRealtime() {
   const supa = await getSupa();
+  await stopRealtime();
 
   // ── Candidatos: realtime updates ──────────────────────────
-  supa.channel('candidatos-changes')
+  const candidatesChannel = supa.channel('candidatos-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'candidatos' },
       payload => {
         console.log('[Realtime:candidatos]', payload.eventType, payload.new?.id);
@@ -3630,14 +3894,15 @@ async function startRealtime() {
         } else if (payload.eventType === 'DELETE' && payload.old) {
           S.candidates = (S.candidates||[]).filter(c => c.id !== payload.old.id);
         }
-        S.dashboard = buildDashboardPayload(S.candidates);
+        scheduleRealtimeCandidateRefresh();
+        return;
         renderView();  // ← corrigido: era renderCurrentView() — undefined
         toast('↻ Dados atualizados', 'ok', 2000); // ← corrigido: era showToast() — undefined
       })
     .subscribe();
 
   // ── Agenda: realtime updates ──────────────────────────────
-  supa.channel('agenda-changes')
+  const agendaChannel = supa.channel('agenda-changes')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'agenda' },
       payload => {
         console.log('[Realtime:agenda]', payload.eventType, payload.new?.id);
@@ -3654,6 +3919,7 @@ async function startRealtime() {
         if (S.view === 'agenda') renderView();
       })
     .subscribe();
+  S.realtimeChannels = [candidatesChannel, agendaChannel];
 }
 
 
@@ -3670,7 +3936,10 @@ async function initApp() {
     await refreshAdminMfaState();
     agLoad().catch(e => console.warn('[Agenda] Load falhou na init:', e.message));
     startRealtime().catch(e => console.warn('[Realtime]', e));
-    nav(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
+    _navSetupUI(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
+    clearSort();
+    syncTopbarSearchInputs();
+    renderView();
     startAutoSync();
     applyViewerRestrictions();
     const sess = getSession();
@@ -3681,7 +3950,10 @@ async function initApp() {
   } catch(e) {
     setSyncStatus('err');
     toast('⚠ Erro ao carregar dados: ' + e.message, 'err');
-    nav(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
+    _navSetupUI(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
+    clearSort();
+    syncTopbarSearchInputs();
+    renderView();
   }
 }
 
@@ -3742,6 +4014,7 @@ async function loadAll() {
 function startAutoSync() {
   if (S.syncTimer) clearInterval(S.syncTimer);
   S.syncTimer = setInterval(() => {
+    if (document.hidden) return;
     loadAll().then(() => { if (S.view === 'dashboard') renderView(); }).catch(() => {});
   }, SYNC_INTERVAL);
 }
@@ -3793,6 +4066,7 @@ function _navSetupUI(view) {
   const showSearch = ['candidates','prioritarios','kanban','triagem','entrevistas','analise','alemao','documentacao','employer','inativos'].includes(view);
   document.getElementById('search-wrap').style.display = showSearch ? 'flex' : 'none';
   document.getElementById('nlp-search-wrap').style.display = showSearch ? 'flex' : 'none';
+  syncTopbarSearchInputs();
 }
 
 function clearSort() {
@@ -5844,6 +6118,7 @@ function openEmployerModal(employerData = null) {
         </div>
       </div>
       <div class="emp-modal-foot">
+        ${isEdit ? `<button type="button" class="emp-btn btn-danger" onclick="deleteEmployerConfirm('${esc(d.id||'')}','${esc(d.nome||'').replace(/'/g, "\\'")}')">🗑 Excluir empregador</button>` : ''}
         <button type="button" class="emp-btn" onclick="closeEmployerModal()">Cancelar</button>
         <button type="button" class="emp-btn primary" onclick="saveEmployerModal()">💾 Salvar empregador</button>
       </div>
@@ -5924,6 +6199,53 @@ async function saveEmployerModal() {
   } catch (e) {
     toast('❌ Erro ao salvar empregador: ' + (e?.message || e), 'err', 5000);
     if (btn) { btn.textContent = '💾 Salvar empregador'; btn.disabled = false; }
+  }
+}
+
+async function deleteEmployerConfirm(employerId, employerName = '') {
+  if (!employerId) return;
+  const matches = (S.candidateMatches || []).filter(m => String(m.empregador_id || m.employers?.id || '') === String(employerId));
+  const linkedCandidates = new Set(matches.map(m => String(m.candidato_id || ''))).size;
+  const label = employerName || (S.employers || []).find(e => String(e.id || '') === String(employerId))?.nome || 'este empregador';
+  const confirmMsg = linkedCandidates
+    ? `Excluir "${label}"? Isso removerá também ${matches.length} vínculo(s) com ${linkedCandidates} candidato(s).`
+    : `Excluir "${label}"?`;
+  if (!confirm(confirmMsg)) return;
+  try {
+    const supa = await getSupa();
+    const sess = getSession();
+    const legacyCandidateIds = (S.candidates || [])
+      .filter(c => normalizeEmployerNameClient(getEmployerDisplay(c)) === normalizeEmployerNameClient(label))
+      .map(c => String(c.ID || c.id || ''))
+      .filter(Boolean);
+    if (matches.length) {
+      const { error: matchErr } = await supa.from('candidate_employer_matches').delete().eq('empregador_id', employerId);
+      if (matchErr) throw matchErr;
+    }
+    if (legacyCandidateIds.length) {
+      const { error: legacyErr } = await supa.from('candidatos').update({
+        hospital_alvo: null,
+        employer_nome: null,
+        status_employer: null,
+        retorno_employer: null,
+        data_envio_employer: null,
+        ultima_atualizacao: new Date().toISOString(),
+        atualizado_por: sess?.nome || 'web'
+      }).in('id', legacyCandidateIds);
+      if (legacyErr) console.warn('[Employer] limpeza de campos legados falhou:', legacyErr.message);
+    }
+    const { error } = await supa.from('employers').delete().eq('id', employerId);
+    if (error) throw error;
+    closeEmployerModal();
+    if (S.employerHub?.selectedEmployer === `emp:${employerId}`) {
+      S.employerHub.selectedEmployer = '';
+      S.employerHub.selectedCandidateId = '';
+    }
+    await loadAll();
+    renderView();
+    toast('✅ Empregador excluído.', 'ok');
+  } catch (e) {
+    toast('❌ Erro ao excluir empregador: ' + (e?.message || e), 'err', 5000);
   }
 }
 
@@ -6054,9 +6376,16 @@ async function saveMatchModal() {
   const candidatoId = document.getElementById('mm-cand-id')?.value || '';
   const empregadorId = document.getElementById('mm-emp-id')?.value || '';
   if (!empregadorId) { toast('❌ Selecione um empregador.', 'err'); return; }
+  const sess = getSession();
 
   const elegRaw = document.getElementById('mm-elegivel')?.value || '';
   const elegivel = elegRaw === 'true' ? true : elegRaw === 'false' ? false : null;
+  const dataEnvio = document.getElementById('mm-envio')?.value || null;
+  const dataRetorno = document.getElementById('mm-retorno')?.value || null;
+  if (dataEnvio && dataRetorno && dataRetorno < dataEnvio) {
+    toast('⚠ A data de retorno não pode ser anterior à data de envio.', 'warn');
+    return;
+  }
 
   const payload = {
     candidato_id: candidatoId,
@@ -6065,15 +6394,15 @@ async function saveMatchModal() {
     prioridade: parseInt(document.getElementById('mm-prio')?.value || '1') || 1,
     match_strength: document.getElementById('mm-strength')?.value || null,
     is_primary: document.getElementById('mm-primary')?.value === 'true',
-    data_envio: document.getElementById('mm-envio')?.value || null,
-    data_retorno: document.getElementById('mm-retorno')?.value || null,
+    data_envio: dataEnvio,
+    data_retorno: dataRetorno,
     elegivel,
     motivo_encaixe: document.getElementById('mm-motivo')?.value || null,
     riscos_ressalvas: document.getElementById('mm-riscos')?.value || null,
     proxima_acao: document.getElementById('mm-acao')?.value || null,
     observacoes: document.getElementById('mm-obs')?.value || null,
     updated_at: new Date().toISOString(),
-    updated_by: S.session?.nome || 'web',
+    updated_by: sess?.nome || 'web',
   };
 
   const matchId = document.getElementById('mm-match-id')?.value || '';
@@ -6087,7 +6416,7 @@ async function saveMatchModal() {
       ({ error } = await supa.from('candidate_employer_matches').update(payload).eq('id', matchId));
     } else {
       payload.created_at = new Date().toISOString();
-      payload.created_by = S.session?.nome || 'web';
+      payload.created_by = sess?.nome || 'web';
       ({ error } = await supa.from('candidate_employer_matches').insert(payload));
     }
     if (error) throw error;
@@ -6384,6 +6713,7 @@ function bindEmployerHubInteractions(root) {
     else if (action === 'open-candidate') openCand(btn.dataset.candidateId || '');
     else if (action === 'create-employer') await createEmployerHubEmployer();
     else if (action === 'edit-employer') await editEmployerModal(btn.dataset.employerId || btn.dataset.employerName || '');
+    else if (action === 'delete-employer') await deleteEmployerConfirm(btn.dataset.employerId || '', btn.dataset.employerName || '');
     else if (action === 'link-employer') {
       const cid = btn.dataset.candidateId || '';
       openMatchModal(cid, null);
@@ -6537,8 +6867,11 @@ function renderEmployerHub(el) {
     </details>`;
   };
 
-  const editEmpBtn = selectedGroup && selectedGroup.kind !== 'unassigned'
+  const editEmpBtn = selectedGroup && selectedGroup.kind !== 'unassigned' && selectedGroup.employerId
     ? `<button type="button" class="emp-link" data-emp-action="edit-employer" data-employer-id="${esc(selectedGroup.employerId || '')}" data-employer-name="${esc(selectedGroup.name)}" title="${esc(uiTranslate('Editar este empregador'))}">${esc(uiTranslate('✏️ Editar'))}</button>`
+    : '';
+  const deleteEmpBtn = selectedGroup && selectedGroup.kind !== 'unassigned' && selectedGroup.employerId
+    ? `<button type="button" class="emp-link" data-emp-action="delete-employer" data-employer-id="${esc(selectedGroup.employerId || '')}" data-employer-name="${esc(selectedGroup.name)}" title="${esc(uiTranslate('Excluir este empregador'))}" style="color:var(--red)">${esc(uiTranslate('🗑 Excluir'))}</button>`
     : '';
 
   const selectedEmployer = selectedGroup?.employerObj || null;
@@ -6765,10 +7098,11 @@ function renderEmployerHub(el) {
           <div class="emp-main-head">
             <div>
               <div class="emp-pane-title">${esc(selectedGroup?.name || 'Sem seleção')}</div>
-              <div class="emp-pane-sub">${esc(uiTranslate(selectedGroup?.kind==='unassigned' ? 'Candidatos sem empresa definida.' : 'Candidatos vinculados a este empregador.'))}</div>
+            <div class="emp-pane-sub">${esc(uiTranslate(selectedGroup?.kind==='unassigned' ? 'Candidatos sem empresa definida.' : 'Candidatos vinculados a este empregador.'))}</div>
             </div>
             <div class="emp-pane-actions">
               ${editEmpBtn}
+              ${deleteEmpBtn}
               ${selectedGroup ? `<button type="button" class="emp-link" data-emp-action="open-filtered" data-employer="${esc(selectedGroup.name)}">${esc(uiTranslate('Lista filtrada'))}</button>` : ''}
             </div>
           </div>
@@ -7274,10 +7608,196 @@ function renderInativo(el) {
 // ══════════════════════════════════════════════════════════════
 // CANDIDATE DETAIL MODAL
 // ══════════════════════════════════════════════════════════════
+function getSortValue(c, key, filterStatus) {
+  switch (key) {
+    case 'nome': return fv(c,'Nome completo') || '';
+    case 'status': return fv(c,'STATUS PIPELINE') || '';
+    case 'resultado': return getEmployerLinkStatus(c) || fv(c,'Resultado entrevista','Resultado da entrevista') || '';
+    case 'data_entrevista': return fv(c,'entrevista_preliminar_data','Data da Entrevista','data_da_entrevista') || '';
+    case 'entrevistador': return fv(c,'entrevista_preliminar_entrevistador','Avaliador') || '';
+    case 'empresa_cliente': return fv(c,'entrevista_preliminar_empresa_cliente') || '';
+    case 'vaga': return fv(c,'entrevista_preliminar_posicao_vaga','posicao_vaga') || '';
+    case 'employer': return getEmployerDisplay(c) || '';
+    case 'perfil': return fv(c,'Perfil','perfil') || '';
+    case 'tipo': return fv(c,'tipo_vaga_preferido','Tipo de candidato','Tipo candidato') || '';
+    case 'alemao': return _nivelRank(c);
+    case 'profissao': return candidateProfessionLabel(c) || '';
+    case 'cidade': return fv(c,'Cidade atual') || '';
+    case 'avaliador': return fv(c,'Avaliador','ResponsÃ¡vel interno','responsavel_interno') || '';
+    case 'score': return Number(c._score || 0);
+    case 'id': return c.ID || c.id || '';
+    case 'resumo_rh': return fv(c,'resumo_rh_curto','entrevista_preliminar_resumo_rh') || '';
+    case 'risco': return _sortRiskRank(fv(c,'risco_desistencia') || '');
+    case 'pronto_emp': return _sortRiskRank(fv(c,'pronto_para_employer') || '');
+    case 'readiness': return _sortRiskRank(fv(c,'readiness_internacional') || '');
+    case 'disponibilidade': return fv(c,'disponibilidade_mudanca') || '';
+    case 'motivo': return fv(c,'motivo_inativacao','Motivo inativaÃ§Ã£o') || '';
+    case 'etapa_saida': return fv(c,'etapa_de_saida','Etapa de saÃ­da') || '';
+    case 'data_saida': return fv(c,'data_inativacao','Data inativaÃ§Ã£o','Data saÃ­da','Data de saÃ­da') || '';
+    case 'reativavel': return fv(c,'reativavel','ReativÃ¡vel') || '';
+    default: return '';
+  }
+}
+
+function renderSortableTh(label, key, viewKey, extra='') {
+  const active = S.sort && S.sort.view === viewKey && S.sort.key === key;
+  const arrow = active ? (S.sort.dir === 'asc' ? 'â†‘' : 'â†“') : 'â†•';
+  return `<th ${extra}><button type="button" class="th-sort ${active?'active':''}" data-sort-view="${escAttr(viewKey)}" data-sort-key="${escAttr(key)}"><span>${esc(label)}</span><span class="th-arrow">${arrow}</span></button></th>`;
+}
+
+function bindCandidateTableInteractions(el) {
+  if (!el) return;
+  el.onclick = (event) => {
+    const row = event.target.closest('[data-open-candidate]');
+    if (row) {
+      openCand(row.getAttribute('data-open-candidate'));
+      return;
+    }
+    const sortBtn = event.target.closest('[data-sort-view][data-sort-key]');
+    if (sortBtn) {
+      cycleSort(sortBtn.getAttribute('data-sort-view'), sortBtn.getAttribute('data-sort-key'));
+      return;
+    }
+    const pageBtn = event.target.closest('[data-page]');
+    if (pageBtn) {
+      setPage(Number(pageBtn.getAttribute('data-page') || '1'));
+      return;
+    }
+    const chipBtn = event.target.closest('[data-op-chip]');
+    if (chipBtn) {
+      applyOpFilter(Number(chipBtn.getAttribute('data-op-chip') || '0'));
+      return;
+    }
+    const clearBtn = event.target.closest('[data-filter-clear]');
+    if (clearBtn) {
+      const key = clearBtn.getAttribute('data-filter-clear');
+      if (key === '__all') {
+        clearFilters();
+        renderView();
+      } else {
+        clearFilterKey(key || '');
+      }
+    }
+  };
+}
+
+window.renderView = renderView;
+function renderView() {
+  const el = document.getElementById('content');
+  el.innerHTML = '';
+  switch(S.view) {
+    case 'dashboard':    renderDashboard(el);               break;
+    case 'kanban':       renderKanban(el);                  break;
+    case 'candidates':   renderTable(el, null);             break;
+    case 'prioritarios': renderTable(el, '__prioritarios'); break;
+    case 'triagem':      renderTable(el, '__triagem');      break;
+    case 'entrevistas':  renderTable(el, '__entrevistas');  break;
+    case 'analise':      renderTable(el, '__analise');      break;
+    case 'alemao':       renderTable(el, 'Curso de alemÃ£o'); break;
+    case 'agenda':       renderAgenda(el);                  break;
+    case 'documentacao': renderTable(el, '__documentacao'); break;
+    case 'employer':     renderEmployerHub(el);             break;
+    case 'inativos':     renderInativo(el);                 break;
+    case 'settings':     renderSettings(el);                break;
+  }
+  if (['candidates','prioritarios','triagem','entrevistas','analise','alemao','documentacao','inativos'].includes(S.view)) {
+    const filterBar = el.querySelector('.filters-bar');
+    if (filterBar && !el.querySelector('.active-filters-row')) {
+      filterBar.insertAdjacentHTML('afterend', buildActiveFilterChipsHtml());
+    }
+    bindCandidateTableInteractions(el);
+  }
+}
+
+function renderInativo(el) {
+  const list = getInactiveCandidateList();
+  const total = list.length;
+  const pages = Math.max(1, Math.ceil(Math.max(total, 1) / S.pageSize));
+  if (S.page > pages) S.page = pages;
+  const paged = list.slice((S.page - 1) * S.pageSize, S.page * S.pageSize);
+  const inativoStatusOpts = [''].concat(INACTIVE_STATUSES);
+  const rows = paged.map(c => `
+    <tr onclick="openCand('${esc(c.ID)}')">
+      <td class="td-name" title="${esc(displayCandidateName(c))}">${esc(displayCandidateName(c))}</td>
+      <td><span class="badge b-inativo">${esc(c['STATUS PIPELINE']||'â€”')}</span></td>
+      <td>${esc(fv(c,'motivo_inativacao','Motivo inativaÃ§Ã£o')||'â€”')}</td>
+      <td>${esc(fv(c,'etapa_de_saida','Etapa de saÃ­da')||'â€”')}</td>
+      <td style="font-size:11px;color:var(--txt3)">${esc(fv(c,'data_inativacao','Data inativaÃ§Ã£o')||'â€”')}</td>
+      <td>${normalizeUpper(fv(c,'reativavel','ReativÃ¡vel'))==='SIM'?'<span style="color:var(--green);font-size:12px;font-weight:600">Sim</span>':'<span style="color:var(--txt3);font-size:12px">NÃ£o</span>'}</td>
+      <td>${esc(fv(c,'NÃ­vel de alemÃ£o','NÃ­vel alemÃ£o')||'â€”')}</td>
+      <td>${esc(fv(c,'Perfil','Perfil do candidato','perfil')||'â€”')}</td>
+    </tr>`).join('');
+  const pg = pages > 1 ? `<div class="pagination">
+    <button class="pg-btn" onclick="setPage(${S.page-1})" ${S.page===1?'disabled':''}>â€¹</button>
+    ${Array.from({length:Math.min(pages,7)},(_,i)=>{ const p=pages<=7?i+1:(S.page<=4?i+1:(S.page>=pages-3?pages-6+i:S.page-3+i)); return `<button class="pg-btn ${p===S.page?'active':''}" onclick="setPage(${p})">${p}</button>`; }).join('')}
+    <button class="pg-btn" onclick="setPage(${S.page+1})" ${S.page===pages?'disabled':''}>â€º</button>
+    <span class="pg-info">pÃ¡g ${S.page}/${pages}</span>
+  </div>` : '';
+  el.innerHTML = `
+    <div class="filters-bar">
+      <div style="font-size:12px;color:var(--txt3)">${total} candidatos inativos</div>
+      <div style="flex:1"></div>
+      <select class="filter-select" onchange="setFilter('status',this.value)">
+        ${inativoStatusOpts.map(s=>`<option value="${escAttr(s)}" ${S.filter.status===s?'selected':''}>${esc(s||'Todos os inativos')}</option>`).join('')}
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table class="data-tbl">
+        <thead><tr>${renderSortableTh('Nome','nome','__inativos')}${renderSortableTh('Status','status','__inativos')}${renderSortableTh('Motivo','motivo','__inativos')}${renderSortableTh('Etapa saÃ­da','etapa_saida','__inativos')}${renderSortableTh('Data','data_saida','__inativos')}${renderSortableTh('ReativÃ¡vel','reativavel','__inativos')}${renderSortableTh('AlemÃ£o','alemao','__inativos')}${renderSortableTh('Perfil','perfil','__inativos')}</tr></thead>
+        <tbody>${rows||buildTableEmptyState(8,'candidato inativo')}</tbody>
+      </table>
+    </div>${pg}`;
+}
+
+function filterByMetric(label) {
+  clearFilters();
+  const B1PLUS = ['B1','B2','B2+','C1','C2'];
+  switch (label) {
+    case 'Total':
+    case 'Ativos':
+      break;
+    case 'Contratados':
+      S.filter.status = 'Contratado';
+      break;
+    case 'B1+':
+      S.filter._customFn = c => B1PLUS.includes(fv(c,'NÃ­vel de alemÃ£o','nivel_alemao','NÃ­vel alemÃ£o'));
+      S.filter._customLabel = 'B1+';
+      break;
+    default:
+      if (PIPELINE_STAGES.includes(label)) {
+        S.filter.status = label;
+      } else {
+        const healthMap = {
+          'Sem idioma alemÃ£o': c => { const a = fv(c,'NÃ­vel de alemÃ£o','NÃ­vel alemÃ£o'); return !a || ['Nenhum','A0',''].includes(a); },
+          'Sem perfil avaliado': c => !fv(c,'Perfil'),
+          'Prontos nÃ£o marcados': c => !isYes(fv(c,'ElegÃ­vel para employer','elegivel_para_employer')) && isElegibleCalc(c),
+          '"Em curso" nÃ£o marcado': c => normalizeUpper(fv(c,'STATUS PIPELINE')) === 'CURSO DE ALEMAO' && !isYes(fv(c,'Em curso de alemÃ£o','em_curso_de_alemao')),
+          'Sem responsÃ¡vel': c => !fv(c,'ResponsÃ¡vel interno','responsavel_interno'),
+          'PendÃªncia crÃ­tica': c => !!(fv(c,'PendÃªncia documental crÃ­tica','pendencia_documental_critica')||'').trim(),
+          'InconsistÃªncia ativo': c => {
+            const at = isYes(fv(c,'Ativo','ativo'));
+            const st = fv(c,'STATUS PIPELINE','status_pipeline');
+            return (at && INACTIVE_STATUSES.includes(st)) || (!at && !INACTIVE_STATUSES.includes(st) && !!st);
+          },
+          'Doc. incompleta': c => !isYes(fv(c,'DocumentaÃ§Ã£o completa','documentacao_completa')),
+        };
+        if (healthMap[label]) {
+          S.filter._customFn = healthMap[label];
+          S.filter._customLabel = label;
+        }
+      }
+      break;
+  }
+  _navSetupUI('candidates');
+  persistCandidateFilters();
+  renderView();
+}
+
 async function openCand(id) {
   S.pendingEdits = {};
   S.rhInterviewDraft = null;
   S.currentInterview = null;
+  S.ticketDraft = null;
   let c = S.candidates.find(x => x.ID === id);
   if (!c) {
     try { const r = await apiGet({route:'candidate', id}); c = r.candidate; }
@@ -7614,6 +8134,7 @@ function buildCandModal(c) {
     {id:'t-profissional',label:'Profissional'},{id:'t-entrevista',label:'Entrevista'},
     {id:'t-analise',label:'Análise RH'},{id:'t-idioma',label:'🇩🇪 Alemão'},
     {id:'t-docs',label:'Documentação'},{id:'t-employer',label:'Employer'},
+    {id:'t-tickets',label:'Tickets'},
     {id:'t-saida',label:'Saída'},
   ];
   document.getElementById('cm-tabs').innerHTML = TABS.map(t =>
@@ -7817,6 +8338,235 @@ function rhScaleBadge(v) {
   else if (n === 'medio' || n === 'médio' || n === 'media' || n === 'média') { bg = 'rgba(245,158,11,.16)'; bd = 'rgba(245,158,11,.24)'; fg = 'var(--yellow)'; }
   else if (n === 'baixo' || n === 'baixa') { bg = 'rgba(239,68,68,.16)'; bd = 'rgba(239,68,68,.24)'; fg = 'var(--red)'; }
   return `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:92px;padding:8px 10px;border-radius:999px;background:${bg};border:1px solid ${bd};color:${fg};font-size:12px;font-weight:800;text-transform:capitalize">${esc(label)}</span>`;
+}
+
+function ticketMakeId() {
+  return `ticket_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+function ticketEmptyDraft(ticket = null) {
+  return {
+    id: ticket?.id || '',
+    assunto: ticket?.assunto || '',
+    conversa: ticket?.conversa || '',
+    status: ticket?.status || TICKET_STATUS_OPTIONS[0],
+    prioridade: ticket?.prioridade || TICKET_PRIORITY_OPTIONS[1],
+    proxima_acao: ticket?.proxima_acao || '',
+    followup_em: ticket?.followup_em || '',
+  };
+}
+function ensureTicketDraft(ticket = null) {
+  if (!S.ticketDraft || ticket) S.ticketDraft = ticketEmptyDraft(ticket);
+  return S.ticketDraft;
+}
+function getTicketStatusClass(status) {
+  const v = normalizeSearchToken(status);
+  if (v.includes('resolvido')) return 'status-done';
+  if (v.includes('encerrado')) return 'status-closed';
+  if (v.includes('aguardando') || v.includes('follow')) return 'status-wait';
+  return 'status-open';
+}
+function getTicketPriorityClass(priority) {
+  const v = normalizeSearchToken(priority);
+  if (v.includes('alta')) return 'priority-high';
+  if (v.includes('baixa')) return 'priority-low';
+  return 'priority-medium';
+}
+function ticketFormatStamp(v) {
+  if (!v) return '—';
+  const dt = new Date(v);
+  return Number.isNaN(dt.getTime())
+    ? String(v)
+    : `${dt.toLocaleDateString('pt-BR')} ${dt.toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit' })}`;
+}
+function ticketFormatDue(v) {
+  if (!v) return 'Sem follow-up';
+  const raw = String(v).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const [y, m, d] = raw.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return raw;
+}
+function getCandidateTickets(c) {
+  const tickets = histReadBundle(c).tickets || [];
+  return tickets.slice().sort((a, b) => {
+    const av = new Date(a?.atualizado_em || a?.criado_em || 0).getTime();
+    const bv = new Date(b?.atualizado_em || b?.criado_em || 0).getTime();
+    return bv - av;
+  });
+}
+function rerenderTicketPanel() {
+  const panel = document.getElementById('t-tickets');
+  if (!panel || !S.currentCand) return;
+  panel.innerHTML = buildPanel('t-tickets', S.currentCand);
+}
+function updateTicketDraft(el) {
+  if (!el) return;
+  const draft = ensureTicketDraft();
+  draft[el.dataset.ticketField] = el.value || '';
+}
+function editCandidateTicket(ticketId) {
+  if (!S.currentCand || !ticketId) return;
+  const ticket = getCandidateTickets(S.currentCand).find(t => t.id === ticketId);
+  if (!ticket) return;
+  S.ticketDraft = ticketEmptyDraft(ticket);
+  rerenderTicketPanel();
+}
+function resetCandidateTicketDraft() {
+  S.ticketDraft = ticketEmptyDraft();
+  rerenderTicketPanel();
+}
+function upsertCandidateTicketDraft() {
+  if (!S.currentCand) return;
+  const sess = getSession();
+  if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar tickets.', 'warn'); return; }
+  const draft = ensureTicketDraft();
+  const assunto = String(draft.assunto || '').trim();
+  const conversa = String(draft.conversa || '').trim();
+  if (!assunto) { toast('⚠ Informe o assunto do ticket.', 'warn'); return; }
+  if (!conversa) { toast('⚠ Registre o que foi falado pelo candidato no WhatsApp.', 'warn'); return; }
+  const actor = sess?.nome || 'web';
+  const now = new Date().toISOString();
+  const bundle = histReadBundle(S.currentCand);
+  const tickets = Array.isArray(bundle.tickets) ? bundle.tickets.slice() : [];
+  const existing = tickets.find(t => t.id === draft.id) || null;
+  const ticket = {
+    id: existing?.id || draft.id || ticketMakeId(),
+    canal: 'WhatsApp',
+    assunto,
+    conversa,
+    status: draft.status || TICKET_STATUS_OPTIONS[0],
+    prioridade: draft.prioridade || TICKET_PRIORITY_OPTIONS[1],
+    proxima_acao: String(draft.proxima_acao || '').trim(),
+    followup_em: draft.followup_em || '',
+    criado_em: existing?.criado_em || now,
+    criado_por: existing?.criado_por || actor,
+    atualizado_em: now,
+    atualizado_por: actor,
+  };
+  const nextTickets = [ticket, ...tickets.filter(t => t.id !== ticket.id)].slice(0, 100);
+  S.pendingEdits['historico_operacional'] = histSerializeBundle({ ...bundle, tickets: nextTickets });
+  S.ticketDraft = ticketEmptyDraft();
+  updateCandidateSaveUi();
+  rerenderTicketPanel();
+  _renderHistBlock(S.currentCand);
+  toast(existing ? '✅ Ticket atualizado no rascunho. Clique em Salvar para persistir.' : '✅ Ticket adicionado ao rascunho. Clique em Salvar para persistir.', 'ok', 4500);
+}
+function deleteCandidateTicket(ticketId) {
+  if (!S.currentCand || !ticketId) return;
+  const sess = getSession();
+  if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar tickets.', 'warn'); return; }
+  if (!confirm('Excluir este ticket do candidato?')) return;
+  const bundle = histReadBundle(S.currentCand);
+  const nextTickets = (bundle.tickets || []).filter(t => t.id !== ticketId);
+  if (nextTickets.length === (bundle.tickets || []).length) return;
+  S.pendingEdits['historico_operacional'] = histSerializeBundle({ ...bundle, tickets: nextTickets });
+  if (S.ticketDraft?.id === ticketId) S.ticketDraft = ticketEmptyDraft();
+  updateCandidateSaveUi();
+  rerenderTicketPanel();
+  _renderHistBlock(S.currentCand);
+  toast('✅ Ticket removido do rascunho. Clique em Salvar para persistir.', 'ok', 4500);
+}
+function buildTicketPanel(c) {
+  const tickets = getCandidateTickets(c);
+  const draft = ensureTicketDraft();
+  const openCount = tickets.filter(t => !['resolvido', 'encerrado'].includes(normalizeSearchToken(t.status))).length;
+  const waitCount = tickets.filter(t => {
+    const st = normalizeSearchToken(t.status);
+    return st.includes('aguardando') || st.includes('follow');
+  }).length;
+  const overdueCount = tickets.filter(t => {
+    const raw = String(t.followup_em || '').trim();
+    if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return false;
+    return raw < new Date().toISOString().split('T')[0] && !['resolvido', 'encerrado'].includes(normalizeSearchToken(t.status));
+  }).length;
+  const statusOptions = TICKET_STATUS_OPTIONS.map(opt => `<option value="${esc(opt)}" ${draft.status===opt?'selected':''}>${esc(opt)}</option>`).join('');
+  const priorityOptions = TICKET_PRIORITY_OPTIONS.map(opt => `<option value="${esc(opt)}" ${draft.prioridade===opt?'selected':''}>${esc(opt)}</option>`).join('');
+  const cards = tickets.map(ticket => `
+    <div class="ticket-card">
+      <div class="ticket-card-head">
+        <div>
+          <div class="ticket-card-title">${esc(ticket.assunto || 'Ticket sem assunto')}</div>
+          <div class="ticket-card-meta">
+            <span class="ticket-badge ${getTicketStatusClass(ticket.status)}">${esc(ticket.status || 'Aberto')}</span>
+            <span class="ticket-badge ${getTicketPriorityClass(ticket.prioridade)}">${esc(ticket.prioridade || 'Média')}</span>
+            <span class="ticket-badge status-open">${esc(ticket.canal || 'WhatsApp')}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-sm btn-ghost" onclick="editCandidateTicket('${esc(ticket.id)}')">✏️ Editar</button>
+          <button type="button" class="btn btn-sm btn-ghost btn-danger" onclick="deleteCandidateTicket('${esc(ticket.id)}')">🗑 Excluir</button>
+        </div>
+      </div>
+      <div class="ticket-card-body">
+        <div class="ticket-card-block full">
+          <div class="ticket-card-lbl">O que o candidato falou no WhatsApp</div>
+          <div class="ticket-card-val">${esc(ticket.conversa || '—')}</div>
+        </div>
+        <div class="ticket-card-block">
+          <div class="ticket-card-lbl">Próxima ação</div>
+          <div class="ticket-card-val">${esc(ticket.proxima_acao || 'Sem ação definida')}</div>
+        </div>
+        <div class="ticket-card-block">
+          <div class="ticket-card-lbl">Follow-up</div>
+          <div class="ticket-card-val">${esc(ticketFormatDue(ticket.followup_em))}</div>
+        </div>
+      </div>
+      <div class="ticket-card-foot">
+        <div class="ticket-card-updated">Atualizado em ${esc(ticketFormatStamp(ticket.atualizado_em || ticket.criado_em))}${ticket.atualizado_por ? ` por ${esc(ticket.atualizado_por)}` : ''}</div>
+      </div>
+    </div>
+  `).join('');
+  return `<div class="ticket-shell">
+    <div class="ticket-composer">
+      <div class="ticket-composer-head">
+        <div>
+          <div class="section-hdr" style="margin-top:0">Tickets de acompanhamento</div>
+          <div class="ticket-composer-sub">Registre aqui o que foi dito pelo candidato no WhatsApp, o próximo passo combinado e a data de follow-up sem depender de uma nova tabela no banco.</div>
+        </div>
+        <div class="ticket-stats">
+          <div class="ticket-stat"><div class="ticket-stat-lbl">Total</div><div class="ticket-stat-val">${tickets.length}</div></div>
+          <div class="ticket-stat"><div class="ticket-stat-lbl">Em aberto</div><div class="ticket-stat-val">${openCount}</div></div>
+          <div class="ticket-stat"><div class="ticket-stat-lbl">Aguardando</div><div class="ticket-stat-val">${waitCount}</div></div>
+          <div class="ticket-stat"><div class="ticket-stat-lbl">Atrasados</div><div class="ticket-stat-val">${overdueCount}</div></div>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field-group fg-full">
+          <label class="field-lbl">Assunto do ticket *</label>
+          <input class="field-input" data-ticket-field="assunto" value="${esc(draft.assunto || '')}" oninput="updateTicketDraft(this)" placeholder="Ex: follow-up da proposta, dúvida sobre documentos">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Status</label>
+          <select class="field-select" data-ticket-field="status" onchange="updateTicketDraft(this)">${statusOptions}</select>
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Prioridade</label>
+          <select class="field-select" data-ticket-field="prioridade" onchange="updateTicketDraft(this)">${priorityOptions}</select>
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Follow-up</label>
+          <input class="field-input" type="date" data-ticket-field="followup_em" value="${esc(draft.followup_em || '')}" oninput="updateTicketDraft(this)">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Próxima ação</label>
+          <input class="field-input" data-ticket-field="proxima_acao" value="${esc(draft.proxima_acao || '')}" oninput="updateTicketDraft(this)" placeholder="Ex: cobrar retorno, enviar lista de documentos">
+        </div>
+        <div class="field-group fg-full">
+          <label class="field-lbl">O que o candidato falou no WhatsApp *</label>
+          <textarea class="field-textarea" data-ticket-field="conversa" oninput="updateTicketDraft(this)" placeholder="Resuma a conversa, objeções, disponibilidade, dúvidas e qualquer combinado relevante.">${esc(draft.conversa || '')}</textarea>
+        </div>
+      </div>
+      <div class="ticket-actions">
+        <div class="ticket-hint">Os tickets entram no rascunho do candidato e são persistidos junto com o botão principal de salvar.</div>
+        ${draft.id ? `<button type="button" class="btn btn-ghost" onclick="resetCandidateTicketDraft()">Cancelar edição</button>` : ''}
+        <button type="button" class="btn btn-primary" onclick="upsertCandidateTicketDraft()">${draft.id ? '💾 Atualizar ticket' : '+ Adicionar ticket'}</button>
+      </div>
+    </div>
+    <div class="ticket-list">
+      ${cards || `<div class="ticket-empty">Nenhum ticket registrado ainda. Use o formulário acima para começar a acompanhar as conversas do WhatsApp deste candidato.</div>`}
+    </div>
+  </div>`;
 }
 
 function refreshInterviewPanels() {
@@ -8435,6 +9185,7 @@ function buildPanel(tabId, c) {
         <div class="field-group fg-full"><label class="field-lbl">Retorno employer</label><textarea class="field-textarea" data-field="Retorno employer" oninput="onEdit(this)">${esc(c['Retorno employer']||'')}</textarea></div>
       </div>
     </div>`;
+    case 't-tickets': return buildTicketPanel(c);
     case 't-saida': return `<div>
       <div class="section-hdr">Inativação / Saída</div>
       <div class="field-grid">
@@ -9152,11 +9903,36 @@ const HIST_TRACKED = new Set([
   'Elegível para employer',
 ]);
 
+function histNormalizeBundle(source) {
+  if (Array.isArray(source)) return { changes: source.filter(Boolean), tickets: [] };
+  if (source && typeof source === 'object') {
+    return {
+      changes: Array.isArray(source.changes) ? source.changes.filter(Boolean) : [],
+      tickets: Array.isArray(source.tickets) ? source.tickets.filter(Boolean) : [],
+    };
+  }
+  const raw = String(source || '').trim();
+  if (!raw) return { changes: [], tickets: [] };
+  try {
+    return histNormalizeBundle(JSON.parse(raw));
+  } catch {
+    return { changes: [], tickets: [] };
+  }
+}
+function histCurrentRaw(c) {
+  const candId = String(c?.ID || c?.id || '');
+  const currentId = String(S.currentCand?.ID || S.currentCand?.id || '');
+  if (candId && currentId && candId === currentId && Object.prototype.hasOwnProperty.call(S.pendingEdits || {}, 'historico_operacional')) {
+    return S.pendingEdits['historico_operacional'];
+  }
+  return c?.['historico_operacional'] || c?.historico_operacional || '';
+}
+function histReadBundle(c) {
+  return histNormalizeBundle(histCurrentRaw(c));
+}
 // Lê o histórico do candidato (array de entradas, mais recente primeiro)
 function histRead(c) {
-  const raw = c['historico_operacional'] || c['historico_operacional'] || '';
-  if (!raw) return [];
-  try { return JSON.parse(raw); } catch { return []; }
+  return histReadBundle(c).changes || [];
 }
 
 // Gera as entradas de histórico para os campos que mudaram
@@ -9173,10 +9949,18 @@ function histBuildEntries(fieldsToSave, currentCand, actor) {
   return entries;
 }
 
+function histSerializeBundle(bundleLike) {
+  const bundle = histNormalizeBundle(bundleLike);
+  bundle.changes = bundle.changes.slice(0, 50);
+  bundle.tickets = bundle.tickets.slice(0, 100);
+  if (!bundle.tickets.length) return JSON.stringify(bundle.changes);
+  return JSON.stringify({ version: 2, changes: bundle.changes, tickets: bundle.tickets });
+}
 // Prepara o valor serializado para salvar no banco (máx 50 entradas)
 function histSerialize(existing, newEntries) {
-  const merged = [...newEntries, ...existing].slice(0, 50);
-  return JSON.stringify(merged);
+  const bundle = histNormalizeBundle(existing);
+  bundle.changes = [...newEntries, ...bundle.changes].slice(0, 50);
+  return histSerializeBundle(bundle);
 }
 
 // Formata uma entrada do histórico para exibição
@@ -9249,7 +10033,9 @@ async function saveCandidate() {
     // ── Rastreabilidade: detecta mudanças em campos críticos ─
     const histEntries = histBuildEntries(candidateFieldsToSave, S.currentCand, sess?.nome || 'web');
     if (histEntries.length) {
-      const existing = histRead(S.currentCand);
+      const existing = Object.prototype.hasOwnProperty.call(candidateFieldsToSave, 'historico_operacional')
+        ? histNormalizeBundle(candidateFieldsToSave['historico_operacional'])
+        : histReadBundle(S.currentCand);
       candidateFieldsToSave['historico_operacional'] = histSerialize(existing, histEntries);
     }
 
@@ -9353,18 +10139,103 @@ function _refreshLastUpdated(c) {
   el.textContent = `Atualizado em ${fmt}${por ? ` por ${por}` : ''}`;
 }
 
+function getInactivationReasonOptions() {
+  const dynamic = Array.isArray(S.enums?.['Motivo inativação']) ? S.enums['Motivo inativação'] : [];
+  return Array.from(new Set([...dynamic, ...INACTIVATION_REASON_OPTIONS].map(v => String(v || '').trim()).filter(Boolean)));
+}
+function closeInactivationModal() {
+  const el = document.getElementById('candidate-inactivation-root');
+  if (el) el.remove();
+}
+function openInactivationModal() {
+  const c = S.currentCand;
+  if (!c) return;
+  closeInactivationModal();
+  const stage = fv(c, 'STATUS PIPELINE') || '';
+  const reason = fv(c, 'Motivo inativação', 'motivo_inativacao') || '';
+  const exitDate = fv(c, 'Data inativação', 'data_inativacao') || new Date().toISOString().split('T')[0];
+  const exitNote = fv(c, 'Observação final de saída', 'observacao_final_de_saida') || '';
+  const reativavel = fv(c, 'Reativável', 'reativavel') || 'SIM';
+  const options = getInactivationReasonOptions().map(opt => `<option value="${esc(opt)}" ${reason===opt?'selected':''}>${esc(opt)}</option>`).join('');
+  const html = `
+    <div class="emp-modal-overlay" id="candidate-inactivation-overlay" onclick="if(event.target===this)closeInactivationModal()">
+      <div class="emp-modal" style="width:min(640px,96vw)">
+        <div class="emp-modal-hd">
+          <div class="emp-modal-title">🚫 Inativar candidato</div>
+          <button type="button" class="emp-modal-close" onclick="closeInactivationModal()">✕</button>
+        </div>
+        <div class="emp-modal-body">
+          <div style="margin-bottom:14px;color:var(--txt3);font-size:12px;line-height:1.55">
+            Registre o motivo da inativação para manter a fila de inativos auditável e facilitar reativação futura quando fizer sentido.
+          </div>
+          <div class="emp-form-grid">
+            <div class="emp-field"><label class="emp-label">Motivo *</label><select class="emp-fselect" id="inactive-reason"><option value="">Selecionar...</option>${options}</select></div>
+            <div class="emp-field"><label class="emp-label">Reativável?</label><select class="emp-fselect" id="inactive-reactivable"><option value="SIM" ${reativavel==='SIM'?'selected':''}>Sim</option><option value="NÃO" ${reativavel==='NÃO'?'selected':''}>Não</option></select></div>
+            <div class="emp-field"><label class="emp-label">Data da inativação</label><input class="emp-input" type="date" id="inactive-date" value="${esc(exitDate)}"></div>
+            <div class="emp-field"><label class="emp-label">Etapa de saída</label><input class="emp-input" id="inactive-stage" value="${esc(stage)}" placeholder="Etapa atual"></div>
+            <div class="emp-field full"><label class="emp-label">Observação final</label><textarea class="emp-textarea" id="inactive-note" placeholder="Explique o contexto, combinados finais ou condição para reativação futura...">${esc(exitNote)}</textarea></div>
+          </div>
+        </div>
+        <div class="emp-modal-foot">
+          <button type="button" class="emp-btn" onclick="closeInactivationModal()">Cancelar</button>
+          <button type="button" class="emp-btn primary" onclick="confirmCandidateInactivation()">Salvar e inativar</button>
+        </div>
+      </div>
+    </div>`;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'candidate-inactivation-root';
+  wrapper.innerHTML = html;
+  document.body.appendChild(wrapper);
+  document.getElementById('inactive-reason')?.focus();
+}
+async function confirmCandidateInactivation() {
+  const c = S.currentCand;
+  if (!c) return;
+  const reason = (document.getElementById('inactive-reason')?.value || '').trim();
+  if (!reason) { toast('⚠ Selecione o motivo da inativação.', 'warn'); return; }
+  const date = document.getElementById('inactive-date')?.value || new Date().toISOString().split('T')[0];
+  const exitStage = (document.getElementById('inactive-stage')?.value || fv(c, 'STATUS PIPELINE') || '').trim();
+  const detail = (document.getElementById('inactive-note')?.value || '').trim();
+  const reativavel = document.getElementById('inactive-reactivable')?.value || 'SIM';
+  const sess = getSession();
+  try {
+    await apiPost({
+      action:'setActive',
+      id:c.ID,
+      active:false,
+      reason,
+      date,
+      exitStage,
+      detail,
+      reativavel,
+      actor:sess?.nome || 'web'
+    });
+    closeInactivationModal();
+    closeCand();
+    await loadAll();
+    renderView();
+    toast('🚫 Candidato inativado com motivo registrado.', 'ok');
+  } catch(e) {
+    toast('❌ ' + e.message, 'err');
+  }
+}
+
 async function toggleActive() {
   if (!S.currentCand) return;
   const c = S.currentCand;
   const isActive = isActiveCand(c);
-  if (!confirm(isActive ? 'Inativar este candidato?' : 'Reativar este candidato?')) return;
   const sess = getSession();
   try {
-    await apiPost({ action:'setActive', id:c.ID, active:!isActive, reason:'Arquivado estratégico', actor:sess?.nome||'web' });
+    if (isActive) {
+      openInactivationModal();
+      return;
+    }
+    if (!confirm('Reativar este candidato?')) return;
+    await apiPost({ action:'setActive', id:c.ID, active:true, actor:sess?.nome||'web' });
     closeCand();
     await loadAll();
     renderView();
-    toast(isActive ? '🚫 Candidato inativado.' : '✅ Candidato reativado.', 'ok');
+    toast('✅ Candidato reativado.', 'ok');
   } catch(e) { toast('❌ ' + e.message, 'err'); }
 }
 
@@ -9661,7 +10532,7 @@ async function downloadCandidatePdf() {
   }
 }
 
-function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; S.rhInterviewDirty=false; }
+function closeCand() { document.getElementById('cand-overlay').classList.remove('open'); S.currentCand=null; S.pendingEdits={}; S.rhInterviewDraft=null; S.rhInterviewDirty=false; S.ticketDraft=null; }
 function closeCandOverlay(e) { if(e.target===document.getElementById('cand-overlay')) closeCand(); }
 
 
@@ -11411,6 +12282,7 @@ function nlpParseQuery(phrase) {
 // Aplica busca inteligente NLP
 function applyNlpSearch(phrase) {
   const parsed = nlpParseQuery(phrase);
+  S.filter._nlpQuery = String(phrase || '').trim();
   S.filter._nlpProfissao = null;
   S.filter._nlpAlemao    = null;
   S.filter._nlpCidade    = null;
@@ -11428,13 +12300,92 @@ function applyNlpSearch(phrase) {
     if (parsed.idadeMin !== null) S.filter._nlpIdadeMin = parsed.idadeMin;
   }
   S.page = 1;
+  persistCandidateFilters();
   renderView();
+}
+
+function persistCandidateFilters() {
+  persistUiState(FILTERS_KEY, {
+    ...S.filter,
+    _customFn: null,
+    _customLabel: '',
+  });
+}
+
+function clearNlpFilters() {
+  S.filter._nlpQuery = '';
+  S.filter._nlpProfissao = null;
+  S.filter._nlpAlemao = null;
+  S.filter._nlpCidade = null;
+  S.filter._nlpIdadeMax = null;
+  S.filter._nlpIdadeMin = null;
 }
 
 function isActiveCand(c) {
   const ativo  = fv(c,'Ativo');
   const status = fv(c,'STATUS PIPELINE');
   return isYes(ativo) && !INACTIVE_STATUSES.includes(status);
+}
+
+function candidateMatchesSearch(c, rawQuery, includeInactiveNotes=false) {
+  const q = String(rawQuery || '').trim().toLowerCase();
+  if (!q) return true;
+  const haystack = [
+    fv(c,'Nome completo'),
+    candidateProfessionLabel(c),
+    fv(c,'E-mail'),
+    fv(c,'Cidade atual'),
+    getEmployerDisplay(c),
+    c.ID,
+  ];
+  if (includeInactiveNotes) {
+    haystack.push(fv(c,'Motivo inativaÃ§Ã£o'), fv(c,'Etapa de saÃ­da'));
+  }
+  return haystack.some(value => String(value || '').toLowerCase().includes(q));
+}
+
+function applyCandidateViewScope(list, filterStatus) {
+  const scoped = Array.isArray(list) ? list : [];
+  switch (filterStatus) {
+    case '__entrevistas':
+      return scoped.filter(c => fv(c,'STATUS PIPELINE','status_pipeline') === 'Entrevista');
+    case '__analise':
+      return scoped.filter(c => fv(c,'STATUS PIPELINE','status_pipeline') === 'AnÃ¡lise RH');
+    case '__prioritarios':
+      return scoped.filter(c => _nivelRank(c) >= 3);
+    case '__triagem':
+      return scoped.filter(c => fv(c,'STATUS PIPELINE','status_pipeline') === 'Triagem');
+    case '__documentacao':
+      return scoped.filter(c => fv(c,'STATUS PIPELINE','status_pipeline') === 'DocumentaÃ§Ã£o');
+    default:
+      return filterStatus ? scoped.filter(c => fv(c,'STATUS PIPELINE') === filterStatus) : scoped;
+  }
+}
+
+function getCandidateViewFilterStatus(view = S.view) {
+  const map = {
+    candidates: null,
+    prioritarios: '__prioritarios',
+    triagem: '__triagem',
+    entrevistas: '__entrevistas',
+    analise: '__analise',
+    alemao: 'Curso de alemÃ£o',
+    documentacao: '__documentacao',
+  };
+  return Object.prototype.hasOwnProperty.call(map, view) ? map[view] : null;
+}
+
+function getFilteredCandidateList(filterStatus = null) {
+  return applyCandidateViewScope(filterCands(S.candidates, false), filterStatus);
+}
+
+function getInactiveCandidateList() {
+  let list = S.candidates.filter(c =>
+    !isYes(fv(c,'Ativo')) || INACTIVE_STATUSES.includes(fv(c,'STATUS PIPELINE'))
+  );
+  if (S.filter.q) list = list.filter(c => candidateMatchesSearch(c, S.filter.q, true));
+  if (S.filter.status) list = list.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
+  return sortCandidateList(list, '__inativos');
 }
 
 function filterCands(list, includeInactive=false) {
@@ -11498,6 +12449,168 @@ function setPage(p) {
 }
 function onSearch(q) { S.filter.q=q; S.page=1; renderView(); }
 function filterByMetric_REMOVED_SEE_ABOVE() {} // substituído na sprint 3
+
+function applyNlpSearch(phrase) {
+  const parsed = nlpParseQuery(phrase);
+  S.filter._nlpQuery = String(phrase || '').trim();
+  S.filter.q = '';
+  clearNlpFilters();
+  S.filter._nlpQuery = String(phrase || '').trim();
+  if (parsed.rawQuery) {
+    S.filter.q = parsed.rawQuery;
+  } else {
+    if (parsed.profissao) S.filter._nlpProfissao = parsed.profissao;
+    if (parsed.nivel_alemao) S.filter._nlpAlemao = parsed.nivel_alemao;
+    if (parsed.cidade) S.filter._nlpCidade = parsed.cidade;
+    if (parsed.idadeMax !== null) S.filter._nlpIdadeMax = parsed.idadeMax;
+    if (parsed.idadeMin !== null) S.filter._nlpIdadeMin = parsed.idadeMin;
+  }
+  S.page = 1;
+  persistCandidateFilters();
+  renderView();
+}
+
+function persistCandidateFilters() {
+  persistUiState(FILTERS_KEY, {
+    ...S.filter,
+    _customFn: null,
+    _customLabel: '',
+  });
+}
+
+function clearNlpFilters() {
+  S.filter._nlpQuery = '';
+  S.filter._nlpProfissao = null;
+  S.filter._nlpAlemao = null;
+  S.filter._nlpCidade = null;
+  S.filter._nlpIdadeMax = null;
+  S.filter._nlpIdadeMin = null;
+}
+
+function candidateMatchesSearch(c, rawQuery, includeInactiveNotes=false) {
+  const q = String(rawQuery || '').trim().toLowerCase();
+  if (!q) return true;
+  const haystack = [
+    fv(c,'Nome completo'),
+    candidateProfessionLabel(c),
+    fv(c,'E-mail'),
+    fv(c,'Cidade atual'),
+    getEmployerDisplay(c),
+    c.ID,
+  ];
+  if (includeInactiveNotes) {
+    haystack.push(fv(c,'motivo_inativacao'), fv(c,'etapa_de_saida'));
+  }
+  return haystack.some(value => String(value || '').toLowerCase().includes(q));
+}
+
+function applyCandidateViewScope(list, filterStatus) {
+  const scoped = Array.isArray(list) ? list : [];
+  switch (filterStatus) {
+    case '__entrevistas':
+      return scoped.filter(c => normalizeUpper(fv(c,'STATUS PIPELINE','status_pipeline')) === 'ENTREVISTA');
+    case '__analise':
+      return scoped.filter(c => normalizeUpper(fv(c,'STATUS PIPELINE','status_pipeline')) === 'ANALISE RH');
+    case '__prioritarios':
+      return scoped.filter(c => _nivelRank(c) >= 3);
+    case '__triagem':
+      return scoped.filter(c => normalizeUpper(fv(c,'STATUS PIPELINE','status_pipeline')) === 'TRIAGEM');
+    case '__documentacao':
+      return scoped.filter(c => normalizeUpper(fv(c,'STATUS PIPELINE','status_pipeline')) === 'DOCUMENTACAO');
+    case '__alemao':
+      return scoped.filter(c => normalizeUpper(fv(c,'STATUS PIPELINE','status_pipeline')) === 'CURSO DE ALEMAO');
+    default:
+      return filterStatus ? scoped.filter(c => fv(c,'STATUS PIPELINE') === filterStatus) : scoped;
+  }
+}
+
+function getCandidateViewFilterStatus(view = S.view) {
+  const map = {
+    candidates: null,
+    prioritarios: '__prioritarios',
+    triagem: '__triagem',
+    entrevistas: '__entrevistas',
+    analise: '__analise',
+    alemao: '__alemao',
+    documentacao: '__documentacao',
+  };
+  return Object.prototype.hasOwnProperty.call(map, view) ? map[view] : null;
+}
+
+function getFilteredCandidateList(filterStatus = null) {
+  return applyCandidateViewScope(filterCands(S.candidates, false), filterStatus);
+}
+
+function getInactiveCandidateList() {
+  let list = S.candidates.filter(c =>
+    !isYes(fv(c,'Ativo')) || INACTIVE_STATUSES.includes(fv(c,'STATUS PIPELINE'))
+  );
+  if (S.filter.q) list = list.filter(c => candidateMatchesSearch(c, S.filter.q, true));
+  if (S.filter.status) list = list.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
+  return sortCandidateList(list, '__inativos');
+}
+
+function filterCands(list, includeInactive=false) {
+  let r = Array.isArray(list) ? list : [];
+  if (!includeInactive) r = r.filter(c => isActiveCand(c));
+  if (S.filter.status) r = r.filter(c => fv(c,'STATUS PIPELINE') === S.filter.status);
+  if (S.filter.perfil) r = r.filter(c => fv(c,'Perfil') === S.filter.perfil);
+  if (S.filter.profissao) r = r.filter(c => checkSemanticMatch(S.filter.profissao, candidateProfessionLabel(c) || ''));
+  if (S.filter._nlpProfissao) r = r.filter(c => checkSemanticMatch(S.filter._nlpProfissao, candidateProfessionLabel(c) || ''));
+  if (S.filter._nlpAlemao) r = r.filter(c => fv(c,'NÃ­vel de alemÃ£o','NÃ­vel alemÃ£o') === S.filter._nlpAlemao);
+  if (S.filter._nlpCidade) r = r.filter(c => String(fv(c,'Cidade atual') || '').toLowerCase().includes(String(S.filter._nlpCidade).toLowerCase()));
+  if (S.filter._nlpIdadeMax !== null && S.filter._nlpIdadeMax !== undefined) {
+    r = r.filter(c => { const id = parseInt(fv(c,'Idade','idade') || '0', 10); return id > 0 && id <= S.filter._nlpIdadeMax; });
+  }
+  if (S.filter._nlpIdadeMin !== null && S.filter._nlpIdadeMin !== undefined) {
+    r = r.filter(c => { const id = parseInt(fv(c,'Idade','idade') || '0', 10); return id >= S.filter._nlpIdadeMin; });
+  }
+  if (S.filter.empregador === '__filled__') r = r.filter(c => getEmployerDisplay(c).trim());
+  else if (S.filter.empregador === '__unassigned__') r = r.filter(c => !getEmployerDisplay(c).trim());
+  else if (S.filter.empregador) r = r.filter(c => getEmployerDisplay(c) === S.filter.empregador);
+  if (S.filter.alemao) r = r.filter(c => fv(c,'NÃ­vel de alemÃ£o','NÃ­vel alemÃ£o') === S.filter.alemao);
+  if (S.filter.substatus) r = r.filter(c => fv(c,'Substatus','substatus') === S.filter.substatus);
+  if (S.filter.prioridade) r = r.filter(c => fv(c,'Prioridade comercial','prioridade_comercial') === S.filter.prioridade);
+  if (typeof S.filter._customFn === 'function') r = r.filter(S.filter._customFn);
+  if (S.filter.q) r = r.filter(c => candidateMatchesSearch(c, S.filter.q));
+  return r;
+}
+
+function setFilter(key, val) {
+  S.filter[key] = val;
+  S.filter._customFn = null;
+  S.filter._customLabel = '';
+  S.page = 1;
+  persistCandidateFilters();
+  renderView();
+}
+
+function applyOpFilter(idx) {
+  const chip = window._opChips && window._opChips[idx];
+  if (!chip) return;
+  clearFilters();
+  S.filter._customFn = chip.fn;
+  S.filter._customLabel = chip.label || '';
+  persistCandidateFilters();
+  _navSetupUI('candidates');
+  renderView();
+}
+
+function setPage(p) {
+  const total = S.view === 'inativos'
+    ? getInactiveCandidateList().length
+    : getFilteredCandidateList(getCandidateViewFilterStatus()).length;
+  const pages = Math.max(1, Math.ceil(Math.max(total, 1) / S.pageSize));
+  S.page = Math.max(1, Math.min(p, pages));
+  renderView();
+}
+
+function onSearch(q) {
+  S.filter.q = q;
+  S.page = 1;
+  persistCandidateFilters();
+  renderView();
+}
 
 function groupCount(items, fn) {
   const m = {};
@@ -11600,11 +12713,76 @@ function calcPendenciaDocumentalCritica(c) {
 }
 
 function clearFilters() {
-  S.filter = { status:'', q:'', perfil:'', alemao:'', profissao:'', empregador:'', substatus:'', prioridade:'', _customFn: null, _nlpProfissao: null, _nlpAlemao: null, _nlpCidade: null, _nlpIdadeMax: null, _nlpIdadeMin: null };
-  const gs = document.getElementById('global-search');
-  if (gs) gs.value = '';
-  const ns = document.getElementById('nlp-search-input');
-  if (ns) ns.value = '';
+  S.filter = normalizeCandidateFilterState(defaultCandidateFilterState());
+  S.page = 1;
+  syncTopbarSearchInputs();
+  persistCandidateFilters();
+}
+
+function clearFilterKey(key) {
+  const base = defaultCandidateFilterState();
+  if (key === '__custom') {
+    S.filter._customFn = null;
+    S.filter._customLabel = '';
+  } else if (key === '__nlp') {
+    clearNlpFilters();
+    S.filter.q = '';
+  } else if (Object.prototype.hasOwnProperty.call(base, key)) {
+    S.filter[key] = base[key];
+  }
+  S.page = 1;
+  syncTopbarSearchInputs();
+  persistCandidateFilters();
+  renderView();
+}
+
+function escAttr(v) {
+  return String(v ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[s]));
+}
+
+function getActiveFilterTokens() {
+  const tokens = [];
+  if (S.filter._customLabel && typeof S.filter._customFn === 'function') {
+    tokens.push({ key:'__custom', label:S.filter._customLabel });
+  }
+  if (S.filter.q && !S.filter._nlpQuery) tokens.push({ key:'q', label:`Busca: ${S.filter.q}` });
+  if (S.filter._nlpQuery) tokens.push({ key:'__nlp', label:`Busca inteligente: ${S.filter._nlpQuery}` });
+  if (S.filter.status) tokens.push({ key:'status', label:`Status: ${S.filter.status}` });
+  if (S.filter.substatus) tokens.push({ key:'substatus', label:`Substatus: ${S.filter.substatus}` });
+  if (S.filter.empregador) {
+    const label = S.filter.empregador === '__filled__'
+      ? 'Employer: com employer'
+      : S.filter.empregador === '__unassigned__'
+        ? 'Employer: sem employer'
+        : `Employer: ${S.filter.empregador}`;
+    tokens.push({ key:'empregador', label });
+  }
+  if (S.filter.prioridade) tokens.push({ key:'prioridade', label:`Prioridade: ${S.filter.prioridade}` });
+  if (S.filter.alemao) tokens.push({ key:'alemao', label:`AlemÃ£o: ${S.filter.alemao}` });
+  if (S.filter.perfil) tokens.push({ key:'perfil', label:`Perfil: ${S.filter.perfil}` });
+  if (S.filter.profissao) tokens.push({ key:'profissao', label:`ProfissÃ£o: ${S.filter.profissao}` });
+  return tokens;
+}
+
+function buildActiveFilterChipsHtml() {
+  const tokens = getActiveFilterTokens();
+  if (!tokens.length) return '';
+  return `<div class="active-filters-row">
+    <span class="active-filters-label">Filtros ativos</span>
+    ${tokens.map(token => `<div class="active-filter-chip"><strong>${esc(token.label)}</strong><button type="button" data-filter-clear="${escAttr(token.key)}" title="Remover filtro">×</button></div>`).join('')}
+    <button type="button" class="btn btn-xs btn-ghost" data-filter-clear="__all">Limpar tudo</button>
+  </div>`;
+}
+
+function buildTableEmptyState(colCount, noun='candidato') {
+  const hasFilters = getActiveFilterTokens().length > 0;
+  return `<tr><td colspan="${colCount}">
+    <div class="table-empty-state">
+      <strong>${hasFilters ? `Nenhum ${noun} encontrado` : `Sem ${noun}s nesta visÃ£o`}</strong>
+      <p>${hasFilters ? 'Os filtros atuais zeraram a lista. Remova um critÃ©rio ou limpe tudo para voltar ao pipeline.' : 'Esta visÃ£o estÃ¡ vazia no momento. Sincronize os dados ou avance candidatos para este estÃ¡gio.'}</p>
+      ${hasFilters ? '<button type="button" class="btn btn-sm btn-ghost" data-filter-clear="__all">Limpar filtros</button>' : ''}
+    </div>
+  </td></tr>`;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -13068,6 +14246,176 @@ function agNav(dir) {
     mo.observe(document.body, { childList:true, subtree:true });
   });
 })();
+
+function getSortValue(c, key, filterStatus) {
+  switch (key) {
+    case 'nome': return fv(c,'Nome completo') || '';
+    case 'status': return fv(c,'STATUS PIPELINE') || '';
+    case 'resultado': return getEmployerLinkStatus(c) || fv(c,'Resultado entrevista','Resultado da entrevista') || '';
+    case 'data_entrevista': return fv(c,'entrevista_preliminar_data','Data da Entrevista','data_da_entrevista') || '';
+    case 'entrevistador': return fv(c,'entrevista_preliminar_entrevistador','Avaliador') || '';
+    case 'empresa_cliente': return fv(c,'entrevista_preliminar_empresa_cliente') || '';
+    case 'vaga': return fv(c,'entrevista_preliminar_posicao_vaga','posicao_vaga') || '';
+    case 'employer': return getEmployerDisplay(c) || '';
+    case 'perfil': return fv(c,'Perfil','perfil') || '';
+    case 'tipo': return fv(c,'tipo_vaga_preferido','Tipo de candidato','Tipo candidato') || '';
+    case 'alemao': return _nivelRank(c);
+    case 'profissao': return candidateProfessionLabel(c) || '';
+    case 'cidade': return fv(c,'Cidade atual') || '';
+    case 'avaliador': return fv(c,'Avaliador','Responsável interno','responsavel_interno') || '';
+    case 'score': return Number(c._score || 0);
+    case 'id': return c.ID || c.id || '';
+    case 'resumo_rh': return fv(c,'resumo_rh_curto','entrevista_preliminar_resumo_rh') || '';
+    case 'risco': return _sortRiskRank(fv(c,'risco_desistencia') || '');
+    case 'pronto_emp': return _sortRiskRank(fv(c,'pronto_para_employer') || '');
+    case 'readiness': return _sortRiskRank(fv(c,'readiness_internacional') || '');
+    case 'disponibilidade': return fv(c,'disponibilidade_mudanca') || '';
+    case 'motivo': return fv(c,'motivo_inativacao','Motivo inativação') || '';
+    case 'etapa_saida': return fv(c,'etapa_de_saida','Etapa de saída') || '';
+    case 'data_saida': return fv(c,'data_inativacao','Data inativação','Data saída','Data de saída') || '';
+    case 'reativavel': return fv(c,'reativavel','Reativável') || '';
+    default: return '';
+  }
+}
+
+function renderSortableTh(label, key, viewKey, extra='') {
+  const active = S.sort && S.sort.view === viewKey && S.sort.key === key;
+  const arrow = active ? (S.sort.dir === 'asc' ? '↑' : '↓') : '↕';
+  return `<th ${extra}><button type="button" class="th-sort ${active?'active':''}" data-sort-view="${escAttr(viewKey)}" data-sort-key="${escAttr(key)}"><span>${esc(label)}</span><span class="th-arrow">${arrow}</span></button></th>`;
+}
+
+function bindCandidateTableInteractions(el) {
+  if (!el) return;
+  el.onclick = (event) => {
+    const sortBtn = event.target.closest('[data-sort-view][data-sort-key]');
+    if (sortBtn) {
+      cycleSort(sortBtn.getAttribute('data-sort-view'), sortBtn.getAttribute('data-sort-key'));
+      return;
+    }
+    const clearBtn = event.target.closest('[data-filter-clear]');
+    if (clearBtn) {
+      const key = clearBtn.getAttribute('data-filter-clear');
+      if (key === '__all') {
+        clearFilters();
+        renderView();
+      } else {
+        clearFilterKey(key || '');
+      }
+    }
+  };
+}
+
+window.renderView = renderView;
+function renderView() {
+  const el = document.getElementById('content');
+  el.innerHTML = '';
+  switch (S.view) {
+    case 'dashboard': renderDashboard(el); break;
+    case 'kanban': renderKanban(el); break;
+    case 'candidates': renderTable(el, null); break;
+    case 'prioritarios': renderTable(el, '__prioritarios'); break;
+    case 'triagem': renderTable(el, '__triagem'); break;
+    case 'entrevistas': renderTable(el, '__entrevistas'); break;
+    case 'analise': renderTable(el, '__analise'); break;
+    case 'alemao': renderTable(el, 'Curso de alemão'); break;
+    case 'agenda': renderAgenda(el); break;
+    case 'documentacao': renderTable(el, '__documentacao'); break;
+    case 'employer': renderEmployerHub(el); break;
+    case 'inativos': renderInativo(el); break;
+    case 'settings': renderSettings(el); break;
+  }
+  if (['candidates','prioritarios','triagem','entrevistas','analise','alemao','documentacao','inativos'].includes(S.view)) {
+    const filterBar = el.querySelector('.filters-bar');
+    if (filterBar && !el.querySelector('.active-filters-row')) {
+      filterBar.insertAdjacentHTML('afterend', buildActiveFilterChipsHtml());
+    }
+    bindCandidateTableInteractions(el);
+  }
+}
+
+function renderInativo(el) {
+  const list = getInactiveCandidateList();
+  const total = list.length;
+  const pages = Math.max(1, Math.ceil(Math.max(total, 1) / S.pageSize));
+  if (S.page > pages) S.page = pages;
+  const paged = list.slice((S.page - 1) * S.pageSize, S.page * S.pageSize);
+  const inativoStatusOpts = [''].concat(INACTIVE_STATUSES);
+  const rows = paged.map(c => `
+    <tr onclick="openCand('${esc(c.ID)}')">
+      <td class="td-name" title="${esc(displayCandidateName(c))}">${esc(displayCandidateName(c))}</td>
+      <td><span class="badge b-inativo">${esc(c['STATUS PIPELINE'] || '-')}</span></td>
+      <td>${esc(fv(c,'motivo_inativacao','Motivo inativação') || '-')}</td>
+      <td>${esc(fv(c,'etapa_de_saida','Etapa de saída') || '-')}</td>
+      <td style="font-size:11px;color:var(--txt3)">${esc(fv(c,'data_inativacao','Data inativação') || '-')}</td>
+      <td>${normalizeUpper(fv(c,'reativavel','Reativável')) === 'SIM' ? '<span style="color:var(--green);font-size:12px;font-weight:600">Sim</span>' : '<span style="color:var(--txt3);font-size:12px">Não</span>'}</td>
+      <td>${esc(fv(c,'Nível de alemão','Nível alemão') || '-')}</td>
+      <td>${esc(fv(c,'Perfil','Perfil do candidato','perfil') || '-')}</td>
+    </tr>`).join('');
+  const pg = pages > 1 ? `<div class="pagination">
+    <button class="pg-btn" onclick="setPage(${S.page-1})" ${S.page===1?'disabled':''}>‹</button>
+    ${Array.from({length:Math.min(pages,7)},(_,i)=>{ const p=pages<=7?i+1:(S.page<=4?i+1:(S.page>=pages-3?pages-6+i:S.page-3+i)); return `<button class="pg-btn ${p===S.page?'active':''}" onclick="setPage(${p})">${p}</button>`; }).join('')}
+    <button class="pg-btn" onclick="setPage(${S.page+1})" ${S.page===pages?'disabled':''}>›</button>
+    <span class="pg-info">pág ${S.page}/${pages}</span>
+  </div>` : '';
+  el.innerHTML = `
+    <div class="filters-bar">
+      <div style="font-size:12px;color:var(--txt3)">${total} candidatos inativos</div>
+      <div style="flex:1"></div>
+      <select class="filter-select" onchange="setFilter('status',this.value)">
+        ${inativoStatusOpts.map(s=>`<option value="${escAttr(s)}" ${S.filter.status===s?'selected':''}>${esc(s||'Todos os inativos')}</option>`).join('')}
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table class="data-tbl">
+        <thead><tr>${renderSortableTh('Nome','nome','__inativos')}${renderSortableTh('Status','status','__inativos')}${renderSortableTh('Motivo','motivo','__inativos')}${renderSortableTh('Etapa saída','etapa_saida','__inativos')}${renderSortableTh('Data','data_saida','__inativos')}${renderSortableTh('Reativável','reativavel','__inativos')}${renderSortableTh('Alemão','alemao','__inativos')}${renderSortableTh('Perfil','perfil','__inativos')}</tr></thead>
+        <tbody>${rows || buildTableEmptyState(8,'candidato inativo')}</tbody>
+      </table>
+    </div>${pg}`;
+}
+
+function filterByMetric(label) {
+  clearFilters();
+  const B1PLUS = ['B1','B2','B2+','C1','C2'];
+  switch (label) {
+    case 'Total':
+    case 'Ativos':
+      break;
+    case 'Contratados':
+      S.filter.status = 'Contratado';
+      break;
+    case 'B1+':
+      S.filter._customFn = c => B1PLUS.includes(fv(c,'Nível de alemão','nivel_alemao','Nível alemão'));
+      S.filter._customLabel = 'B1+';
+      break;
+    default:
+      if (PIPELINE_STAGES.includes(label)) {
+        S.filter.status = label;
+      } else {
+        const healthMap = {
+          'Sem idioma alemão': c => { const a = fv(c,'Nível de alemão','Nível alemão'); return !a || ['Nenhum','A0',''].includes(a); },
+          'Sem perfil avaliado': c => !fv(c,'Perfil'),
+          'Prontos não marcados': c => !isYes(fv(c,'Elegível para employer','elegivel_para_employer')) && isElegibleCalc(c),
+          '"Em curso" não marcado': c => normalizeUpper(fv(c,'STATUS PIPELINE')) === 'CURSO DE ALEMAO' && !isYes(fv(c,'Em curso de alemão','em_curso_de_alemao')),
+          'Sem responsável': c => !fv(c,'Responsável interno','responsavel_interno'),
+          'Pendência crítica': c => !!(fv(c,'Pendência documental crítica','pendencia_documental_critica') || '').trim(),
+          'Inconsistência ativo': c => {
+            const at = isYes(fv(c,'Ativo','ativo'));
+            const st = fv(c,'STATUS PIPELINE','status_pipeline');
+            return (at && INACTIVE_STATUSES.includes(st)) || (!at && !INACTIVE_STATUSES.includes(st) && !!st);
+          },
+          'Doc. incompleta': c => !isYes(fv(c,'Documentação completa','documentacao_completa')),
+        };
+        if (healthMap[label]) {
+          S.filter._customFn = healthMap[label];
+          S.filter._customLabel = label;
+        }
+      }
+      break;
+  }
+  _navSetupUI('candidates');
+  persistCandidateFilters();
+  renderView();
+}
 </script>
 
 
