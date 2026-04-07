@@ -2955,7 +2955,7 @@ async function cleanupPendingAdminMfaFactors(supa) {
     try {
       const { error } = await supa.auth.mfa.unenroll({ factorId: factor.id });
       if (error) throw error;
-    if (false) {
+    } catch (e) {
       throw new Error('Falha ao limpar fator MFA pendente anterior. ' + (e?.message || e));
     }
   }
@@ -4050,7 +4050,7 @@ async function driveUploadCurriculum(candId, candName) {
     // Token jÃ¡ garantido â€” nenhuma chamada OAuth daqui em diante
     const file = input.files[0];
     if (!file) return;
-    const safeName = String(candName || 'Candidato').replace(/[^a-zA-ZÃ€-Ã¿0-9\s\-_.]/g,'').trim();
+    const safeName = String(candName || 'Candidato').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s._-]/g,'').trim();
     const ts       = new Date().toISOString().slice(0,16).replace('T',' ');
     const hasExisting = !!S.candidates?.find(c=>(c.ID||c['ID'])===candId)?.['CV/ ARQUIVO DOC'];
     const fileName = hasExisting
@@ -4291,6 +4291,10 @@ async function loadParserAuditData(options = {}) {
     if (error) throw error;
     S.parserAuditLogs = data || [];
     S.parserAuditError = '';
+  } catch (e) {
+    S.parserAuditLogs = [];
+    S.parserAuditError = e?.message || '';
+  }
   markCacheStamp('parserAuditAt');
   return S.parserAuditLogs;
 }
@@ -6219,7 +6223,7 @@ function getEmployerLinkBucketFor(match, c) {
   return 'outros';
 }
 function normalizeSearchToken(v) {
-  return String(v || '').normalize('NFD').replace(/[Ì€-Í¯]/g,'').toLowerCase().trim();
+  return String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 }
 function normalizeEmployerNameClient(v) {
   return normalizeSearchToken(v).replace(/\s+/g,' ');
@@ -10276,7 +10280,7 @@ function rhFindSectionCodeIndex(source, code, from=0) {
   while (idx !== -1) {
     const prev = idx === 0 ? '\n' : hay[idx - 1];
     const next = hay[idx + code.length] || '';
-    if (/\s/.test(prev) && (!next || /\s/.test(next) || /[A-Za-zÃ€-Ã¿0-9(]/.test(next))) return idx;
+if (/\s/.test(prev) && (!next || /\s/.test(next) || /[\p{L}\p{N}(]/u.test(next))) return idx;
     idx = hay.indexOf(code, idx + code.length);
   }
   return -1;
@@ -12070,7 +12074,7 @@ function _pdfExtractLikelyCity(lines) {
     if (chunk && chunk.length >= 2 && chunk.length <= 40) return chunk;
   }
   for (const line of arr.slice(0, 20)) {
-    const m = line.match(/\b([A-ZÃ€-Ã][A-Za-zÃ€-Ã¿' -]{2,28})(?:\s*[-,/]\s*[A-Z]{2})\b/);
+  const m = line.match(/\b([\p{Lu}][\p{L}' -]{2,28})(?:\s*[-,/]\s*[A-Z]{2})\b/u);
     if (m?.[1]) return m[1].trim();
   }
   return null;
@@ -12187,10 +12191,10 @@ function extractCurriculumDeterministicHints(payload) {
   if (!nome) {
     for (const line of topLines) {
       if (/[@\d]|curriculum|curr[iÃ­]culo|lebenslauf|resume|telefone|telefon|email|e-mail|linkedin/i.test(line)) continue;
-      const clean = line.replace(/[^A-Za-zÃ€-Ã¿' -]/g,' ').replace(/\s+/g,' ').trim();
+  const clean = line.replace(/[^\p{L}' -]/gu,' ').replace(/\s+/g,' ').trim();
       const parts = clean.split(' ').filter(Boolean);
       if (parts.length >= 2 && parts.length <= 5 && clean.length <= 60) {
-        const upperish = parts.filter(p => /^[A-ZÃ€-Ã][a-zÃ -Ã¿' -]+$/.test(p)).length;
+  const upperish = parts.filter(p => /^[\p{Lu}][\p{L}' -]+$/u.test(p)).length;
         if (upperish >= Math.max(2, parts.length - 1)) {
           nome = clean;
           break;
@@ -12356,7 +12360,7 @@ function _parserNormalizePhoneDigits(value) {
   return String(value || '').replace(/\D+/g,'');
 }
 function _parserNormalizeNameLoose(value) {
-  return String(value || '').normalize('NFD').replace(/[Ì€-Í¯]/g,'').toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
+  return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim();
 }
 function _parserCriticalMissingFields(fields) {
   const checks = [
@@ -12787,7 +12791,7 @@ async function submitNew() {
     if (pdfFile && driveIsConnected()) {
       toast('â³ Enviando currÃ­culo ao Drive...', 'ok', 10000);
       try {
-        const safeName = String(nome).replace(/[^a-zA-ZÃ€-Ã¿0-9\s\-_.]/g, '').trim();
+        const safeName = String(nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s._-]/g, '').trim();
         const fileName = `Curriculo - ${safeName}.pdf`;
         const renamedFile = new File([pdfFile], fileName, { type: 'application/pdf' });
         let driveResult;
@@ -16240,7 +16244,7 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
       if (pdfFile && driveIsConnected()) {
         toast('â³ Enviando currÃ­culo ao Drive...', 'ok', 10000);
         try {
-          const safeName = String(nome).replace(/[^a-zA-ZÃ€-Ã¿0-9\s\-_.]/g, '').trim();
+          const safeName = String(nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s._-]/g, '').trim();
           const fileName = `Curriculo - ${safeName}.pdf`; const renamedFile = new File([pdfFile], fileName, { type: 'application/pdf' });
           let driveResult; try { driveResult = await driveUploadFile(renamedFile, r.id, nome); } catch(uploadErr) { toast(`âš  Candidato criado, mas falhou ao enviar currÃ­culo ao Drive: ${uploadErr.message}`, 'warn', 8000); return; }
           try { await apiPost({ action: 'updateCandidate', id: r.id, actor: sess?.nome || 'web', fields: _cvBuildSaveFields(driveResult) }); toast(`âœ… CurrÃ­culo "${driveResult.fileName}" salvo no Drive e vÃ­nculo registrado.`, 'ok', 6000); await loadAll(); renderView(); } catch(saveErr) { toast(`âš  CurrÃ­culo enviado ao Drive, mas falhou ao salvar vÃ­nculo no banco: ${saveErr.message}`, 'warn', 8000); }
@@ -16928,7 +16932,7 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
       if (pdfFile && typeof driveIsConnected === 'function' && driveIsConnected()) {
         toast('â³ Enviando currÃ­culo ao Drive...', 'ok', 10000);
         try {
-          const safeName = String(nome).replace(/[^a-zA-ZÃ€-Ã¿0-9\s\-_.]/g, '').trim();
+          const safeName = String(nome).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9\s._-]/g, '').trim();
           const fileName = `Curriculo - ${safeName}.pdf`;
           const renamedFile = new File([pdfFile], fileName, { type:'application/pdf' });
           const driveResult = await driveUploadFile(renamedFile, r.id, nome);
