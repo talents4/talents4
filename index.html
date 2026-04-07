@@ -3612,7 +3612,7 @@ async function apiGet(params) {
   if (route === 'candidates') {
     const { data, error } = await supa
       .from('v_candidatos_full_employer')
-      .select(CANDIDATE_LIST_SELECT)
+      .select('*')
       .order('nome_completo')
       .limit(500);
     if (error) throw new Error(error.message);
@@ -3623,7 +3623,7 @@ async function apiGet(params) {
   if (route === 'candidate') {
     const { data, error } = await supa
       .from('v_candidatos_full_employer')
-      .select(CANDIDATE_DETAIL_SELECT)
+      .select('*')
       .eq('id', params.id)
       .single();
     if (error) throw new Error(error.message);
@@ -9183,7 +9183,7 @@ async function loadTicketBoardRows(options = {}) {
       const supa = await getSupa();
       const { data, error } = await supa
         .from('v_candidatos_full_employer')
-        .select(CANDIDATE_TICKET_INDEX_SELECT)
+        .select('id,nome_completo,status_pipeline,responsavel_interno,prioridade_comercial,ultima_atualizacao,historico_operacional')
         .not('historico_operacional', 'is', null)
         .order('ultima_atualizacao', { ascending:false })
         .limit(500);
