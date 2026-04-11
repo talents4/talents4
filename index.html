@@ -19477,16 +19477,31 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
         const fallback = () => supa.from('candidatos').select('id,nome_completo,status_pipeline,responsavel_interno,prioridade_comercial,ultima_atualizacao,historico_operacional').not('historico_operacional', 'is', null).order('ultima_atualizacao', { ascending:false }).limit(PERF_TICKET_LIMIT);
         const { data, error } = await perfSafeSelect(primary, fallback);
         if (error) throw error;
-        S.ticketBoardRows = Array.isArray(data) ? data.map((row) => perfNormalizeCandidateRow(row)) : [];
+
+        const rows = [];
+        (Array.isArray(data) ? data : []).forEach((row) => {
+          const candidate = perfNormalizeCandidateRow(row);
+          const tickets = getCandidateTickets(candidate);
+          if (!tickets.length) return;
+          tickets.forEach((ticket) => rows.push(buildTicketBoardRow(candidate, ticket)));
+        });
+
+        S.ticketBoardRows = rows;
+        S.ticketBoardStats = computeTicketBoardStats(rows);
         markCacheStamp('ticketsAt');
-        return S.ticketBoardRows;
+        updateBadges();
+        return rows;
       } catch (e) {
         console.error('[T4 perf patch] tickets', e);
         S.ticketBoardRows = [];
+        S.ticketBoardStats = computeTicketBoardStats([]);
+        markCacheStamp('ticketsAt');
+        updateBadges();
         throw e;
       } finally {
         S.ticketBoardLoading = false;
         S.ticketBoardPromise = null;
+        if (!options.silent && S.view === 'tickets') renderView();
       }
     })();
     S.ticketBoardPromise = run;
