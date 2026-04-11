@@ -620,6 +620,21 @@ a{color:inherit;text-decoration:none}
   font-size:11px;
   color:var(--txt3);
 }
+.ticket-collapsible-card>summary{list-style:none;cursor:pointer;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.ticket-collapsible-card>summary::-webkit-details-marker{display:none}
+.ticket-collapsible-card>summary::after{content:'Abrir';display:inline-flex;align-items:center;justify-content:center;min-width:78px;padding:6px 10px;border-radius:999px;border:1px solid rgba(96,165,250,.18);background:rgba(15,23,42,.7);color:#c8d8ff;font-size:11px;font-weight:800;letter-spacing:.02em;flex-shrink:0}
+.ticket-collapsible-card[open]>summary::after{content:'Minimizar';background:rgba(37,99,235,.12);color:#eef4ff;border-color:rgba(96,165,250,.3)}
+.ticket-summary-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:6px}
+.ticket-summary-preview{font-size:12px;color:var(--txt2);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ticket-summary-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;min-width:160px}
+.ticket-summary-meta{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px}
+.ticket-expanded{margin-top:12px;padding-top:12px;border-top:1px solid rgba(103,126,170,.16);display:flex;flex-direction:column;gap:12px}
+.ticket-expanded-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.ticket-expanded-title{font-size:16px;font-weight:800;color:#f4f8ff;line-height:1.3}
+.ticket-expanded-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ticket-inline-kpis{display:flex;flex-wrap:wrap;gap:8px}
+.ticket-inline-kpi{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);font-size:12px;color:var(--txt1)}
+.ticket-inline-kpi strong{color:#fff}
 @media (max-width: 820px){
   .ticket-card-body { grid-template-columns:1fr; }
   .ticket-stat { min-width:0; flex:1 1 140px; }
@@ -4008,6 +4023,78 @@ function _cvDownloadUrl(fileId, webViewLink) {
   const m = String(webViewLink || '').match(/\/d\/([^/]+)/);
   if (m) return `https://drive.google.com/uc?export=download&id=${m[1]}`;
   return webViewLink || '#'; // último recurso: abre no Drive
+}
+function extractGoogleDriveFileId(url) {
+  const raw = String(url || '').trim();
+  if (!raw) return '';
+  let m = raw.match(/\/file\/d\/([a-zA-Z0-9_-]{10,})/);
+  if (m) return m[1];
+  m = raw.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
+  if (m) return m[1];
+  m = raw.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
+  if (m) return m[1];
+  return '';
+}
+function buildManualCvLinkFields(url) {
+  const clean = String(url || '').trim();
+  const fileId = extractGoogleDriveFileId(clean);
+  return {
+    'CV/ ARQUIVO DOC': clean || null,
+    'CV Drive File ID': fileId || null,
+    'CV Drive Upload At': clean ? new Date().toISOString() : null,
+  };
+}
+async function saveCandidateCvDriveLink(candidateId, inputId) {
+  const input = document.getElementById(inputId);
+  if (!candidateId || !input) return;
+  const sess = getSession();
+  if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar.', 'warn'); return; }
+  const url = String(input.value || '').trim();
+  try {
+    await apiPost({ action:'updateCandidate', id:candidateId, actor:sess?.nome || 'web', fields: buildManualCvLinkFields(url) });
+    const detail = await loadCandidateDetailById(candidateId, { force:true });
+    mergeCandidateIntoState(detail, { cacheDetail:true });
+    if (String(S.currentCand?.ID || S.currentCand?.id || '') === String(candidateId)) S.currentCand = detail;
+    if (S.view === 'employer' || S.view === 'candidatos' || S.view === 'inativos') renderView();
+    if (document.getElementById('cm-body')) renderCandidateModalBody();
+    toast(url ? '✅ Link do currículo salvo.' : '✅ Link do currículo removido.', 'ok');
+  } catch (e) {
+    toast('Erro ao salvar link do currículo: ' + (e?.message || e), 'err', 5000);
+  }
+}
+async function saveActiveInterviewDriveLink(candidateId, inputId) {
+  const input = document.getElementById(inputId);
+  if (!candidateId || !input) return;
+  const sess = getSession();
+  if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar.', 'warn'); return; }
+  const url = String(input.value || '').trim();
+  try {
+    const candidate = await loadCandidateDetailById(candidateId, { force:true });
+    const interview = await loadCandidateInterview(candidate, { force:true });
+    if (!interview?.id) throw new Error('Este candidato ainda não possui entrevista preliminar vinculada.');
+    const fileId = extractGoogleDriveFileId(url);
+    const nextMeta = { ...(interview.meta || {}) };
+    if (url) {
+      nextMeta.drive_docx_web_view_link = url;
+      if (fileId) nextMeta.drive_docx_file_id = fileId;
+      nextMeta.drive_docx_uploaded_at = nextMeta.drive_docx_uploaded_at || new Date().toISOString();
+    } else {
+      delete nextMeta.drive_docx_web_view_link;
+      delete nextMeta.drive_docx_file_id;
+    }
+    const supa = await getSupa();
+    const payload = { meta: nextMeta, updated_at: new Date().toISOString() };
+    const { error } = await supa.from('entrevistas_preliminares').update(payload).eq('id', interview.id);
+    if (error) throw error;
+    const nextInterview = { ...interview, meta: nextMeta, updated_at: payload.updated_at };
+    cacheCandidateInterview(candidateId, nextInterview);
+    if (String(S.currentCand?.ID || S.currentCand?.id || '') === String(candidateId)) S.currentInterview = nextInterview;
+    if (S.view === 'employer' || S.view === 'candidatos' || S.view === 'inativos') renderView();
+    if (document.getElementById('cm-body')) renderCandidateModalBody();
+    toast(url ? '✅ Link do formulário RH salvo.' : '✅ Link do formulário RH removido.', 'ok');
+  } catch (e) {
+    toast('Erro ao salvar link do formulário RH: ' + (e?.message || e), 'err', 5000);
+  }
 }
 async function driveUploadRhDocx(file, candId, candName) {
   if (!file) throw new Error('Arquivo DOCX não informado.');
@@ -7410,21 +7497,42 @@ function renderEmployerHub(el) {
   const rhDocUploadedAt = interviewMeta.drive_docx_uploaded_at || '';
   const rhDocDownloadUrl = (rhDocFileId || rhDocViewLink) ? _cvDownloadUrl(rhDocFileId, rhDocViewLink) : '';
   const rhDocLoading = !!(currentInterviewId && cachedInterview === undefined && S.candidateInterviewPromises?.[cid]);
-  const driveFilesSection = current && (cvDownloadUrl || currentInterviewId) ? section('Arquivos do candidato', `
+  const driveFilesSection = current ? section('Arquivos do candidato', `
         <div class="emp-summary-grid">
-          ${cvDownloadUrl ? box('Currículo PDF', [cvFileName || 'Arquivo disponível no Drive', cvUploadedAt ? `Enviado em ${uiFormatDate(cvUploadedAt)}` : ''].filter(Boolean).join(' • ')) : ''}
-          ${(rhDocDownloadUrl || currentInterviewId) ? box('Formulário RH (Word)', rhDocDownloadUrl
-            ? [rhDocFileName || 'Arquivo DOCX disponível no Drive', rhDocUploadedAt ? `Enviado em ${uiFormatDate(rhDocUploadedAt)}` : ''].filter(Boolean).join(' • ')
-            : rhDocLoading
-              ? 'Carregando vínculo do formulário no Drive...'
-              : 'Entrevista estruturada encontrada, mas ainda sem arquivo do Drive salvo.') : ''}
+          ${box('Currículo PDF', cvDownloadUrl
+            ? [cvFileName || 'Arquivo disponível no Drive', cvUploadedAt ? `Enviado em ${uiFormatDate(cvUploadedAt)}` : '', cvUrl ? 'Link registrado no CRM' : ''].filter(Boolean).join(' • ')
+            : 'Nenhum currículo vinculado ao Drive ainda.')}
+          ${box('Formulário RH (Word)', (rhDocDownloadUrl || currentInterviewId)
+            ? (rhDocDownloadUrl
+                ? [rhDocFileName || 'Arquivo DOCX disponível no Drive', rhDocUploadedAt ? `Enviado em ${uiFormatDate(rhDocUploadedAt)}` : '', rhDocViewLink ? 'Link registrado no CRM' : ''].filter(Boolean).join(' • ')
+                : rhDocLoading
+                  ? 'Carregando vínculo do formulário no Drive...'
+                  : 'Entrevista estruturada encontrada, mas ainda sem arquivo do Drive salvo.')
+            : 'Nenhum formulário RH vinculado ainda.')}
         </div>
         <div class="emp-actions" style="margin-top:10px">
           ${cvDownloadUrl ? `<a class="emp-btn" href="${esc(cvDownloadUrl)}" target="_blank" rel="noopener" style="text-decoration:none">Baixar currículo PDF</a>` : ''}
+          ${cvUrl ? `<a class="emp-link" href="${esc(cvUrl)}" target="_blank" rel="noopener">${esc(uiTranslate('Abrir no Drive'))}</a>` : ''}
           ${rhDocDownloadUrl ? `<a class="emp-btn" href="${esc(rhDocDownloadUrl)}" target="_blank" rel="noopener" style="text-decoration:none">Baixar formulário Word</a>` : ''}
           ${rhDocViewLink ? `<a class="emp-link" href="${esc(rhDocViewLink)}" target="_blank" rel="noopener">${esc(uiTranslate('Abrir no Drive'))}</a>` : ''}
         </div>
-      `, { subtitle:'Atalhos diretos para os arquivos já enviados à pasta do candidato no Google Drive.' }) : '';
+        <div class="field-grid" style="margin-top:12px">
+          <div class="field-group fg-full">
+            <label class="field-lbl">Link do Drive do currículo</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input id="emp-drive-link-cv-${esc(cid)}" class="field-input" type="url" value="${esc(cvUrl)}" placeholder="Cole aqui o link do Drive do currículo">
+              <button type="button" class="btn btn-xs btn-ghost" onclick="saveCandidateCvDriveLink('${esc(cid)}','emp-drive-link-cv-${esc(cid)}')">Salvar link</button>
+            </div>
+          </div>
+          <div class="field-group fg-full">
+            <label class="field-lbl">Link do Drive do formulário RH</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <input id="emp-drive-link-rh-${esc(cid)}" class="field-input" type="url" value="${esc(rhDocViewLink)}" placeholder="Cole aqui o link do Drive do formulário de entrevista">
+              <button type="button" class="btn btn-xs btn-ghost" onclick="saveActiveInterviewDriveLink('${esc(cid)}','emp-drive-link-rh-${esc(cid)}')">Salvar link</button>
+            </div>
+          </div>
+        </div>
+      `, { subtitle:'Baixe os arquivos e registre manualmente o link do Drive quando necessário, sem perder rastreabilidade no CRM.' }) : '';
 
   const currentDetailPanel = current ? `<div class="emp-inline-detail">
     <div class="emp-pane-hd">
@@ -8968,6 +9076,7 @@ async function persistCurrentCandidateTicketHistory(nextHistory, successMessage 
   toast(successMessage, 'ok', 4000);
 }
 
+
 function findBestTicketCandidateMatch(query) {
   const q = normalizeSearchToken(query || '');
   if (!q) return null;
@@ -8990,32 +9099,194 @@ function findBestTicketCandidateMatch(query) {
   return scored.length ? { best: scored[0].candidate, total: scored.length } : null;
 }
 
-async function promptNewTicketFromBoard() {
+function getTicketCandidateSearchMatches(query, limit = 14) {
+  const list = Array.isArray(S.candidates) ? S.candidates : [];
+  const q = normalizeSearchToken(query || '');
+  const scored = list.map((candidate, idx) => {
+    const id = String(candidate?.ID || candidate?.id || '').trim();
+    const name = String(fv(candidate, 'Nome completo', 'nome_completo') || '').trim();
+    const stage = String(candidate?.status || candidate?.Status || candidate?.etapa_pipeline || '').trim();
+    const german = String(candidate?.nivel_alemao || candidate?.alemao_nivel || candidate?.alemao || '').trim();
+    const profissao = String(candidate?.profissao_principal || candidate?.profissao || candidate?.area_profissional || '').trim();
+    const idNorm = normalizeSearchToken(id);
+    const nameNorm = normalizeSearchToken(name);
+    let score = 0;
+    if (!q) {
+      score = 100 - idx;
+    } else if (idNorm === q) score = 1200;
+    else if (nameNorm === q) score = 1100;
+    else if (idNorm.startsWith(q)) score = 1000;
+    else if (nameNorm.startsWith(q)) score = 950;
+    else if (nameNorm.includes(q)) score = 820;
+    else if (idNorm.includes(q)) score = 780;
+    else if (normalizeSearchToken(stage).includes(q)) score = 520;
+    else if (normalizeSearchToken(profissao).includes(q)) score = 500;
+    else return null;
+    return { candidate, id, name, stage, german, profissao, score: score - idx };
+  }).filter(Boolean).sort((a,b)=>b.score-a.score);
+  return scored.slice(0, Math.max(1, limit));
+}
+
+function closeTicketCandidateSearchModal() {
+  const overlay = document.getElementById('ticket-candidate-search-overlay');
+  if (!overlay) return;
+  overlay.remove();
+  document.removeEventListener('keydown', handleTicketCandidateSearchModalKeydown, true);
+}
+
+async function selectTicketCandidateFromSearch(candidateId) {
+  const id = String(candidateId || '').trim();
+  if (!id) return;
   try {
-    if (!Array.isArray(S.candidates) || !S.candidates.length) {
-      await loadAll();
-    }
-    const query = String(window.prompt('Digite o nome ou ID do candidato para abrir um novo ticket:', '') || '').trim();
-    if (!query) return;
-    const match = findBestTicketCandidateMatch(query);
-    if (!match?.best) {
-      toast(`Nenhum candidato encontrado para "${query}".`, 'warn', 4000);
-      return;
-    }
-    const candidateId = String(match.best?.ID || match.best?.id || '').trim();
-    await openTicketBoardCandidate(candidateId, '', false);
+    closeTicketCandidateSearchModal();
+    await openTicketBoardCandidate(id, '', false);
     resetCandidateTicketDraft();
-    if (match.total > 1) {
-      toast(`Abrindo o melhor resultado para "${query}". Revise o candidato antes de salvar o ticket.`, 'warn', 4500);
-    } else {
-      toast('Preencha o ticket e clique em Adicionar ticket.', 'ok', 3500);
-    }
+    toast('Preencha o ticket e clique em Adicionar ticket.', 'ok', 3500);
     setTimeout(() => {
       const field = document.querySelector('#t-tickets [data-ticket-field="assunto"]');
       field?.focus();
     }, 180);
   } catch (e) {
     toast('Erro ao abrir a criação do ticket: ' + (e?.message || e), 'err', 5000);
+  }
+}
+
+function renderTicketCandidateSearchResults(query) {
+  const root = document.getElementById('ticket-candidate-search-results');
+  const countEl = document.getElementById('ticket-candidate-search-count');
+  const input = document.getElementById('ticket-candidate-search-input');
+  if (!root) return;
+  const matches = getTicketCandidateSearchMatches(query, 14);
+  const q = String(query || '').trim();
+  if (countEl) countEl.textContent = matches.length ? `${matches.length} resultado(s) exibidos` : 'Nenhum resultado';
+  root.dataset.matches = JSON.stringify(matches.map(x => String(x.id || x.candidate?.ID || x.candidate?.id || '')));
+  if (!matches.length) {
+    root.innerHTML = `<div class="ticket-search-empty">${q ? `Nenhum candidato encontrado para <strong>${esc(q)}</strong>. Continue digitando nome, ID, profissão ou etapa.` : 'Digite o nome, ID, profissão ou etapa do candidato. Os melhores resultados aparecem automaticamente.'}</div>`;
+    return;
+  }
+  root.innerHTML = matches.map((row, idx) => {
+    const candidate = row.candidate || {};
+    const id = String(row.id || candidate?.ID || candidate?.id || '').trim();
+    const name = String(row.name || fv(candidate, 'Nome completo', 'nome_completo') || 'Sem nome').trim();
+    const initials = esc((name.split(/\s+/).filter(Boolean).slice(0,2).map(p => p[0] || '').join('') || '?').toUpperCase());
+    const meta = [
+      id ? `<span class="ticket-search-tag">ID ${esc(id)}</span>` : '',
+      row.german ? `<span>${esc(row.german)}</span>` : '',
+      row.stage ? `<span>${esc(row.stage)}</span>` : '',
+      row.profissao ? `<span>${esc(row.profissao)}</span>` : ''
+    ].filter(Boolean).join('');
+    return `<button type="button" class="ticket-search-item ${idx===0?'active':''}" data-ticket-search-id="${esc(id)}" onclick="selectTicketCandidateFromSearch('${esc(id)}')">
+      <div class="ticket-search-avatar">${initials}</div>
+      <div class="ticket-search-main">
+        <div class="ticket-search-name">${esc(name)}</div>
+        <div class="ticket-search-meta">${meta}</div>
+      </div>
+    </button>`;
+  }).join('');
+  if (input) input.dataset.activeIndex = '0';
+}
+
+function moveTicketCandidateSearchSelection(step) {
+  const input = document.getElementById('ticket-candidate-search-input');
+  const items = Array.from(document.querySelectorAll('#ticket-candidate-search-results [data-ticket-search-id]'));
+  if (!input || !items.length) return;
+  let idx = Number(input.dataset.activeIndex || 0);
+  if (!Number.isFinite(idx)) idx = 0;
+  idx = (idx + step + items.length) % items.length;
+  input.dataset.activeIndex = String(idx);
+  items.forEach((el, i) => el.classList.toggle('active', i === idx));
+  items[idx]?.scrollIntoView({ block:'nearest' });
+}
+
+function confirmTicketCandidateSearchSelection() {
+  const input = document.getElementById('ticket-candidate-search-input');
+  const items = Array.from(document.querySelectorAll('#ticket-candidate-search-results [data-ticket-search-id]'));
+  if (!items.length) return;
+  let idx = Number(input?.dataset.activeIndex || 0);
+  if (!Number.isFinite(idx) || idx < 0 || idx >= items.length) idx = 0;
+  const id = items[idx]?.getAttribute('data-ticket-search-id') || '';
+  if (id) selectTicketCandidateFromSearch(id);
+}
+
+function handleTicketCandidateSearchModalKeydown(ev) {
+  const overlay = document.getElementById('ticket-candidate-search-overlay');
+  if (!overlay) return;
+  if (ev.key === 'Escape') {
+    ev.preventDefault();
+    closeTicketCandidateSearchModal();
+    return;
+  }
+  if (ev.key === 'ArrowDown') {
+    ev.preventDefault();
+    moveTicketCandidateSearchSelection(1);
+    return;
+  }
+  if (ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    moveTicketCandidateSearchSelection(-1);
+    return;
+  }
+  if (ev.key === 'Enter') {
+    const target = ev.target;
+    if (target && target.id === 'ticket-candidate-search-input') {
+      ev.preventDefault();
+      confirmTicketCandidateSearchSelection();
+    }
+  }
+}
+
+function openTicketCandidateSearchModal() {
+  closeTicketCandidateSearchModal();
+  const existing = document.getElementById('ticket-candidate-search-overlay');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'ticket-search-overlay';
+  overlay.id = 'ticket-candidate-search-overlay';
+  overlay.onclick = (event) => { if (event.target === overlay) closeTicketCandidateSearchModal(); };
+  overlay.innerHTML = `
+    <div class="ticket-search-modal" role="dialog" aria-modal="true" aria-labelledby="ticket-candidate-search-title">
+      <div class="ticket-search-head">
+        <div class="ticket-search-icon">🎫</div>
+        <div style="min-width:0;flex:1">
+          <div class="ticket-search-title" id="ticket-candidate-search-title">Novo ticket</div>
+          <div class="ticket-search-sub">Busque o candidato por nome, ID, profissão ou etapa. A lista vai refinando enquanto você digita.</div>
+        </div>
+        <button type="button" class="ticket-search-close" onclick="closeTicketCandidateSearchModal()">✕</button>
+      </div>
+      <div class="ticket-search-body">
+        <input id="ticket-candidate-search-input" class="ticket-search-input" type="text" placeholder="Ex.: Jean Carlos Lopes, 1024, soldador, triagem" autocomplete="off">
+        <div class="ticket-search-hint">Enter abre o resultado selecionado. Setas ↑ ↓ navegam pela lista.</div>
+        <div id="ticket-candidate-search-results" class="ticket-search-results"></div>
+        <div class="ticket-search-footer">
+          <div id="ticket-candidate-search-count" class="ticket-search-count">0 resultado(s)</div>
+          <div class="ticket-search-actions">
+            <button type="button" class="btn btn-ghost" onclick="closeTicketCandidateSearchModal()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  const input = document.getElementById('ticket-candidate-search-input');
+  if (input) {
+    input.addEventListener('input', () => renderTicketCandidateSearchResults(input.value || ''));
+    input.addEventListener('focus', () => renderTicketCandidateSearchResults(input.value || ''));
+    input.dataset.activeIndex = '0';
+    setTimeout(() => {
+      input.focus();
+      renderTicketCandidateSearchResults('');
+    }, 20);
+  }
+  document.addEventListener('keydown', handleTicketCandidateSearchModalKeydown, true);
+}
+
+async function promptNewTicketFromBoard() {
+  try {
+    if (!Array.isArray(S.candidates) || !S.candidates.length) {
+      await loadAll();
+    }
+    openTicketCandidateSearchModal();
+  } catch (e) {
+    toast('Erro ao abrir a busca de candidatos: ' + (e?.message || e), 'err', 5000);
   }
 }
 
@@ -9092,41 +9363,55 @@ function buildTicketPanel(c) {
   }).length;
   const statusOptions = TICKET_STATUS_OPTIONS.map(opt => `<option value="${esc(opt)}" ${draft.status===opt?'selected':''}>${esc(opt)}</option>`).join('');
   const priorityOptions = TICKET_PRIORITY_OPTIONS.map(opt => `<option value="${esc(opt)}" ${draft.prioridade===opt?'selected':''}>${esc(opt)}</option>`).join('');
-  const cards = tickets.map(ticket => `
-    <div class="ticket-card" id="cand-ticket-${esc(ticket.id)}">
-      <div class="ticket-card-head">
-        <div>
+  const cards = tickets.map(ticket => {
+    const preview = rhPreviewText(ticket.conversa || ticket.proxima_acao || '', 180) || 'Sem resumo da conversa.';
+    return `
+    <details class="ticket-card ticket-collapsible-card" id="cand-ticket-${esc(ticket.id)}">
+      <summary class="ticket-card-summary">
+        <div class="ticket-summary-main">
           <div class="ticket-card-title">${esc(ticket.assunto || 'Ticket sem assunto')}</div>
           <div class="ticket-card-meta">
             <span class="ticket-badge ${getTicketStatusClass(ticket.status)}">${esc(ticket.status || 'Aberto')}</span>
             <span class="ticket-badge ${getTicketPriorityClass(ticket.prioridade)}">${esc(ticket.prioridade || 'Média')}</span>
             <span class="ticket-badge status-open">${esc(ticket.canal || 'WhatsApp')}</span>
           </div>
+          <div class="ticket-summary-preview">${esc(preview)}</div>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button type="button" class="btn btn-sm btn-ghost" onclick="editCandidateTicket('${esc(ticket.id)}')">✏️ Editar</button>
-          <button type="button" class="btn btn-sm btn-ghost btn-danger" onclick="deleteCandidateTicket('${esc(ticket.id)}')">🗑 Excluir</button>
+        <div class="ticket-summary-right">
+          <div class="ticket-inline-kpis">
+            <span class="ticket-inline-kpi"><strong>Follow-up</strong> ${esc(ticketFormatDue(ticket.followup_em))}</span>
+          </div>
+        </div>
+      </summary>
+      <div class="ticket-expanded">
+        <div class="ticket-expanded-head">
+          <div class="ticket-expanded-title">${esc(ticket.assunto || 'Ticket sem assunto')}</div>
+          <div class="ticket-expanded-actions">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); editCandidateTicket('${esc(ticket.id)}')">✏️ Editar</button>
+            <button type="button" class="btn btn-sm btn-ghost btn-danger" onclick="event.stopPropagation(); deleteCandidateTicket('${esc(ticket.id)}')">🗑 Excluir</button>
+          </div>
+        </div>
+        <div class="ticket-card-body">
+          <div class="ticket-card-block full">
+            <div class="ticket-card-lbl">O que o candidato falou no WhatsApp</div>
+            <div class="ticket-card-val">${esc(ticket.conversa || '—')}</div>
+          </div>
+          <div class="ticket-card-block">
+            <div class="ticket-card-lbl">Próxima ação</div>
+            <div class="ticket-card-val">${esc(ticket.proxima_acao || 'Sem ação definida')}</div>
+          </div>
+          <div class="ticket-card-block">
+            <div class="ticket-card-lbl">Follow-up</div>
+            <div class="ticket-card-val">${esc(ticketFormatDue(ticket.followup_em))}</div>
+          </div>
+        </div>
+        <div class="ticket-card-foot">
+          <div class="ticket-card-updated">Atualizado em ${esc(ticketFormatStamp(ticket.atualizado_em || ticket.criado_em))}${ticket.atualizado_por ? ` por ${esc(ticket.atualizado_por)}` : ''}</div>
         </div>
       </div>
-      <div class="ticket-card-body">
-        <div class="ticket-card-block full">
-          <div class="ticket-card-lbl">O que o candidato falou no WhatsApp</div>
-          <div class="ticket-card-val">${esc(ticket.conversa || '—')}</div>
-        </div>
-        <div class="ticket-card-block">
-          <div class="ticket-card-lbl">Próxima ação</div>
-          <div class="ticket-card-val">${esc(ticket.proxima_acao || 'Sem ação definida')}</div>
-        </div>
-        <div class="ticket-card-block">
-          <div class="ticket-card-lbl">Follow-up</div>
-          <div class="ticket-card-val">${esc(ticketFormatDue(ticket.followup_em))}</div>
-        </div>
-      </div>
-      <div class="ticket-card-foot">
-        <div class="ticket-card-updated">Atualizado em ${esc(ticketFormatStamp(ticket.atualizado_em || ticket.criado_em))}${ticket.atualizado_por ? ` por ${esc(ticket.atualizado_por)}` : ''}</div>
-      </div>
-    </div>
-  `).join('');
+    </details>
+  `;
+  }).join('');
   return `<div class="ticket-shell">
     <div class="ticket-composer">
       <div class="ticket-composer-head">
@@ -9168,7 +9453,7 @@ function buildTicketPanel(c) {
         </div>
       </div>
       <div class="ticket-actions">
-        <div class="ticket-hint">Os tickets entram no rascunho do candidato e são persistidos junto com o botão principal de salvar.</div>
+        <div class="ticket-hint">Os tickets desta aba são salvos imediatamente no CRM. Use expandir/minimizar para ler a conversa completa sem deixar a tela gigante.</div>
         ${draft.id ? `<button type="button" class="btn btn-ghost" onclick="resetCandidateTicketDraft()">Cancelar edição</button>` : ''}
         <button type="button" class="btn btn-primary" onclick="upsertCandidateTicketDraft()">${draft.id ? '💾 Atualizar ticket' : '+ Adicionar ticket'}</button>
       </div>
@@ -9549,47 +9834,63 @@ function renderTicketBoard(el) {
         </div>
       </div>
       <div class="ticket-board-list">
-        ${paged.length ? paged.map((row) => `
-          <div class="ticket-card" id="board-ticket-${esc(row.ticketId)}">
-            <div class="ticket-board-candidate">
-              <div class="ticket-board-candidate-main">
-                <div class="ticket-board-candidate-name">${esc(row.candidateName)}</div>
-                <div class="ticket-board-candidate-sub">${esc([row.stage || 'Sem etapa', row.responsavel || 'Sem responsável'].filter(Boolean).join(' • '))}</div>
+        ${paged.length ? paged.map((row) => {
+          const preview = rhPreviewText(row.conversa || row.proxima_acao || row.assunto || '', 220) || 'Sem resumo da conversa.';
+          return `
+          <details class="ticket-card ticket-collapsible-card" id="board-ticket-${esc(row.ticketId)}">
+            <summary class="ticket-card-summary">
+              <div class="ticket-summary-main">
+                <div class="ticket-board-candidate">
+                  <div class="ticket-board-candidate-main">
+                    <div class="ticket-board-candidate-name">${esc(row.candidateName)}</div>
+                    <div class="ticket-board-candidate-sub">${esc([row.stage || 'Sem etapa', row.responsavel || 'Sem responsável'].filter(Boolean).join(' • '))}</div>
+                  </div>
+                  <div class="ticket-card-meta">
+                    <span class="ticket-badge ${getTicketStatusClass(row.status)}">${esc(row.status || 'Aberto')}</span>
+                    <span class="ticket-badge ${getTicketPriorityClass(row.prioridade)}">${esc(row.prioridade || 'Média')}</span>
+                    <span class="ticket-badge status-open">${esc(row.canal || 'WhatsApp')}</span>
+                  </div>
+                </div>
+                <div class="ticket-card-title">${esc(row.assunto || 'Ticket sem assunto')}</div>
+                <div class="ticket-summary-preview">${esc(preview)}</div>
               </div>
-              <div class="ticket-card-meta">
-                <span class="ticket-badge ${getTicketStatusClass(row.status)}">${esc(row.status || 'Aberto')}</span>
-                <span class="ticket-badge ${getTicketPriorityClass(row.prioridade)}">${esc(row.prioridade || 'Média')}</span>
-                <span class="ticket-badge status-open">${esc(row.canal || 'WhatsApp')}</span>
+              <div class="ticket-summary-right">
+                <div class="ticket-inline-kpis">
+                  <span class="ticket-inline-kpi"><strong>Follow-up</strong> ${esc(ticketFormatDue(row.followup_em))}${ticketIsOverdue(row) ? ' • atraso' : ''}</span>
+                  ${row.prioridadeComercial ? `<span class="ticket-inline-kpi"><strong>Prioridade comercial</strong> ${esc(row.prioridadeComercial)}</span>` : ''}
+                </div>
+              </div>
+            </summary>
+            <div class="ticket-expanded">
+              <div class="ticket-expanded-head">
+                <div class="ticket-expanded-title">${esc(row.candidateName)} · ${esc(row.assunto || 'Ticket sem assunto')}</div>
+                <div class="ticket-expanded-actions">
+                  <button type="button" class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); openTicketBoardCandidate('${esc(row.candidateId)}','${esc(row.ticketId)}',false)">Abrir candidato</button>
+                  <button type="button" class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); editTicketFromBoard('${esc(row.candidateId)}','${esc(row.ticketId)}')">Editar</button>
+                  <button type="button" class="btn btn-sm ${ticketIsClosed(row) ? 'btn-ghost' : 'btn-primary'}" onclick="event.stopPropagation(); toggleTicketBoardStatus('${esc(row.candidateId)}','${esc(row.ticketId)}')">${ticketIsClosed(row) ? 'Reabrir' : 'Resolver'}</button>
+                </div>
+              </div>
+              <div class="ticket-card-body">
+                <div class="ticket-card-block full">
+                  <div class="ticket-card-lbl">O que o candidato falou no WhatsApp</div>
+                  <div class="ticket-card-val">${esc(row.conversa || '—')}</div>
+                </div>
+                <div class="ticket-card-block">
+                  <div class="ticket-card-lbl">Próxima ação</div>
+                  <div class="ticket-card-val">${esc(row.proxima_acao || 'Sem ação definida')}</div>
+                </div>
+                <div class="ticket-card-block">
+                  <div class="ticket-card-lbl">Follow-up</div>
+                  <div class="ticket-card-val">${esc(ticketFormatDue(row.followup_em))}${ticketIsOverdue(row) ? ' • Em atraso' : ''}</div>
+                </div>
+              </div>
+              <div class="ticket-card-foot">
+                <div class="ticket-card-updated">Atualizado em ${esc(ticketFormatStamp(row.atualizado_em || row.criado_em))}${row.atualizado_por ? ` por ${esc(row.atualizado_por)}` : ''}</div>
               </div>
             </div>
-            <div class="ticket-card-head" style="margin-bottom:12px">
-              <div class="ticket-card-title">${esc(row.assunto || 'Ticket sem assunto')}</div>
-              <div class="ticket-board-actions">
-                <button type="button" class="btn btn-sm btn-ghost" onclick="openTicketBoardCandidate('${esc(row.candidateId)}','${esc(row.ticketId)}',false)">Abrir</button>
-                <button type="button" class="btn btn-sm btn-ghost" onclick="editTicketFromBoard('${esc(row.candidateId)}','${esc(row.ticketId)}')">Editar</button>
-                <button type="button" class="btn btn-sm ${ticketIsClosed(row) ? 'btn-ghost' : 'btn-primary'}" onclick="toggleTicketBoardStatus('${esc(row.candidateId)}','${esc(row.ticketId)}')">${ticketIsClosed(row) ? 'Reabrir' : 'Resolver'}</button>
-              </div>
-            </div>
-            <div class="ticket-card-body">
-              <div class="ticket-card-block full">
-                <div class="ticket-card-lbl">O que o candidato falou no WhatsApp</div>
-                <div class="ticket-card-val">${esc(row.conversa || '—')}</div>
-              </div>
-              <div class="ticket-card-block">
-                <div class="ticket-card-lbl">Próxima ação</div>
-                <div class="ticket-card-val">${esc(row.proxima_acao || 'Sem ação definida')}</div>
-              </div>
-              <div class="ticket-card-block">
-                <div class="ticket-card-lbl">Follow-up</div>
-                <div class="ticket-card-val">${esc(ticketFormatDue(row.followup_em))}${ticketIsOverdue(row) ? ' • Em atraso' : ''}</div>
-              </div>
-            </div>
-            <div class="ticket-card-foot">
-              <div class="ticket-card-updated">Atualizado em ${esc(ticketFormatStamp(row.atualizado_em || row.criado_em))}${row.atualizado_por ? ` por ${esc(row.atualizado_por)}` : ''}</div>
-              <div class="ticket-card-updated">${esc(row.prioridadeComercial ? `Prioridade comercial: ${row.prioridadeComercial}` : '')}</div>
-            </div>
-          </div>
-        `).join('') : `<div class="ticket-empty">Nenhum ticket encontrado com os filtros atuais.</div>`}
+          </details>
+        `;
+        }).join('') : `<div class="ticket-empty">Nenhum ticket encontrado com os filtros atuais.</div>`}
       </div>
       ${pagination}
     </div>`;
@@ -9764,6 +10065,33 @@ function buildPanel(tabId, c) {
         <div style="margin-bottom:14px;color:var(--txt3);font-size:12px;line-height:1.55">
           Esta aba mostra o conteúdo documental do formulário importado. A pré-entrevista acima serve como filtro rápido e o conteúdo abaixo preserva a entrevista estruturada completa.
         </div>
+
+        ${(()=>{
+          const candId = esc(c['ID']||c.ID||'');
+          const mdoc = iv.meta || {};
+          const rhDocLink = mdoc.drive_docx_web_view_link || iv.drive_docx_web_view_link || '';
+          const rhDocFileId = mdoc.drive_docx_file_id || iv.drive_docx_file_id || '';
+          const rhDocDownloadUrl = (rhDocFileId || rhDocLink) ? _cvDownloadUrl(rhDocFileId, rhDocLink) : '';
+          const rhDocUploadedAt = mdoc.drive_docx_uploaded_at || '';
+          const rhDocFileName = mdoc.drive_docx_file_name || iv.arquivo_origem_nome || '';
+          return rhSectionCard('Arquivo do formulário RH / Drive', `
+            <div class="field-grid g1">
+              <div class="field-group fg-full">
+                <label class="field-lbl">Link do Drive</label>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                  <input id="rhdoc-drive-link-${candId}" class="field-input" type="url" value="${esc(rhDocLink)}" placeholder="Cole aqui o link do Drive do formulário de entrevista">
+                  <button type="button" class="btn btn-xs btn-ghost" onclick="saveActiveInterviewDriveLink('${candId}','rhdoc-drive-link-${candId}')">Salvar link</button>
+                  ${rhDocLink ? `<a href="${esc(rhDocLink)}" target="_blank" class="btn btn-xs btn-ghost">↗ Abrir no Drive</a>` : ''}
+                  ${rhDocDownloadUrl ? `<a href="${esc(rhDocDownloadUrl)}" target="_blank" class="btn btn-xs btn-ghost">⬇ Baixar formulário</a>` : ''}
+                </div>
+                <div style="font-size:11px;color:var(--txt2);margin-top:6px">
+                  ${rhDocFileName ? `📄 <strong>${esc(rhDocFileName)}</strong>` : 'Nenhum nome de arquivo salvo.'}
+                  ${rhDocUploadedAt ? `<span style="color:var(--txt3)"> · Registrado em ${uiFormatDate(rhDocUploadedAt)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          `, 'Use este campo quando o arquivo já existir no Drive e você só precisar registrar ou corrigir o link no CRM.');
+        })()}
 
         ${rhSectionCard('Cabeçalho da entrevista', `
           <div class="field-grid">
@@ -10120,16 +10448,16 @@ function buildPanel(tabId, c) {
         <div class="section-hdr">Documentação Estruturada</div>
         <div class="idioma-bento">
           ${(()=>{
-            // ── Card de Currículo ──────────────────────────────────────
+            const candId = esc(c['ID']||c.ID||'');
+            const candName = esc(c['Nome completo']||'');
             const cvUrl    = fv(c,'CV/ ARQUIVO DOC','cv_arquivo_doc') || '';
             const cvFileId = fv(c,'CV Drive File ID','cv_drive_file_id') || '';
             const cvName   = fv(c,'CV Drive File Name','cv_drive_file_name') || '';
             const cvUpAt   = fv(c,'CV Drive Upload At','cv_drive_upload_at') || fv(c,'Última atualização','ultima_atualizacao') || '';
             const cvDateFmt = cvUpAt ? new Date(cvUpAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-            // URL de download real — <a download> não funciona para o Drive
             const dlUrl = _cvDownloadUrl(cvFileId, cvUrl);
             return card('Currículo PDF','📎', `
-              <div class="field-group fg-full" style="flex-direction:column;gap:6px">
+              <div class="field-group fg-full" style="flex-direction:column;gap:8px">
                 ${cvUrl
                   ? `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
                       <a href="${esc(cvUrl)}" target="_blank" class="btn btn-xs" style="background:var(--accent);color:#fff;text-decoration:none">↗ Abrir currículo</a>
@@ -10141,9 +10469,13 @@ function buildPanel(tabId, c) {
                     </div>`
                   : `<div style="color:var(--txt3);font-size:12px">Nenhum currículo anexado.</div>`
                 }
+                <label class="field-lbl">Link do Drive registrado no CRM</label>
+                <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                  <input id="docs-drive-link-cv-${candId}" class="field-input" type="url" value="${esc(cvUrl)}" placeholder="Cole aqui o link do Drive do currículo">
+                  <button type="button" class="btn btn-xs btn-ghost" onclick="saveCandidateCvDriveLink('${candId}','docs-drive-link-cv-${candId}')">Salvar link</button>
+                </div>
                 <div style="display:flex;gap:6px;margin-top:4px">
-                  <button type="button" class="btn btn-xs btn-ghost"
-                    onclick="driveUploadCurriculum('${esc(c['ID']||c.ID||'')}','${esc(c['Nome completo']||'')}')">
+                  <button type="button" class="btn btn-xs btn-ghost" onclick="driveUploadCurriculum('${candId}','${candName}')">
                     ☁ ${cvUrl ? 'Atualizar currículo' : 'Enviar currículo ao Drive'}
                   </button>
                 </div>
@@ -17122,6 +17454,41 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
 .pf-v53-mount{grid-column:1/-1}
 .pf-hidden-legacy{display:none !important}
 @media (max-width:1100px){.pf-v53-grid,.pf-v53-grid-2{grid-template-columns:1fr}}
+
+
+/* Ticket candidate search modal */
+.ticket-search-overlay{position:fixed;inset:0;background:rgba(4,6,14,.82);backdrop-filter:blur(4px);z-index:9200;display:flex;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.ticket-search-modal{width:min(760px,96vw);max-height:88vh;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(14,18,42,.98),rgba(9,12,29,.98));border:1px solid rgba(255,255,255,.08);border-radius:22px;box-shadow:0 26px 80px rgba(0,0,0,.48);overflow:hidden}
+.ticket-search-head{display:flex;align-items:flex-start;gap:14px;padding:18px 20px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.ticket-search-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.06);font-size:18px}
+.ticket-search-title{font-size:24px;font-weight:800;color:#fff;line-height:1.1}
+.ticket-search-sub{margin-top:4px;font-size:13px;color:var(--txt3)}
+.ticket-search-close{margin-left:auto;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.03);color:#fff;border-radius:12px;width:38px;height:38px;cursor:pointer}
+.ticket-search-body{padding:16px 20px 20px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.ticket-search-input{width:100%;height:54px;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:#fff;padding:0 16px;font-size:16px;outline:none;box-shadow:none}
+.ticket-search-input:focus{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.05)}
+.ticket-search-hint{font-size:12px;color:var(--txt3)}
+.ticket-search-results{display:flex;flex-direction:column;gap:10px;min-height:80px}
+.ticket-search-empty{padding:14px 16px;border-radius:16px;border:1px dashed rgba(255,255,255,.09);color:var(--txt3);font-size:13px;background:rgba(255,255,255,.02)}
+.ticket-search-item{display:flex;align-items:flex-start;gap:14px;width:100%;text-align:left;padding:14px 16px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#fff;cursor:pointer;transition:.16s transform ease,.16s border-color ease,.16s background ease}
+.ticket-search-item:hover,.ticket-search-item.active{transform:translateY(-1px);border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.05)}
+.ticket-search-avatar{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;background:rgba(255,255,255,.08);font-weight:800;color:#fff;flex:none}
+.ticket-search-main{min-width:0;flex:1}
+.ticket-search-name{font-size:15px;font-weight:700;color:#fff}
+.ticket-search-meta{margin-top:4px;font-size:12px;color:var(--txt3);display:flex;flex-wrap:wrap;gap:8px 12px}
+.ticket-search-meta span{white-space:nowrap}
+.ticket-search-tag{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+.ticket-search-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:4px}
+.ticket-search-count{font-size:12px;color:var(--txt3)}
+.ticket-search-actions{display:flex;gap:10px}
+@media (max-width: 640px){
+  .ticket-search-head{padding:16px 16px 12px}
+  .ticket-search-body{padding:14px 16px 16px}
+  .ticket-search-title{font-size:20px}
+  .ticket-search-item{padding:12px 13px}
+  .ticket-search-footer{flex-direction:column;align-items:flex-start}
+}
+
 </style>
 
 
@@ -18244,6 +18611,617 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
     };
     try { _fillNewFormFromCurriculum = window._fillNewFormFromCurriculum; } catch(_) {}
   }
+})();
+</script>
+
+
+<script id="t4-final-audit-patch">
+(function(){
+  const FINAL_CANDIDATE_FETCH_LIMIT = 1200;
+  const FINAL_TICKET_INDEX_LIMIT = 1200;
+
+  function finalIsSchemaSelectError(error){
+    const msg = String(error?.message || error || '');
+    return /column|select|relationship|schema cache|PGRST|Could not find|does not exist|not found/i.test(msg);
+  }
+
+  async function finalSafeSelect(runPrimary, runFallback){
+    const primary = await runPrimary();
+    if (!primary?.error) return primary;
+    if (!runFallback || !finalIsSchemaSelectError(primary.error)) return primary;
+    console.warn('[T4 rebuild patch] Select otimizado falhou; usando fallback compatível:', primary.error?.message || primary.error);
+    return await runFallback();
+  }
+
+  function registerFieldAlias(label, snake){
+    try {
+      if (!label || !snake) return;
+      FIELD_MAP[label] = snake;
+      if (!Array.isArray(REV_MAP_MULTI[snake])) REV_MAP_MULTI[snake] = [];
+      if (!REV_MAP_MULTI[snake].includes(label)) REV_MAP_MULTI[snake].push(label);
+      REV_MAP[snake] = REV_MAP_MULTI[snake][REV_MAP_MULTI[snake].length - 1];
+    } catch(_) {}
+  }
+
+  registerFieldAlias('CV Drive Web Link', 'cv_drive_web_link');
+  registerFieldAlias('Formulário RH Drive Link', 'formulario_rh_drive_web_link');
+  registerFieldAlias('Formulário RH Drive File ID', 'formulario_rh_drive_file_id');
+  registerFieldAlias('Formulário RH Drive File Name', 'formulario_rh_drive_file_name');
+  registerFieldAlias('Formulário RH Drive Upload At', 'formulario_rh_drive_upload_at');
+
+  const BASE_CANDIDATE_LIST_COLUMNS = [
+    'id','nome_completo','ativo','email','telefone','cidade_atual','pais_de_origem','idade',
+    'status_pipeline','substatus','status_final','data_da_candidatura','data_entrada_etapa_atual',
+    'ultima_atualizacao','atualizado_por','responsavel_interno','prioridade_comercial','perfil',
+    'nivel_alemao','em_curso_de_alemao','nivel_alvo','previsao_termino_alemao','resultado_da_prova',
+    'area_profissional','profissao_principal','cv_arquivo_doc','cv_drive_file_id','cv_drive_file_name',
+    'cv_drive_upload_at','cv_drive_web_link','resumo_rh_curto','decisao_operacional_rh','entrevista_preliminar_id',
+    'documentacao_completa','pendencia_documental_critica','elegivel_para_employer','pronto_para_employer',
+    'readiness_internacional','risco_desistencia','disponibilidade_mudanca','status_employer','retorno_employer',
+    'data_envio_employer','hospital_alvo','motivo_inativacao','data_inativacao','etapa_de_saida','reativavel',
+    'tipo_de_candidato','tipo_vaga_preferido','numero_do_passaporte','diploma','_score','_elegivel_calculado'
+  ];
+  const BASE_CANDIDATE_LIST_SELECT = buildSelect(BASE_CANDIDATE_LIST_COLUMNS);
+  const BASE_INTERVIEW_COLUMNS = [
+    'id','candidate_id','ativo','updated_at','data_entrevista','entrevistador','empresa_cliente',
+    'posicao_vaga','tipo_vaga','nivel_alemao_exigido','resumo_rh_curto','decisao_operacional_rh',
+    'proxima_acao','arquivo_origem_nome','meta','formulario_rh_drive_web_link','formulario_rh_drive_file_id',
+    'formulario_rh_drive_file_name','formulario_rh_drive_upload_at'
+  ];
+  const BASE_INTERVIEW_SELECT = buildSelect(BASE_INTERVIEW_COLUMNS);
+  const BASE_ACTIVE_LINK_SELECT = buildSelect([
+    'id','candidate_id','employer_id','status_vinculo','ativo','data_vinculo','responsavel_interno','prioridade','proxima_acao'
+  ]);
+  const BASE_EMPLOYER_MIN_SELECT = buildSelect(['id','nome','status','tipo','area_atuacao','cidade','ativo']);
+  const BASE_TICKET_SELECT = buildSelect([
+    'id','nome_completo','status_pipeline','responsavel_interno','prioridade_comercial','ultima_atualizacao','historico_operacional'
+  ]);
+
+  function compareIsoDesc(a, b){
+    const av = String(a || '');
+    const bv = String(b || '');
+    return bv.localeCompare(av);
+  }
+
+  function normalizeInterviewRow(row){
+    if (!row) return null;
+    const out = { ...row };
+    const meta = { ...(row.meta || {}) };
+
+    if (out.formulario_rh_drive_file_id && !meta.drive_docx_file_id) meta.drive_docx_file_id = out.formulario_rh_drive_file_id;
+    if (out.formulario_rh_drive_web_link && !meta.drive_docx_web_view_link) meta.drive_docx_web_view_link = out.formulario_rh_drive_web_link;
+    if (out.formulario_rh_drive_file_name && !meta.drive_docx_file_name) meta.drive_docx_file_name = out.formulario_rh_drive_file_name;
+    if (out.formulario_rh_drive_upload_at && !meta.drive_docx_uploaded_at) meta.drive_docx_uploaded_at = out.formulario_rh_drive_upload_at;
+
+    if (!out.formulario_rh_drive_file_id && meta.drive_docx_file_id) out.formulario_rh_drive_file_id = meta.drive_docx_file_id;
+    if (!out.formulario_rh_drive_web_link && meta.drive_docx_web_view_link) out.formulario_rh_drive_web_link = meta.drive_docx_web_view_link;
+    if (!out.formulario_rh_drive_file_name && meta.drive_docx_file_name) out.formulario_rh_drive_file_name = meta.drive_docx_file_name;
+    if (!out.formulario_rh_drive_upload_at && meta.drive_docx_uploaded_at) out.formulario_rh_drive_upload_at = meta.drive_docx_uploaded_at;
+
+    out.drive_docx_file_id = out.formulario_rh_drive_file_id || meta.drive_docx_file_id || null;
+    out.drive_docx_web_view_link = out.formulario_rh_drive_web_link || meta.drive_docx_web_view_link || null;
+    out.drive_docx_file_name = out.formulario_rh_drive_file_name || meta.drive_docx_file_name || out.arquivo_origem_nome || null;
+    out.drive_docx_uploaded_at = out.formulario_rh_drive_upload_at || meta.drive_docx_uploaded_at || null;
+    out.meta = meta;
+    return out;
+  }
+
+  function buildAugmentContext(payload){
+    const interviewsByCandidateId = {};
+    const activeLinksByCandidateId = {};
+    const matchesByCandidateId = {};
+    const employersById = {};
+
+    (payload?.employers || []).forEach((row) => {
+      const id = String(row?.id || '').trim();
+      if (id) employersById[id] = row;
+    });
+
+    (payload?.interviews || []).forEach((raw) => {
+      const row = normalizeInterviewRow(raw);
+      const key = String(row?.candidate_id || '').trim();
+      if (!key) return;
+      const prev = interviewsByCandidateId[key];
+      if (!prev || compareIsoDesc(prev.updated_at || prev.data_entrevista, row.updated_at || row.data_entrevista) > 0) {
+        interviewsByCandidateId[key] = row;
+      }
+    });
+
+    (payload?.links || []).forEach((row) => {
+      const key = String(row?.candidate_id || '').trim();
+      if (!key) return;
+      const prev = activeLinksByCandidateId[key];
+      if (!prev || compareIsoDesc(prev.data_vinculo || prev.updated_at, row.data_vinculo || row.updated_at) > 0) {
+        activeLinksByCandidateId[key] = row;
+      }
+    });
+
+    (payload?.matches || []).forEach((row) => {
+      const key = String(row?.candidato_id || '').trim();
+      if (!key) return;
+      const prev = matchesByCandidateId[key];
+      const score = (row?.is_primary ? 1000 : 0) - Number(row?.prioridade ?? 999);
+      const prevScore = prev ? ((prev?.is_primary ? 1000 : 0) - Number(prev?.prioridade ?? 999)) : -999999;
+      if (!prev || score > prevScore) matchesByCandidateId[key] = row;
+    });
+
+    return { interviewsByCandidateId, activeLinksByCandidateId, matchesByCandidateId, employersById };
+  }
+
+  function decorateCandidateRow(row, ctx){
+    const source = { ...(row || {}) };
+    const candidateId = String(source.id || source.ID || '').trim();
+    const interview = candidateId ? ctx?.interviewsByCandidateId?.[candidateId] : null;
+    const match = candidateId ? ctx?.matchesByCandidateId?.[candidateId] : null;
+    const link = candidateId ? ctx?.activeLinksByCandidateId?.[candidateId] : null;
+    const employerId = String(match?.empregador_id || link?.employer_id || source.employer_id || '').trim();
+    const employer = employerId ? ctx?.employersById?.[employerId] : null;
+
+    if (source.cv_arquivo_doc && !source.cv_drive_web_link) source.cv_drive_web_link = source.cv_arquivo_doc;
+    if (source.cv_drive_web_link && !source.cv_arquivo_doc) source.cv_arquivo_doc = source.cv_drive_web_link;
+
+    if (interview) {
+      source.entrevista_preliminar_ativa_id = interview.id || source.entrevista_preliminar_ativa_id || null;
+      source.entrevista_preliminar_data = interview.data_entrevista || source.entrevista_preliminar_data || null;
+      source.entrevista_preliminar_entrevistador = interview.entrevistador || source.entrevista_preliminar_entrevistador || null;
+      source.entrevista_preliminar_empresa_cliente = interview.empresa_cliente || source.entrevista_preliminar_empresa_cliente || null;
+      source.entrevista_preliminar_posicao_vaga = interview.posicao_vaga || source.entrevista_preliminar_posicao_vaga || null;
+      source.entrevista_preliminar_tipo_vaga = interview.tipo_vaga || source.entrevista_preliminar_tipo_vaga || null;
+      source.entrevista_preliminar_nivel_alemao_exigido = interview.nivel_alemao_exigido || source.entrevista_preliminar_nivel_alemao_exigido || null;
+      source.entrevista_preliminar_resumo_rh = interview.resumo_rh_curto || source.entrevista_preliminar_resumo_rh || null;
+      source.entrevista_preliminar_decisao_rh = interview.decisao_operacional_rh || source.entrevista_preliminar_decisao_rh || null;
+      if (!source.entrevista_preliminar_id) source.entrevista_preliminar_id = interview.id || null;
+      if (!source.resumo_rh_curto && interview.resumo_rh_curto) source.resumo_rh_curto = interview.resumo_rh_curto;
+      if (!source.decisao_operacional_rh && interview.decisao_operacional_rh) source.decisao_operacional_rh = interview.decisao_operacional_rh;
+    }
+
+    source.employer_id = employerId || source.employer_id || null;
+    source.employer_nome = employer?.nome || source.employer_nome || null;
+    source.status_vinculo = match?.status_vinculo || link?.status_vinculo || source.status_vinculo || null;
+    source.employer_link_id = link?.id || source.employer_link_id || null;
+    source.employer_atual_exibicao = source.employer_nome || String(source.substatus || '').trim() || null;
+    if (!source.status_employer && match?.status_vinculo) source.status_employer = match.status_vinculo;
+    if (!source.data_envio_employer && match?.data_envio) source.data_envio_employer = match.data_envio;
+    if (!source.retorno_employer && match?.data_retorno) source.retorno_employer = match.data_retorno;
+
+    return toFrontend(source);
+  }
+
+  async function fetchCandidateAugmentsAll(supa){
+    const [interviewsResp, linksResp, matchesResp, employersResp] = await Promise.all([
+      finalSafeSelect(
+        () => supa.from('entrevistas_preliminares').select(BASE_INTERVIEW_SELECT).eq('ativo', true).order('updated_at', { ascending:false }).limit(FINAL_CANDIDATE_FETCH_LIMIT),
+        () => supa.from('entrevistas_preliminares').select(INTERVIEW_SELECT).eq('ativo', true).order('updated_at', { ascending:false }).limit(FINAL_CANDIDATE_FETCH_LIMIT)
+      ),
+      supa.from('candidate_employer_links').select(BASE_ACTIVE_LINK_SELECT).eq('ativo', true).limit(FINAL_CANDIDATE_FETCH_LIMIT),
+      supa.from('candidate_employer_matches').select(MATCH_SELECT).order('is_primary', { ascending:false }).order('prioridade', { ascending:true }).limit(FINAL_CANDIDATE_FETCH_LIMIT),
+      supa.from('employers').select(BASE_EMPLOYER_MIN_SELECT).order('nome', { ascending:true }).limit(FINAL_CANDIDATE_FETCH_LIMIT)
+    ]);
+
+    return buildAugmentContext({
+      interviews: interviewsResp?.data || [],
+      links: linksResp?.data || [],
+      matches: matchesResp?.data || [],
+      employers: employersResp?.data || []
+    });
+  }
+
+  async function fetchCandidateAugmentsSingle(supa, candidateId){
+    const [interviewResp, linkResp, matchResp] = await Promise.all([
+      finalSafeSelect(
+        () => supa.from('entrevistas_preliminares').select(BASE_INTERVIEW_SELECT).eq('candidate_id', candidateId).eq('ativo', true).order('updated_at', { ascending:false }).limit(1),
+        () => supa.from('entrevistas_preliminares').select(INTERVIEW_SELECT).eq('candidate_id', candidateId).eq('ativo', true).order('updated_at', { ascending:false }).limit(1)
+      ),
+      supa.from('candidate_employer_links').select(BASE_ACTIVE_LINK_SELECT).eq('candidate_id', candidateId).eq('ativo', true).limit(1),
+      supa.from('candidate_employer_matches').select(MATCH_SELECT).eq('candidato_id', candidateId).order('is_primary', { ascending:false }).order('prioridade', { ascending:true }).limit(1)
+    ]);
+
+    const employerIds = new Set();
+    (linkResp?.data || []).forEach((row) => { if (row?.employer_id) employerIds.add(String(row.employer_id)); });
+    (matchResp?.data || []).forEach((row) => { if (row?.empregador_id) employerIds.add(String(row.empregador_id)); });
+
+    let employers = [];
+    if (employerIds.size) {
+      const empResp = await supa.from('employers').select(BASE_EMPLOYER_MIN_SELECT).in('id', Array.from(employerIds));
+      employers = empResp?.data || [];
+    }
+
+    return buildAugmentContext({
+      interviews: interviewResp?.data || [],
+      links: linkResp?.data || [],
+      matches: matchResp?.data || [],
+      employers
+    });
+  }
+
+  function syncCandidateSnapshotsFromState(){
+    const employersById = Object.fromEntries((S.employers || []).map((row) => [String(row?.id || ''), row]));
+    const matchesByCandidateId = {};
+    (S.candidateMatches || []).forEach((row) => {
+      const key = String(row?.candidato_id || '').trim();
+      if (!key) return;
+      const prev = matchesByCandidateId[key];
+      const score = (row?.is_primary ? 1000 : 0) - Number(row?.prioridade ?? 999);
+      const prevScore = prev ? ((prev?.is_primary ? 1000 : 0) - Number(prev?.prioridade ?? 999)) : -999999;
+      if (!prev || score > prevScore) matchesByCandidateId[key] = row;
+      if (row?.employers?.id) employersById[String(row.employers.id)] = row.employers;
+    });
+    const ctx = { employersById, matchesByCandidateId, activeLinksByCandidateId: {}, interviewsByCandidateId: {} };
+    if (Array.isArray(S.candidates)) S.candidates = S.candidates.map((row) => decorateCandidateRow(row, ctx));
+    if (S.currentCand) S.currentCand = decorateCandidateRow(S.currentCand, ctx);
+  }
+
+  const _apiGetBase = apiGet;
+  apiGet = async function(params = {}){
+    const supa = await getSupa();
+    const route = params.route;
+
+    if (route === 'candidates') {
+      const requested = Number(params.pageSize || 0);
+      const limit = Math.max(200, Math.min(Number.isFinite(requested) && requested > 0 ? requested : FINAL_CANDIDATE_FETCH_LIMIT, FINAL_CANDIDATE_FETCH_LIMIT));
+
+      const primary = () => supa.from('candidatos').select(BASE_CANDIDATE_LIST_SELECT).order('nome_completo', { ascending:true }).limit(limit);
+      const fallback = () => supa.from('candidatos').select('*').order('nome_completo', { ascending:true }).limit(limit);
+
+      const [{ data, error }, ctx] = await Promise.all([finalSafeSelect(primary, fallback), fetchCandidateAugmentsAll(supa)]);
+      if (error) throw new Error(error.message || error);
+
+      const cands = (data || []).map((row) => ({ ...decorateCandidateRow(row, ctx), __partial:true }));
+      return { ok:true, candidates:cands, items:cands, total:cands.length, partial:true };
+    }
+
+    if (route === 'candidate') {
+      const candidateId = String(params.id || '').trim();
+      if (!candidateId) throw new Error('ID do candidato não informado.');
+
+      const primary = () => supa.from('candidatos').select('*').eq('id', candidateId).maybeSingle();
+      const { data, error } = await primary();
+      if (error) throw new Error(error.message || error);
+      if (!data) throw new Error('Candidato não encontrado.');
+
+      const ctx = await fetchCandidateAugmentsSingle(supa, candidateId);
+      return { ok:true, candidate: decorateCandidateRow(data, ctx) };
+    }
+
+    return _apiGetBase(params);
+  };
+  try { window.apiGet = apiGet; } catch(_) {}
+
+  loadAll = async function(options = {}) {
+    if (S.loadAllPromise) return S.loadAllPromise;
+    const run = (async () => {
+      setSyncStatus('loading');
+      try {
+        const force = !!options.force;
+        const includeDashboardAux = Object.prototype.hasOwnProperty.call(options, 'includeDashboardAux')
+          ? !!options.includeDashboardAux
+          : S.view === 'dashboard';
+
+        const candResp = await apiGet({ route:'candidates', includeHidden:'true', pageSize: FINAL_CANDIDATE_FETCH_LIMIT });
+        S.candidates = candResp.items || candResp.candidates || [];
+        S.dashboard = buildDashboardPayload(S.candidates || []);
+
+        const jobs = [loadEmployersIndex(force), loadAllMatches({ force })];
+
+        if (force || !Object.keys(S.enums || {}).length || !cacheStampFresh('schemaAt', CACHE_TTL.schema)) {
+          jobs.push(
+            apiGet({ route:'schema' }).then((schemaResp) => {
+              S.schema = schemaResp.schema || schemaResp.fields || [];
+              S.enums = schemaResp.enums || {};
+              markCacheStamp('schemaAt');
+            })
+          );
+        }
+
+        if (force || !cacheStampFresh('usersAt', CACHE_TTL.users)) {
+          jobs.push(
+            apiGet({ route:'users' }).then((usersResp) => {
+              S.users = usersResp.users || [];
+              markCacheStamp('usersAt');
+            }).catch((e) => {
+              console.warn('[T4 rebuild patch] Falha ao carregar usuários:', e?.message || e);
+              S.users = Array.isArray(S.users) ? S.users : [];
+            })
+          );
+        }
+
+        if (force || !cacheStampFresh('taxonomyAt', CACHE_TTL.taxonomy)) jobs.push(loadProfessionalTaxonomy(force));
+        if (includeDashboardAux) jobs.push(ensureDashboardAuxData({ force, silent:true }));
+
+        await Promise.all(jobs);
+        syncCandidateSnapshotsFromState();
+        updateBadges();
+        setSyncStatus('ok');
+        return true;
+      } catch (e) {
+        console.error('[T4 rebuild patch] loadAll', e);
+        setSyncStatus('err');
+        throw e;
+      } finally {
+        S.loadAllPromise = null;
+      }
+    })();
+    S.loadAllPromise = run;
+    return run;
+  };
+  try { window.loadAll = loadAll; } catch(_) {}
+
+  loadTicketBoardRows = async function(options = {}) {
+    const force = !!options.force;
+    if (!force && Array.isArray(S.ticketBoardRows) && cacheStampFresh('ticketsAt', CACHE_TTL.tickets)) return S.ticketBoardRows;
+    if (S.ticketBoardPromise) return S.ticketBoardPromise;
+
+    const run = (async () => {
+      S.ticketBoardLoading = true;
+      try {
+        const supa = await getSupa();
+        const primary = () => supa.from('candidatos').select(BASE_TICKET_SELECT).not('historico_operacional', 'is', null).order('ultima_atualizacao', { ascending:false }).limit(FINAL_TICKET_INDEX_LIMIT);
+        const fallback = () => supa.from('candidatos').select('id,nome_completo,status_pipeline,responsavel_interno,prioridade_comercial,ultima_atualizacao,historico_operacional').not('historico_operacional', 'is', null).order('ultima_atualizacao', { ascending:false }).limit(FINAL_TICKET_INDEX_LIMIT);
+        const { data, error } = await finalSafeSelect(primary, fallback);
+        if (error) throw error;
+
+        const rows = [];
+        (data || []).forEach((row) => {
+          const candidate = toFrontend(row);
+          const tickets = getCandidateTickets(candidate);
+          tickets.forEach((ticket) => rows.push(buildTicketBoardRow(candidate, ticket)));
+        });
+
+        S.ticketBoardRows = rows;
+        S.ticketBoardStats = computeTicketBoardStats(rows);
+        markCacheStamp('ticketsAt');
+        updateBadges();
+        return rows;
+      } catch (e) {
+        S.ticketBoardRows = [];
+        S.ticketBoardStats = computeTicketBoardStats([]);
+        markCacheStamp('ticketsAt');
+        throw e;
+      } finally {
+        S.ticketBoardLoading = false;
+        if (!options.silent && S.view === 'tickets') renderView();
+      }
+    })();
+
+    S.ticketBoardPromise = run;
+    try { return await run; }
+    finally { if (S.ticketBoardPromise === run) S.ticketBoardPromise = null; }
+  };
+  try { window.loadTicketBoardRows = loadTicketBoardRows; } catch(_) {}
+
+  _cvBuildSaveFields = function(result) {
+    return {
+      'CV/ ARQUIVO DOC': result.webViewLink,
+      'cv_drive_web_link': result.webViewLink,
+      'CV Drive File ID': result.fileId,
+      'CV Drive Folder ID': result.folderId,
+      'CV Drive File Name': result.fileName,
+      'CV Drive Upload At': new Date().toISOString(),
+    };
+  };
+  try { window._cvBuildSaveFields = _cvBuildSaveFields; } catch(_) {}
+
+  buildManualCvLinkFields = function(url) {
+    const clean = String(url || '').trim();
+    const fileId = extractGoogleDriveFileId(clean);
+    return {
+      'CV/ ARQUIVO DOC': clean || null,
+      'cv_drive_web_link': clean || null,
+      'CV Drive File ID': fileId || null,
+      'CV Drive Upload At': clean ? new Date().toISOString() : null,
+    };
+  };
+  try { window.buildManualCvLinkFields = buildManualCvLinkFields; } catch(_) {}
+
+  saveCandidateCvDriveLink = async function(candidateId, inputId) {
+    const input = document.getElementById(inputId);
+    if (!candidateId || !input) return;
+    const sess = getSession();
+    if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar.', 'warn'); return; }
+    const url = String(input.value || '').trim();
+    try {
+      await apiPost({ action:'updateCandidate', id:candidateId, actor:sess?.nome || 'web', fields: buildManualCvLinkFields(url) });
+      const detail = await loadCandidateDetailById(candidateId, { force:true });
+      mergeCandidateIntoState(detail, { cacheDetail:true });
+      if (String(S.currentCand?.ID || S.currentCand?.id || '') === String(candidateId)) S.currentCand = detail;
+      if (S.view === 'employer' || S.view === 'candidatos' || S.view === 'inativos') renderView();
+      if (document.getElementById('cm-body')) renderCandidateModalBody();
+      toast(url ? '✅ Link do currículo salvo.' : '✅ Link do currículo removido.', 'ok');
+    } catch (e) {
+      toast('Erro ao salvar link do currículo: ' + (e?.message || e), 'err', 5000);
+    }
+  };
+  try { window.saveCandidateCvDriveLink = saveCandidateCvDriveLink; } catch(_) {}
+
+  const PATCHED_INTERVIEW_SELECT = buildSelect(Array.from(new Set([
+    ...BASE_INTERVIEW_COLUMNS,
+    'template_code','template_nome','fonte_tipo','observacao_inicial','respostas','avaliacao','derivados',
+    'proxima_acao','observacao_interna_final','status_importacao','conflito_importacao','warnings_importacao',
+    'arquivo_origem_nome','conflitos_detectados','campos_sincronizados','created_at'
+  ])));
+
+  loadCandidateInterview = async function(c, options = {}) {
+    try {
+      const candidateId = c?.ID || c?.id || null;
+      if (!candidateId) return null;
+      const force = !!options.force;
+      const cached = !force ? getCachedCandidateInterview(candidateId) : undefined;
+      if (cached !== undefined) return cached;
+      if (!S.candidateInterviewPromises) S.candidateInterviewPromises = {};
+      if (!force && S.candidateInterviewPromises[candidateId]) return S.candidateInterviewPromises[candidateId];
+      const run = (async () => {
+        const supa = await getSupa();
+        const linkedId = fv(c, 'entrevista_preliminar_id') || '';
+        let interview = null;
+        if (linkedId) {
+          const { data, error } = await finalSafeSelect(
+            () => supa.from('entrevistas_preliminares').select(PATCHED_INTERVIEW_SELECT).eq('id', linkedId).maybeSingle(),
+            () => supa.from('entrevistas_preliminares').select(INTERVIEW_SELECT).eq('id', linkedId).maybeSingle()
+          );
+          if (error) throw error;
+          interview = data || null;
+        } else {
+          const { data, error } = await finalSafeSelect(
+            () => supa.from('entrevistas_preliminares').select(PATCHED_INTERVIEW_SELECT).eq('candidate_id', candidateId).eq('ativo', true).order('updated_at', { ascending:false }).limit(1),
+            () => supa.from('entrevistas_preliminares').select(INTERVIEW_SELECT).eq('candidate_id', candidateId).eq('ativo', true).order('updated_at', { ascending:false }).limit(1)
+          );
+          if (error) throw error;
+          interview = Array.isArray(data) ? (data[0] || null) : (data || null);
+        }
+        interview = normalizeInterviewRow(interview);
+        cacheCandidateInterview(candidateId, interview);
+        return interview;
+      })();
+      S.candidateInterviewPromises[candidateId] = run;
+      try { return await run; }
+      finally {
+        if (S.candidateInterviewPromises[candidateId] === run) delete S.candidateInterviewPromises[candidateId];
+      }
+    } catch (e) {
+      const candidateId = c?.ID || c?.id || null;
+      if (candidateId) cacheCandidateInterview(candidateId, null);
+      return null;
+    }
+  };
+  try { window.loadCandidateInterview = loadCandidateInterview; } catch(_) {}
+
+  saveActiveInterviewDriveLink = async function(candidateId, inputId) {
+    const input = document.getElementById(inputId);
+    if (!candidateId || !input) return;
+    const sess = getSession();
+    if (sess?.role === 'viewer') { toast('🔒 Visualizadores não podem editar.', 'warn'); return; }
+    const url = String(input.value || '').trim();
+    try {
+      const candidate = await loadCandidateDetailById(candidateId, { force:true });
+      const interview = await loadCandidateInterview(candidate, { force:true });
+      if (!interview?.id) throw new Error('Este candidato ainda não possui entrevista preliminar vinculada.');
+      const fileId = extractGoogleDriveFileId(url);
+      const nextMeta = { ...(interview.meta || {}) };
+      if (url) {
+        nextMeta.drive_docx_web_view_link = url;
+        if (fileId) nextMeta.drive_docx_file_id = fileId;
+        nextMeta.drive_docx_uploaded_at = nextMeta.drive_docx_uploaded_at || interview.formulario_rh_drive_upload_at || new Date().toISOString();
+      } else {
+        delete nextMeta.drive_docx_web_view_link;
+        delete nextMeta.drive_docx_file_id;
+      }
+      const supa = await getSupa();
+      const payload = {
+        meta: nextMeta,
+        formulario_rh_drive_web_link: url || null,
+        formulario_rh_drive_file_id: fileId || null,
+        formulario_rh_drive_file_name: interview.formulario_rh_drive_file_name || interview.arquivo_origem_nome || nextMeta.drive_docx_file_name || null,
+        formulario_rh_drive_upload_at: url ? (interview.formulario_rh_drive_upload_at || nextMeta.drive_docx_uploaded_at || new Date().toISOString()) : null,
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await supa.from('entrevistas_preliminares').update(payload).eq('id', interview.id);
+      if (error) throw error;
+      const nextInterview = normalizeInterviewRow({ ...interview, ...payload, meta: nextMeta });
+      cacheCandidateInterview(candidateId, nextInterview);
+      if (String(S.currentCand?.ID || S.currentCand?.id || '') === String(candidateId)) S.currentInterview = nextInterview;
+      if (S.view === 'employer' || S.view === 'candidatos' || S.view === 'inativos') renderView();
+      if (document.getElementById('cm-body')) renderCandidateModalBody();
+      toast(url ? '✅ Link do formulário RH salvo.' : '✅ Link do formulário RH removido.', 'ok');
+    } catch (e) {
+      toast('Erro ao salvar link do formulário RH: ' + (e?.message || e), 'err', 5000);
+    }
+  };
+  try { window.saveActiveInterviewDriveLink = saveActiveInterviewDriveLink; } catch(_) {}
+
+  saveRhInterviewDraft = async function(candidateId, actor) {
+    if (!S.rhInterviewDraft || !candidateId) return null;
+    const supa = await getSupa();
+    const draft = S.rhInterviewDraft;
+    const isDocxDraft = !!(draft.fileName || (draft.respostas && Object.keys(draft.respostas).length));
+    const candidateName = String(displayCandidateName(S.currentCand || {}) || draft.meta?.candidato_nome_docx || 'Candidato').trim();
+    let driveDocMeta = {
+      drive_docx_file_id: draft.meta?.drive_docx_file_id || null,
+      drive_docx_web_view_link: draft.meta?.drive_docx_web_view_link || null,
+      drive_docx_file_name: draft.meta?.drive_docx_file_name || draft.fileName || null,
+      drive_docx_uploaded_at: draft.meta?.drive_docx_uploaded_at || null,
+    };
+    if (draft.sourceFile && driveIsConnected()) {
+      try {
+        const driveResult = await driveUploadRhDocx(draft.sourceFile, candidateId, candidateName);
+        driveDocMeta = {
+          drive_docx_file_id: driveResult.fileId || null,
+          drive_docx_web_view_link: driveResult.webViewLink || null,
+          drive_docx_file_name: driveResult.fileName || draft.fileName || null,
+          drive_docx_uploaded_at: new Date().toISOString(),
+        };
+        draft.fileName = driveDocMeta.drive_docx_file_name || draft.fileName;
+      } catch (uploadErr) {
+        console.warn('[RH DOCX] falha ao enviar formulário ao Drive:', uploadErr);
+        toast(`⚠ Formulário RH salvo sem upload no Drive: ${uploadErr?.message || uploadErr}`, 'warn', 7000);
+      }
+    }
+    draft.meta = { ...(draft.meta || {}), ...Object.fromEntries(Object.entries(driveDocMeta).filter(([, value]) => !!value)) };
+    const payload = {
+      candidate_id: candidateId,
+      template_code: isDocxDraft ? 'entrevista_preliminar_docx_v1' : 'pre_entrevista_manual_v1',
+      template_nome: isDocxDraft ? 'Template de Entrevista Preliminar' : 'Pré-entrevista resumida',
+      fonte_tipo: isDocxDraft ? 'docx' : 'manual',
+      data_entrevista: rhNormalizePgDate(draft.meta?.data_entrevista),
+      entrevistador: draft.meta?.entrevistador || null,
+      empresa_cliente: draft.meta?.empresa_cliente || null,
+      posicao_vaga: draft.meta?.posicao_vaga || null,
+      tipo_vaga: draft.meta?.tipo_vaga || null,
+      nivel_alemao_exigido: draft.meta?.nivel_alemao_exigido || null,
+      observacao_inicial: draft.meta?.observacao_inicial || null,
+      meta: draft.meta || {},
+      respostas: draft.respostas || {},
+      avaliacao: draft.avaliacao || {},
+      derivados: draft.derivados || {},
+      resumo_rh_curto: draft.derivados?.resumo_rh_curto || null,
+      decisao_operacional_rh: draft.derivados?.decisao_operacional_rh || null,
+      proxima_acao: draft.derivados?.proxima_acao || null,
+      observacao_interna_final: draft.derivados?.observacao_interna_final || null,
+      status_importacao: isDocxDraft ? 'ok' : 'manual',
+      conflito_importacao: (draft.conflitos_detectados || []).length ? 'sim' : null,
+      warnings_importacao: (draft.meta_warnings || []).join(' | ') || null,
+      arquivo_origem_nome: driveDocMeta.drive_docx_file_name || draft.fileName || null,
+      conflitos_detectados: draft.conflitos_detectados || [],
+      campos_sincronizados: draft.campos_sincronizados || [],
+      ativo: true,
+      formulario_rh_drive_file_id: driveDocMeta.drive_docx_file_id || null,
+      formulario_rh_drive_web_link: driveDocMeta.drive_docx_web_view_link || null,
+      formulario_rh_drive_file_name: driveDocMeta.drive_docx_file_name || draft.fileName || null,
+      formulario_rh_drive_upload_at: driveDocMeta.drive_docx_uploaded_at || null,
+      updated_at: new Date().toISOString(),
+    };
+    delete draft.sourceFile;
+
+    const { data: existing, error: selErr } = await supa.from('entrevistas_preliminares').select('id').eq('candidate_id', candidateId).eq('ativo', true).limit(1);
+    if (selErr) throw new Error(`Falha ao consultar a entrevista preliminar no banco: ${selErr.message}`);
+
+    let interviewId = existing?.[0]?.id || null;
+    if (interviewId) {
+      const { error } = await supa.from('entrevistas_preliminares').update(payload).eq('id', interviewId);
+      if (error) throw new Error(`Falha ao atualizar entrevista preliminar: ${error.message}`);
+    } else {
+      const { data: inserted, error } = await supa.from('entrevistas_preliminares').insert(payload).select('id').single();
+      if (error) throw new Error(`Falha ao salvar entrevista preliminar: ${error.message}`);
+      interviewId = inserted?.id || null;
+    }
+
+    if (interviewId) {
+      const { error: linkErr } = await supa.from('candidatos').update({ entrevista_preliminar_id: interviewId }).eq('id', candidateId);
+      if (linkErr) throw new Error(`Entrevista salva, mas falhou ao vincular no candidato: ${linkErr.message}`);
+    }
+    cacheCandidateInterview(candidateId, normalizeInterviewRow({ ...payload, id: interviewId, candidate_id: candidateId }));
+    return interviewId;
+  };
+  try { window.saveRhInterviewDraft = saveRhInterviewDraft; } catch(_) {}
+
+  const baseLoadAllMatches = loadAllMatches;
+  loadAllMatches = async function(options = {}) {
+    const result = await baseLoadAllMatches(options);
+    try { syncCandidateSnapshotsFromState(); } catch(_) {}
+    return result;
+  };
+  try { window.loadAllMatches = loadAllMatches; } catch(_) {}
+
+  console.log('[T4 rebuild patch] Base do CRM reestruturada para tabelas reais e links de Drive persistidos.');
 })();
 </script>
 
