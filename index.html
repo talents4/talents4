@@ -19244,5 +19244,259 @@ body.crm-busy, body.crm-busy * { cursor: progress !important; }
 })();
 </script>
 
+
+<script id="t4-performance-v3-patch">
+(function(){
+  const PERF_CANDIDATE_LIMIT = 180;
+  const PERF_TICKET_LIMIT = 220;
+  const PERF_WARMUP_DELAY = 250;
+
+  function perfIsSchemaSelectError(error){
+    const msg = String(error?.message || error || '');
+    return /column|select|relationship|schema cache|PGRST|Could not find|does not exist|not found/i.test(msg);
+  }
+
+  async function perfSafeSelect(runPrimary, runFallback){
+    const primary = await runPrimary();
+    if (!primary?.error) return primary;
+    if (!runFallback || !perfIsSchemaSelectError(primary.error)) return primary;
+    console.warn('[T4 perf patch] Select otimizado falhou; usando fallback compatível:', primary.error?.message || primary.error);
+    return await runFallback();
+  }
+
+  const PERF_BASE_CANDIDATE_LIST_SELECT = buildSelect([
+    'id','nome_completo','ativo','email','telefone','cidade_atual','pais_de_origem','idade',
+    'status_pipeline','substatus','status_final','data_da_candidatura','data_entrada_etapa_atual',
+    'ultima_atualizacao','atualizado_por','responsavel_interno','prioridade_comercial','perfil',
+    'nivel_alemao','em_curso_de_alemao','nivel_alvo','previsao_termino_alemao','resultado_da_prova',
+    'area_profissional','profissao_principal','cv_arquivo_doc','cv_drive_file_id','cv_drive_file_name',
+    'cv_drive_upload_at','cv_drive_web_link','resumo_rh_curto','decisao_operacional_rh','entrevista_preliminar_id',
+    'documentacao_completa','pendencia_documental_critica','elegivel_para_employer','pronto_para_employer',
+    'readiness_internacional','risco_desistencia','disponibilidade_mudanca','status_employer','retorno_employer',
+    'data_envio_employer','hospital_alvo','motivo_inativacao','data_inativacao','etapa_de_saida','reativavel',
+    'tipo_de_candidato','tipo_vaga_preferido','numero_do_passaporte','diploma','_score','_elegivel_calculado'
+  ]);
+  const PERF_BASE_TICKET_SELECT = buildSelect([
+    'id','nome_completo','status_pipeline','responsavel_interno','prioridade_comercial','ultima_atualizacao','historico_operacional'
+  ]);
+  const PERF_EMPLOYER_MIN_SELECT = buildSelect(['id','nome','status','tipo','area_atuacao','cidade','ativo']);
+  const PERF_LINK_MIN_SELECT = buildSelect(['id','candidate_id','employer_id','status_vinculo','ativo','data_vinculo','responsavel_interno','prioridade','proxima_acao']);
+  const PERF_MATCH_MIN_SELECT = buildSelect(['id','candidato_id','empregador_id','status_vinculo','prioridade','match_strength','is_primary','data_envio','data_retorno','elegivel','motivo_encaixe','riscos_ressalvas','proxima_acao','observacoes']);
+
+  function perfNormalizeCandidateRow(row){
+    const source = { ...(row || {}) };
+    if (source.cv_arquivo_doc && !source.cv_drive_web_link) source.cv_drive_web_link = source.cv_arquivo_doc;
+    if (source.cv_drive_web_link && !source.cv_arquivo_doc) source.cv_arquivo_doc = source.cv_drive_web_link;
+    if (!source.employer_atual_exibicao) source.employer_atual_exibicao = source.employer_nome || String(source.substatus || '').trim() || null;
+    return toFrontend(source);
+  }
+
+  function perfApplyEmployerSnapshotsLite(){
+    const employersById = Object.fromEntries((S.employers || []).map((row) => [String(row?.id || ''), row]));
+    const bestMatchByCandidate = {};
+    (S.candidateMatches || []).forEach((row) => {
+      const key = String(row?.candidato_id || '').trim();
+      if (!key) return;
+      const prev = bestMatchByCandidate[key];
+      const score = (row?.is_primary ? 1000 : 0) - Number(row?.prioridade ?? 999);
+      const prevScore = prev ? ((prev?.is_primary ? 1000 : 0) - Number(prev?.prioridade ?? 999)) : -999999;
+      if (!prev || score > prevScore) bestMatchByCandidate[key] = row;
+      if (row?.employers?.id) employersById[String(row.employers.id)] = row.employers;
+    });
+    const patchOne = (cand) => {
+      if (!cand) return cand;
+      const c = { ...(cand || {}) };
+      const id = String(c.ID || c.id || '').trim();
+      const match = id ? bestMatchByCandidate[id] : null;
+      const empId = String(match?.empregador_id || c.employer_id || '').trim();
+      const emp = empId ? employersById[empId] : null;
+      if (empId) c.employer_id = empId;
+      if (emp?.nome) c.employer_nome = emp.nome;
+      if (match?.status_vinculo) c.status_vinculo = match.status_vinculo;
+      if (!c.status_employer && match?.status_vinculo) c.status_employer = match.status_vinculo;
+      if (!c.data_envio_employer && match?.data_envio) c.data_envio_employer = match.data_envio;
+      if (!c.retorno_employer && match?.data_retorno) c.retorno_employer = match.data_retorno;
+      c.employer_atual_exibicao = c.employer_nome || String(c.substatus || '').trim() || null;
+      return perfNormalizeCandidateRow(c);
+    };
+    if (Array.isArray(S.candidates)) S.candidates = S.candidates.map(patchOne);
+    if (S.currentCand) S.currentCand = patchOne(S.currentCand);
+  }
+
+  function perfScheduleBackgroundWarmup(options = {}){
+    const force = !!options.force;
+    if (S._perfWarmupPromise && !force) return S._perfWarmupPromise;
+    const runner = async () => {
+      try {
+        const jobs = [];
+        if (force || !Object.keys(S.enums || {}).length || !cacheStampFresh('schemaAt', CACHE_TTL.schema)) {
+          jobs.push(
+            apiGet({ route:'schema' }).then((schemaResp) => {
+              S.schema = schemaResp.schema || schemaResp.fields || [];
+              S.enums = schemaResp.enums || {};
+              markCacheStamp('schemaAt');
+            }).catch((e) => console.warn('[T4 perf patch] schema warmup:', e?.message || e))
+          );
+        }
+        if (force || !cacheStampFresh('usersAt', CACHE_TTL.users)) {
+          jobs.push(
+            apiGet({ route:'users' }).then((usersResp) => {
+              S.users = usersResp.users || [];
+              markCacheStamp('usersAt');
+            }).catch((e) => console.warn('[T4 perf patch] users warmup:', e?.message || e))
+          );
+        }
+        if ((force || !cacheStampFresh('taxonomyAt', CACHE_TTL.taxonomy)) && ['candidatos','inativos','triagem','entrevistas','analise','curso','documentacao','dashboard'].includes(String(S.view || ''))) {
+          jobs.push(Promise.resolve().then(() => loadProfessionalTaxonomy(force)).catch((e) => console.warn('[T4 perf patch] taxonomy warmup:', e?.message || e)));
+        }
+        if ((force || !cacheStampFresh('parserAuditAt', CACHE_TTL.parserAudit) || !cacheStampFresh('governanceAt', CACHE_TTL.governance)) && S.view === 'dashboard') {
+          jobs.push(ensureDashboardAuxData({ force, silent:true }).catch((e) => console.warn('[T4 perf patch] dashboard warmup:', e?.message || e)));
+        }
+        await Promise.all(jobs);
+      } finally {
+        S._perfWarmupPromise = null;
+      }
+    };
+    S._perfWarmupPromise = new Promise((resolve) => {
+      const kick = () => Promise.resolve().then(runner).finally(() => resolve(true));
+      if (typeof requestIdleCallback === 'function') requestIdleCallback(kick, { timeout: 1500 });
+      else setTimeout(kick, PERF_WARMUP_DELAY);
+    });
+    return S._perfWarmupPromise;
+  }
+
+  const prevApiGetPerf = apiGet;
+  apiGet = async function(params = {}){
+    const route = params.route;
+    const supa = await getSupa();
+
+    if (route === 'candidates') {
+      const requested = Number(params.pageSize || 0);
+      const limit = Math.max(60, Math.min(Number.isFinite(requested) && requested > 0 ? requested : PERF_CANDIDATE_LIMIT, PERF_CANDIDATE_LIMIT));
+      const primary = () => supa.from('candidatos').select(PERF_BASE_CANDIDATE_LIST_SELECT).order('nome_completo', { ascending:true }).limit(limit);
+      const fallback = () => supa.from('candidatos').select('*').order('nome_completo', { ascending:true }).limit(limit);
+      const { data, error } = await perfSafeSelect(primary, fallback);
+      if (error) throw new Error(error.message || error);
+      const cands = (data || []).map((row) => ({ ...perfNormalizeCandidateRow(row), __partial:true }));
+      return { ok:true, candidates:cands, items:cands, total:cands.length, partial:true };
+    }
+
+    if (route === 'candidate') {
+      const candidateId = String(params.id || '').trim();
+      if (!candidateId) throw new Error('ID do candidato não informado.');
+      const { data, error } = await supa.from('candidatos').select('*').eq('id', candidateId).maybeSingle();
+      if (error) throw new Error(error.message || error);
+      if (!data) throw new Error('Candidato não encontrado.');
+
+      const [linkResp, matchResp] = await Promise.all([
+        supa.from('candidate_employer_links').select(PERF_LINK_MIN_SELECT).eq('candidate_id', candidateId).eq('ativo', true).limit(1),
+        supa.from('candidate_employer_matches').select(PERF_MATCH_MIN_SELECT).eq('candidato_id', candidateId).order('is_primary', { ascending:false }).order('prioridade', { ascending:true }).limit(1)
+      ]);
+      const employerIds = [];
+      (linkResp?.data || []).forEach((row) => row?.employer_id && employerIds.push(String(row.employer_id)));
+      (matchResp?.data || []).forEach((row) => row?.empregador_id && employerIds.push(String(row.empregador_id)));
+      let employers = [];
+      const uniqIds = Array.from(new Set(employerIds.filter(Boolean)));
+      if (uniqIds.length) {
+        const empResp = await supa.from('employers').select(PERF_EMPLOYER_MIN_SELECT).in('id', uniqIds);
+        employers = empResp?.data || [];
+      }
+      const c = { ...data };
+      const match = (matchResp?.data || [])[0] || null;
+      const link = (linkResp?.data || [])[0] || null;
+      const emp = employers.find((e) => String(e?.id || '') === String(match?.empregador_id || link?.employer_id || '')) || null;
+      if (emp?.id) c.employer_id = emp.id;
+      if (emp?.nome) c.employer_nome = emp.nome;
+      if (match?.status_vinculo || link?.status_vinculo) c.status_vinculo = match?.status_vinculo || link?.status_vinculo;
+      if (!c.status_employer && match?.status_vinculo) c.status_employer = match.status_vinculo;
+      if (!c.data_envio_employer && match?.data_envio) c.data_envio_employer = match.data_envio;
+      if (!c.retorno_employer && match?.data_retorno) c.retorno_employer = match.data_retorno;
+      c.employer_atual_exibicao = c.employer_nome || String(c.substatus || '').trim() || null;
+      return { ok:true, candidate: perfNormalizeCandidateRow(c) };
+    }
+
+    return prevApiGetPerf(params);
+  };
+  try { window.apiGet = apiGet; } catch(_) {}
+
+  loadAll = async function(options = {}) {
+    if (S.loadAllPromise) return S.loadAllPromise;
+    const run = (async () => {
+      setSyncStatus('loading');
+      try {
+        const force = !!options.force;
+        const view = String(S.view || 'dashboard');
+        const includeDashboardAux = Object.prototype.hasOwnProperty.call(options, 'includeDashboardAux')
+          ? !!options.includeDashboardAux
+          : view === 'dashboard';
+
+        const candResp = await apiGet({ route:'candidates', includeHidden:'true', pageSize: options.pageSize || PERF_CANDIDATE_LIMIT });
+        S.candidates = candResp.items || candResp.candidates || [];
+        S.dashboard = buildDashboardPayload(S.candidates || []);
+
+        const blockingJobs = [];
+        if (view === 'employer') {
+          blockingJobs.push(loadEmployersIndex(force), loadAllMatches({ force }));
+        }
+        if (view === 'tickets') {
+          blockingJobs.push(loadTicketBoardRows({ force }));
+        }
+
+        await Promise.all(blockingJobs);
+        if (view === 'employer') perfApplyEmployerSnapshotsLite();
+
+        updateBadges();
+        setSyncStatus('ok');
+
+        // warmup não bloqueante
+        perfScheduleBackgroundWarmup({ force, includeDashboardAux });
+        return true;
+      } catch (e) {
+        console.error('[T4 perf patch] loadAll', e);
+        setSyncStatus('err');
+        throw e;
+      } finally {
+        S.loadAllPromise = null;
+      }
+    })();
+    S.loadAllPromise = run;
+    return run;
+  };
+  try { window.loadAll = loadAll; } catch(_) {}
+
+  loadTicketBoardRows = async function(options = {}) {
+    const force = !!options.force;
+    if (!force && Array.isArray(S.ticketBoardRows) && cacheStampFresh('ticketsAt', CACHE_TTL.tickets)) return S.ticketBoardRows;
+    if (S.ticketBoardPromise) return S.ticketBoardPromise;
+
+    const run = (async () => {
+      S.ticketBoardLoading = true;
+      try {
+        const supa = await getSupa();
+        const primary = () => supa.from('candidatos').select(PERF_BASE_TICKET_SELECT).not('historico_operacional', 'is', null).order('ultima_atualizacao', { ascending:false }).limit(PERF_TICKET_LIMIT);
+        const fallback = () => supa.from('candidatos').select('id,nome_completo,status_pipeline,responsavel_interno,prioridade_comercial,ultima_atualizacao,historico_operacional').not('historico_operacional', 'is', null).order('ultima_atualizacao', { ascending:false }).limit(PERF_TICKET_LIMIT);
+        const { data, error } = await perfSafeSelect(primary, fallback);
+        if (error) throw error;
+        S.ticketBoardRows = Array.isArray(data) ? data.map((row) => perfNormalizeCandidateRow(row)) : [];
+        markCacheStamp('ticketsAt');
+        return S.ticketBoardRows;
+      } catch (e) {
+        console.error('[T4 perf patch] tickets', e);
+        S.ticketBoardRows = [];
+        throw e;
+      } finally {
+        S.ticketBoardLoading = false;
+        S.ticketBoardPromise = null;
+      }
+    })();
+    S.ticketBoardPromise = run;
+    return run;
+  };
+  try { window.loadTicketBoardRows = loadTicketBoardRows; } catch(_) {}
+
+  console.log('[T4 perf patch] Carga inicial enxugada, warmup em background e lista sob demanda ativados.');
+})();
+</script>
+
 </body>
 </html>
