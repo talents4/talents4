@@ -109,6 +109,8 @@
     .planner-sheet .note{min-width:285px;width:285px;background:#f4f6f8;font-size:13px;line-height:1.35}
     .planner-sheet .daycol{min-width:84px;width:84px;background:#fff;padding:4px}
     .planner-sheet .daybox{min-height:74px;background:#fbfcfd;border:1px solid #d7dee6;border-radius:4px;padding:4px 5px;display:flex;flex-direction:column;gap:4px}
+    .planner-sheet .daybox.is-clickable{cursor:pointer;transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease}
+    .planner-sheet .daybox.is-clickable:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(21,59,102,.08);border-color:#9fb8d6}
     .planner-chip{display:block;padding:3px 4px;border-radius:3px;border:1px solid #d7dee6;background:#f8fafc;font-size:10px;font-weight:700;margin-bottom:2px;cursor:pointer;line-height:1.2}
     .planner-chip.research{background:#fbf1df}
     .planner-chip.screening{background:#faf6cd}
@@ -117,6 +119,15 @@
     .planner-count{font-size:10px;font-weight:900;align-self:flex-end;background:#2b5b8d;color:#fff;border-radius:999px;padding:1px 6px}
     .planner-empty{color:#98a6b6;justify-content:center;align-items:center;text-align:center}
     .planner-subnote{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.2}
+    .planner-more{font-size:10px;font-weight:800;color:#20456c;padding-top:2px}
+    .planner-drawer{display:grid;gap:12px}
+    .planner-drawer-toolbar{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .planner-drawer-list{display:grid;gap:12px}
+    .planner-drawer-item{border:1px solid var(--line);border-radius:14px;padding:12px;background:#fff}
+    .planner-drawer-grid{display:grid;grid-template-columns:1.4fr repeat(4,minmax(0,140px));gap:10px;margin-top:10px}
+    .planner-drawer-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    .planner-drawer-empty{padding:12px;border:1px dashed var(--line);border-radius:12px;background:#fbfdff;color:var(--muted)}
+    .planner-drawer-add{border:1px solid #cfe0f1;background:#f8fbff}
     .cal-shell{display:grid;gap:0;border:1px solid #9fb0c2;border-radius:10px;overflow:hidden;background:#eef2f6}
     .cal-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
     .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:0}
@@ -183,7 +194,7 @@
     .muted{color:var(--muted)}
     .emp-w0{background:#ead7ca}.emp-w1{background:#d8d2e2}.emp-w2{background:#d9e6d0}.emp-w3{background:#d9e7f3}.emp-w4{background:#eee3b9}.emp-w5{background:#e9c5c5}.emp-w6{background:#d5e4cf}.emp-w7{background:#dec7d4}.emp-w8{background:#d3e0e6}.emp-w9{background:#e6ebf0}
     @media (max-width:1200px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
-    @media (max-width:760px){.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero{grid-template-columns:1fr}.hero-stats{grid-template-columns:1fr}.focus-row{grid-template-columns:1fr}.drawer{width:100%}.sheet-picker-wrap{min-width:100%}.inline-actions{min-width:0}}
+    @media (max-width:760px){.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero{grid-template-columns:1fr}.hero-stats{grid-template-columns:1fr}.focus-row{grid-template-columns:1fr}.drawer{width:100%}.sheet-picker-wrap{min-width:100%}.inline-actions{min-width:0}.planner-drawer-grid{grid-template-columns:1fr}.planner-drawer-toolbar{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
@@ -472,6 +483,8 @@ const State = {
   workspaceEmployerId:null,
   plannerEmployerId:'',
   calendarEmployerId:'',
+  plannerCellContext:null,
+  plannerCellDraft:null,
   wsTab:'summary',
   newRows:{
     employers:null,
@@ -669,6 +682,12 @@ function enumBadgeClass(enumKey, value=''){
     if(s === 'high') return 'b-orange';
     if(s === 'medium') return 'b-blue';
     if(s === 'low') return 'b-green';
+  }
+  if(enumKey === 'planner_bucket'){
+    if(s === 'research') return 'b-orange';
+    if(s === 'screening') return 'b-blue';
+    if(s === 'send') return 'b-green';
+    if(s === 'feedback') return 'b-orange';
   }
   return badgeClass(s);
 }
@@ -874,6 +893,121 @@ function renderNoteDraftRow(){
     <td>${esc(humanDate(new Date().toISOString()))}</td>
     <td><div class="inline-note"><textarea placeholder="Escreva a nota visÃ­vel nesta linha" oninput='setDraftValue("notes","body",this.value)'>${esc(draft.body || '')}</textarea><div class="inline-actions"><button class="btn small primary" onclick="saveNewNote()">Salvar</button><button class="btn small" onclick='cancelInlineCreate("notes")'>Cancelar</button></div></div></td>
   </tr>`;
+}
+function plannerBucketToActivityType(bucket){
+  if(bucket === 'research') return 'research';
+  if(bucket === 'screening') return 'screening';
+  if(bucket === 'send') return 'sendout';
+  return 'feedback';
+}
+function plannerDraftDefaults(employerId, dateIso, bucket){
+  return {
+    employer_id: employerId,
+    planner_bucket: bucket,
+    activity_type: plannerBucketToActivityType(bucket),
+    title:'',
+    status:'open',
+    priority:'medium',
+    next_action:'',
+    description:'',
+    planned_for:dateIso,
+    due_date:dateIso
+  };
+}
+function plannerCycleButtonMarkup(id, field, enumKey, current){
+  const value = current || (ENUMS[enumKey] || [])[0] || '';
+  return `<button type="button" class="cell-cycle ${enumBadgeClass(enumKey, value)}" data-value="${esc(value)}" onclick='cyclePlannerItemValue(${jsArg(id)},${jsArg(field)},${jsArg(enumKey)},this)'><span>${esc(prettyEnum(value))}</span><small>alternar</small></button>`;
+}
+function plannerDraftCycleButtonMarkup(field, enumKey, current){
+  const value = current || (ENUMS[enumKey] || [])[0] || '';
+  return `<button type="button" class="cell-cycle ${enumBadgeClass(enumKey, value)}" data-value="${esc(value)}" onclick='cyclePlannerDraftValue(${jsArg(field)},${jsArg(enumKey)},this)'><span>${esc(prettyEnum(value))}</span><small>alternar</small></button>`;
+}
+function plannerMut(id, field, value){
+  (State.cache.calendar.activities || []).forEach(a => {
+    if(String(a.id) === String(id)) a[field] = value;
+  });
+  (State.cache.workspace.activities || []).forEach(a => {
+    if(String(a.id) === String(id)) a[field] = value;
+  });
+}
+function samePlannerContext(ctx, employerId, dateIso, bucket){
+  if(!ctx) return false;
+  return String(ctx.employerId) === String(employerId) && String(ctx.dateIso) === String(dateIso) && String(ctx.bucket) === String(bucket);
+}
+function plannerDrawerBodyHtml(employerId, dateIso, bucket){
+  const employer = (State.cache.employers || []).find(e => String(e.employer_id) === String(employerId));
+  const meta = bucketMeta(bucket);
+  const items = plannerCellDetails(employerId, dateIso, bucket);
+  const draft = State.plannerCellDraft || plannerDraftDefaults(employerId, dateIso, bucket);
+  const draftOpen = samePlannerContext(State.plannerCellContext, employerId, dateIso, bucket) && !!State.plannerCellDraft;
+  const header = `<div class="planner-drawer-toolbar">
+    <div>
+      <div class="inline-label">Dia e etapa</div>
+      <strong>${esc(employer ? employer.employer_name : 'Employer')} · ${esc(meta.label)}</strong>
+      <div class="inline-hint">${esc(dateIso)} · ${items.length} linha(s) nesta cÃ©lula</div>
+    </div>
+    <button class="btn small primary" onclick='togglePlannerCellDraft(${jsArg(employerId)},${jsArg(dateIso)},${jsArg(bucket)})'>${draftOpen ? 'Fechar nova linha' : 'Adicionar linha'}</button>
+  </div>`;
+  const addForm = draftOpen ? `<div class="planner-drawer-item planner-drawer-add">
+    <div class="inline-label">Nova linha nesta cÃ©lula</div>
+    <div class="planner-drawer-grid">
+      <div>
+        <div class="inline-label">TÃ­tulo / prÃ³xima aÃ§Ã£o</div>
+        <input placeholder="Ex.: cobrar feedback de candidato" value="${esc(draft.title || '')}" oninput='setPlannerDraftValue("title",this.value)'>
+        <input style="margin-top:8px" placeholder="PrÃ³xima aÃ§Ã£o" value="${esc(draft.next_action || '')}" oninput='setPlannerDraftValue("next_action",this.value)'>
+      </div>
+      <div><div class="inline-label">Etapa</div>${plannerDraftCycleButtonMarkup('planner_bucket', 'planner_bucket', draft.planner_bucket || bucket)}</div>
+      <div><div class="inline-label">Status</div>${plannerDraftCycleButtonMarkup('status', 'activity_status', draft.status)}</div>
+      <div><div class="inline-label">Prioridade</div>${plannerDraftCycleButtonMarkup('priority', 'priority', draft.priority)}</div>
+      <div>
+        <div class="inline-label">Datas</div>
+        <input type="date" value="${esc(draft.planned_for || dateIso)}" oninput='setPlannerDraftValue("planned_for",this.value)'>
+        <input style="margin-top:8px" type="date" value="${esc(draft.due_date || dateIso)}" oninput='setPlannerDraftValue("due_date",this.value)'>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="inline-label">DescriÃ§Ã£o</div>
+      <textarea placeholder="Detalhe da linha" oninput='setPlannerDraftValue("description",this.value)'>${esc(draft.description || '')}</textarea>
+    </div>
+    <div class="planner-drawer-actions">
+      <button class="btn small primary" onclick='savePlannerCellDraft()'>Salvar nova linha</button>
+      <button class="btn small" onclick='togglePlannerCellDraft(${jsArg(employerId)},${jsArg(dateIso)},${jsArg(bucket)})'>Cancelar</button>
+    </div>
+  </div>` : '';
+  const list = items.length ? `<div class="planner-drawer-list">` + items.map(item => {
+    const itemBucket = inferPlannerBucket(item);
+    return `<div class="planner-drawer-item">
+      <div class="planner-drawer-grid">
+        <div>
+          <div class="inline-label">TÃ­tulo / prÃ³xima aÃ§Ã£o</div>
+          <input value="${esc(item.title || '')}" oninput='plannerMut(${jsArg(item.id)},"title",this.value)'>
+          <input style="margin-top:8px" placeholder="PrÃ³xima aÃ§Ã£o" value="${esc(item.next_action || '')}" oninput='plannerMut(${jsArg(item.id)},"next_action",this.value)'>
+        </div>
+        <div><div class="inline-label">Etapa</div>${plannerCycleButtonMarkup(item.id, 'planner_bucket', 'planner_bucket', itemBucket)}</div>
+        <div><div class="inline-label">Status</div>${plannerCycleButtonMarkup(item.id, 'status', 'activity_status', item.status)}</div>
+        <div><div class="inline-label">Prioridade</div>${plannerCycleButtonMarkup(item.id, 'priority', 'priority', item.priority)}</div>
+        <div>
+          <div class="inline-label">Datas</div>
+          <input type="date" value="${esc(dateOnly(item.planned_for || item.due_date))}" oninput='plannerMut(${jsArg(item.id)},"planned_for",this.value)'>
+          <input style="margin-top:8px" type="date" value="${esc(dateOnly(item.due_date || item.planned_for))}" oninput='plannerMut(${jsArg(item.id)},"due_date",this.value)'>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="inline-label">DescriÃ§Ã£o</div>
+        <textarea oninput='plannerMut(${jsArg(item.id)},"description",this.value)'>${esc(item.description || '')}</textarea>
+      </div>
+      <div class="planner-drawer-actions">
+        <button class="btn small primary" onclick='savePlannerCellItem(${jsArg(item.id)})'>Salvar linha</button>
+        <span class="muted">${esc(item.activity_type || 'atividade')} · ${esc(humanDate(item.updated_at || item.created_at || dateIso))}</span>
+      </div>
+    </div>`;
+  }).join('') + `</div>` : `<div class="planner-drawer-empty">Nenhuma linha nesta cÃ©lula ainda. Clique em "Adicionar linha" para registrar atividade direto neste dia.</div>`;
+  return `<div class="planner-drawer">${header}${addForm}${list}</div>`;
+}
+function renderPlannerCellDrawer(){
+  const ctx = State.plannerCellContext;
+  if(!ctx) return;
+  document.getElementById('drawerBody').innerHTML = plannerDrawerBodyHtml(ctx.employerId, ctx.dateIso, ctx.bucket);
 }
 function actionOnclick(action){
   if(!action || !action.kind) return '';
@@ -1147,18 +1281,15 @@ function plannerBucketSummary(employerId, yyyyMm, bucket){
   };
 }
 window.openPlannerCell = function(employerId, dateIso, bucket){
-  const items = plannerCellDetails(employerId, dateIso, bucket);
+  const prevCtx = State.plannerCellContext;
+  if(!samePlannerContext(prevCtx, employerId, dateIso, bucket)) State.plannerCellDraft = null;
+  State.plannerCellContext = {employerId, dateIso, bucket};
   const employer = (State.cache.employers || []).find(e => String(e.employer_id) === String(employerId));
   const meta = bucketMeta(bucket);
   drawerOpen(
     `${employer ? employer.employer_name : 'Employer'} · ${meta.label}`,
     dateIso,
-    items.length ? `<div class="stack">` + items.map(a => `
-      <div class="card">
-        <strong>${esc(a.title)}</strong>
-        <div class="muted" style="margin-top:6px">${esc(a.activity_type)} · ${esc(a.status)} · due ${esc(a.due_date || '—')}</div>
-        <div style="margin-top:8px">${esc(a.next_action || a.description || '—')}</div>
-      </div>`).join('') + `</div>` : `<div class="muted">Sem atividades nesta célula.</div>`
+    plannerDrawerBodyHtml(employerId, dateIso, bucket)
   );
 }
 window.openCalendarCell = function(kind, id, employerId){
@@ -1525,11 +1656,13 @@ function renderPlanner(){
       htmlRows += `<td class="note">${esc(summary.next)}<div class="planner-subnote">${summary.count ? `${summary.count} atividade(s) no mês` : 'sem atividade neste bucket'}</div></td>`;
       htmlRows += days.map(d => {
         const entries = plannerCellDetails(emp.employer_id, d.iso, bucket);
+        const openCell = `openPlannerCell(${jsArg(emp.employer_id)},${jsArg(d.iso)},${jsArg(bucket)})`;
         if(!entries.length){
-          return `<td class="daycol"><div class="daybox planner-empty">—</div></td>`;
+          return `<td class="daycol"><div class="daybox planner-empty is-clickable" onclick='${openCell}'><div>—</div><div class="planner-more">clique para adicionar</div></div></td>`;
         }
-        const preview = entries.slice(0,2).map(a => `<span class="planner-chip ${meta.css}" onclick="openPlannerCell('${esc(emp.employer_id)}','${esc(d.iso)}','${esc(bucket)}')" title="${esc(a.title)}">${esc(a.title.length > 18 ? a.title.slice(0,18)+'…' : a.title)}</span>`).join('');
-        return `<td class="daycol"><div class="daybox"><div class="planner-count">${entries.length}</div>${preview}${entries.length > 2 ? `<div class="planner-subnote">+${entries.length - 2} item(ns)</div>` : ''}</div></td>`;
+        const preview = entries.slice(0,3).map(a => `<span class="planner-chip ${meta.css}" title="${esc(a.title)}">${esc(a.title.length > 18 ? a.title.slice(0,18)+'…' : a.title)}</span>`).join('');
+        const moreText = entries.length > 3 ? `+${entries.length - 3} item(ns) · clique para ver tudo` : 'clique para editar esta célula';
+        return `<td class="daycol"><div class="daybox is-clickable" onclick='${openCell}'><div class="planner-count">${entries.length}</div>${preview}<div class="planner-more">${esc(moreText)}</div></div></td>`;
       }).join('');
       htmlRows += `</tr>`;
     });
@@ -1663,6 +1796,7 @@ async function saveActivityRow(id){
   const supa = createClient();
   const {error} = await supa.from('org_activities').update({
     title:a.title, activity_type:a.activity_type, status:a.status, priority:a.priority,
+    next_action:a.next_action||null, description:a.description||null,
     planned_for:a.planned_for||null, due_date:a.due_date||null
   }).eq('id', id);
   if(error) return showAlert(error.message,'danger');
@@ -1679,6 +1813,101 @@ async function saveDocumentRow(id){
   if(error) return showAlert(error.message,'danger');
   showAlert('Documento salvo.','ok');
   await loadWorkspace(State.workspaceEmployerId); await loadHome();
+}
+window.togglePlannerCellDraft = function(employerId, dateIso, bucket){
+  const same = samePlannerContext(State.plannerCellContext, employerId, dateIso, bucket);
+  if(!same) State.plannerCellContext = {employerId, dateIso, bucket};
+  State.plannerCellDraft = same && State.plannerCellDraft ? null : plannerDraftDefaults(employerId, dateIso, bucket);
+  renderPlannerCellDrawer();
+};
+window.setPlannerDraftValue = function(field, value){
+  const ctx = State.plannerCellContext;
+  if(!ctx) return;
+  if(!State.plannerCellDraft) State.plannerCellDraft = plannerDraftDefaults(ctx.employerId, ctx.dateIso, ctx.bucket);
+  State.plannerCellDraft[field] = value;
+};
+window.cyclePlannerDraftValue = function(field, enumKey, btn){
+  const ctx = State.plannerCellContext;
+  if(!ctx) return;
+  if(!State.plannerCellDraft) State.plannerCellDraft = plannerDraftDefaults(ctx.employerId, ctx.dateIso, ctx.bucket);
+  const values = ENUMS[enumKey] || [];
+  if(!values.length) return;
+  const current = String(field === 'planner_bucket' ? (State.plannerCellDraft.planner_bucket || ctx.bucket) : (State.plannerCellDraft[field] || values[0]));
+  const idx = Math.max(0, values.findIndex(v => String(v) === current));
+  const next = values[(idx + 1) % values.length];
+  if(field === 'planner_bucket'){
+    State.plannerCellDraft.planner_bucket = next;
+    State.plannerCellDraft.activity_type = plannerBucketToActivityType(next);
+  } else {
+    State.plannerCellDraft[field] = next;
+  }
+  updateCycleButton(btn, enumKey, next);
+};
+window.cyclePlannerItemValue = function(id, field, enumKey, btn){
+  const values = ENUMS[enumKey] || [];
+  if(!values.length) return;
+  let current = String(btn?.dataset?.value || values[0]);
+  if(field === 'planner_bucket'){
+    const item = plannerCellDetails(State.plannerCellContext?.employerId, State.plannerCellContext?.dateIso, State.plannerCellContext?.bucket).find(x => String(x.id) === String(id))
+      || (State.cache.calendar.activities || []).find(x => String(x.id) === String(id));
+    current = String(item ? inferPlannerBucket(item) : current);
+  }
+  const idx = Math.max(0, values.findIndex(v => String(v) === current));
+  const next = values[(idx + 1) % values.length];
+  if(field === 'planner_bucket'){
+    plannerMut(id, 'activity_type', plannerBucketToActivityType(next));
+  } else {
+    plannerMut(id, field, next);
+  }
+  updateCycleButton(btn, enumKey, next);
+};
+async function savePlannerCellItem(id){
+  const item = (State.cache.calendar.activities || []).find(x => String(x.id) === String(id))
+    || (State.cache.workspace.activities || []).find(x => String(x.id) === String(id));
+  if(!item) return showAlert('Atividade nÃ£o encontrada para salvar.','danger');
+  const supa = createClient();
+  const {error} = await supa.from('org_activities').update({
+    title:item.title || '',
+    activity_type:item.activity_type || 'task',
+    status:item.status || 'open',
+    priority:item.priority || 'medium',
+    next_action:item.next_action || null,
+    description:item.description || null,
+    planned_for:item.planned_for || null,
+    due_date:item.due_date || null
+  }).eq('id', id);
+  if(error) return showAlert(error.message,'danger');
+  showAlert('Linha do planner salva.','ok');
+  await loadPlannerAndCalendar();
+  if(State.workspaceEmployerId && String(State.workspaceEmployerId) === String(item.employer_id)) await loadWorkspace(State.workspaceEmployerId);
+  if(State.plannerCellContext) openPlannerCell(State.plannerCellContext.employerId, State.plannerCellContext.dateIso, State.plannerCellContext.bucket);
+}
+async function savePlannerCellDraft(){
+  const ctx = State.plannerCellContext;
+  const draft = State.plannerCellDraft;
+  if(!ctx || !draft) return;
+  const title = String(draft.title || '').trim();
+  if(!title) return showAlert('Preencha o tÃ­tulo da linha.','danger');
+  const supa = createClient();
+  const {error} = await supa.from('org_activities').insert({
+    entity_type:'employer',
+    entity_id:String(ctx.employerId),
+    employer_id:ctx.employerId,
+    title,
+    activity_type:draft.activity_type || plannerBucketToActivityType(draft.planner_bucket || ctx.bucket),
+    status:draft.status || 'open',
+    priority:draft.priority || 'medium',
+    next_action:draft.next_action || null,
+    description:draft.description || null,
+    planned_for:draft.planned_for || ctx.dateIso,
+    due_date:draft.due_date || ctx.dateIso
+  });
+  if(error) return showAlert(error.message,'danger');
+  State.plannerCellDraft = plannerDraftDefaults(ctx.employerId, ctx.dateIso, ctx.bucket);
+  showAlert('Nova linha criada no planner.','ok');
+  await loadPlannerAndCalendar();
+  if(State.workspaceEmployerId && String(State.workspaceEmployerId) === String(ctx.employerId)) await loadWorkspace(State.workspaceEmployerId);
+  openPlannerCell(ctx.employerId, ctx.dateIso, ctx.bucket);
 }
 
 async function createEmployer(){
