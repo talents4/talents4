@@ -20,100 +20,106 @@
 }
 body{font-family:'Sora',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.5;display:flex;height:100vh;overflow:hidden}
 
-/* ── SIDEBAR ── */
-.sb{width:210px;min-width:210px;background:var(--sidebar);display:flex;flex-direction:column;height:100vh;overflow-y:auto}
-.sb-logo{padding:18px 14px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
-.sb-mark{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;margin-bottom:9px}
-.sb-title{color:#fff;font-weight:700;font-size:14px}
-.sb-sub{color:rgba(255,255,255,.35);font-size:10px;margin-top:2px}
-.sb-section{padding:14px 0 6px}
-.sb-label{padding:0 14px 5px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.28)}
-.sb-item{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:rgba(255,255,255,.55);font-size:12px;font-weight:500;transition:all .12s;position:relative}
+/* SIDEBAR */
+.sb{width:216px;min-width:216px;background:var(--sidebar);display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.sb-logo{padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-mark{width:36px;height:36px;background:var(--blue);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;margin-bottom:10px;letter-spacing:-.5px}
+.sb-title{color:#fff;font-weight:700;font-size:14px;letter-spacing:-.2px}
+.sb-sub{color:rgba(255,255,255,.32);font-size:10px;margin-top:2px}
+.sb-section{padding:14px 0 4px}
+.sb-label{padding:0 14px 6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.24)}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;color:rgba(255,255,255,.52);font-size:12px;font-weight:500;transition:all .12s;position:relative;border-radius:0}
 .sb-item:hover{color:#fff;background:rgba(255,255,255,.06)}
-.sb-item.active{color:#fff;background:rgba(37,99,235,.28)}
-.sb-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--blue);border-radius:0 2px 2px 0}
-.sb-item svg{width:14px;height:14px;opacity:.7;flex-shrink:0}
+.sb-item.active{color:#fff;background:rgba(37,99,235,.25)}
+.sb-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--blue);border-radius:0 2px 2px 0}
+.sb-item svg{width:14px;height:14px;opacity:.65;flex-shrink:0}
 .sb-item.active svg{opacity:1}
+.sb-divider{height:1px;background:rgba(255,255,255,.06);margin:6px 14px}
+.sb-emp-add{display:flex;align-items:center;gap:6px;padding:6px 16px;cursor:pointer;color:rgba(255,255,255,.38);font-size:11px;font-weight:500;transition:all .12s}
+.sb-emp-add:hover{color:rgba(255,255,255,.7)}
+.sb-emp-add svg{width:12px;height:12px}
 
-/* ── MAIN ── */
+/* MAIN */
 .main{flex:1;overflow:hidden;display:flex;flex-direction:column}
 .page{display:none;flex-direction:column;flex:1;overflow:hidden}
 .page.active{display:flex}
 
-/* ── PAGE HEADER ── */
+/* PAGE HEADER */
 .ph{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;flex-shrink:0}
-.ph-left h1{font-size:18px;font-weight:800;color:var(--text)}
-.ph-left p{font-size:12px;color:var(--text2);margin-top:1px}
+.ph-left h1{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.ph-left p{font-size:12px;color:var(--text2);margin-top:2px}
 .ph-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
-/* ── TOOLBAR ── */
+/* TOOLBAR */
 .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0}
 
-/* ── BODY ── */
+/* BODY */
 .pb{flex:1;overflow-y:auto;padding:20px 24px}
 
-/* ── BUTTONS ── */
+/* BUTTONS */
 .btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .12s;white-space:nowrap}
 .btn-primary{background:var(--blue);color:#fff}
 .btn-primary:hover{background:var(--blue-d)}
 .btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
 .btn-ghost:hover{background:var(--bg);color:var(--text)}
-.btn-danger{background:var(--red-l);color:var(--red)}
+.btn-danger{background:var(--red-l);color:var(--red);border:1px solid #fca5a5}
 .btn-danger:hover{background:#fca5a5}
-.btn-sm{padding:4px 9px;font-size:11px}
+.btn-sm{padding:4px 10px;font-size:11px}
 .btn svg{width:13px;height:13px}
 .icon-btn{padding:5px;background:transparent;border:1px solid var(--border);border-radius:var(--r);cursor:pointer;display:inline-flex;align-items:center;color:var(--text2);transition:all .12s}
 .icon-btn:hover{background:var(--bg);color:var(--text)}
 .icon-btn svg{width:13px;height:13px}
+.icon-btn.danger:hover{background:var(--red-l);border-color:#fca5a5;color:var(--red)}
 
-/* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:none;font-family:'Sora',sans-serif}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;cursor:pointer;border:none;font-family:'Sora',sans-serif}
 .b-blue{background:var(--blue-l);color:var(--blue)}
 .b-green{background:var(--green-l);color:var(--green)}
 .b-amber{background:var(--amber-l);color:var(--amber)}
 .b-red{background:var(--red-l);color:var(--red)}
 .b-gray{background:var(--gray-l);color:var(--gray)}
 
-/* ── CARDS ── */
+/* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
 .card-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
-.card-hd h3{font-size:13px;font-weight:700}
+.card-hd h3{font-size:13px;font-weight:700;letter-spacing:-.1px}
 .card-bd{padding:18px}
 
-/* ── STATS ── */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:20px}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px}
-.stat-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:6px}
-.stat-v{font-size:26px;font-weight:800;line-height:1}
-.stat-s{font-size:11px;color:var(--text3);margin-top:3px}
+.stat-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:6px}
+.stat-v{font-size:26px;font-weight:800;line-height:1;letter-spacing:-.5px}
+.stat-s{font-size:11px;color:var(--text3);margin-top:4px}
 
-/* ── MONTH NAV ── */
+/* MONTH NAV */
 .month-nav{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 12px}
-.month-nav span{font-size:13px;font-weight:700;min-width:100px;text-align:center}
+.month-nav span{font-size:13px;font-weight:700;min-width:105px;text-align:center}
 .mnav-btn{background:none;border:none;cursor:pointer;color:var(--text2);padding:2px;display:flex;align-items:center;border-radius:3px;transition:all .12s}
 .mnav-btn:hover{background:var(--bg);color:var(--text)}
 .mnav-btn svg{width:14px;height:14px}
 
-/* ── TABLE ── */
+/* TABLE */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:12px}
-thead th{background:#F8FAFC;padding:8px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+thead th{background:#F8FAFC;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;z-index:1}
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#F8FAFC}
 tbody td{padding:9px 12px;vertical-align:middle}
 td.muted{color:var(--text3);font-style:italic}
-.row-actions{display:flex;gap:5px;opacity:0;transition:opacity .12s}
-tbody tr:hover .row-actions{opacity:1}
-.employer-sep td{border-top:2px solid #E2E8F0!important;padding-top:11px!important}
+.row-actions{display:flex;gap:5px}
+.row-actions.hover{opacity:0;transition:opacity .12s}
+tbody tr:hover .row-actions.hover{opacity:1}
 
-/* ── EMPLOYER TABS ── */
+/* EMPLOYER TABS */
 .emp-tabs{display:flex;gap:4px;flex-wrap:wrap;padding:12px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
-.emp-tab{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sora',sans-serif;transition:all .12s}
+.emp-tab{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sora',sans-serif;transition:all .12s;display:flex;align-items:center;gap:5px}
 .emp-tab:hover{background:var(--bg);color:var(--text)}
-.emp-tab.active{background:var(--blue);border-color:var(--blue);color:#fff}
+.emp-tab.active{color:#fff;border-color:transparent}
+.emp-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
 
-/* ── SUB-TABS ── */
+/* SUB-TABS */
 .sub-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);padding:0 24px;flex-shrink:0}
 .sub-tab{padding:10px 14px;font-size:12px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);font-family:'Sora',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .12s;white-space:nowrap}
 .sub-tab:hover{color:var(--text)}
@@ -121,81 +127,110 @@ tbody tr:hover .row-actions{opacity:1}
 .sub-page{display:none}
 .sub-page.active{display:block}
 
-/* ── MODAL ── */
+/* MODAL */
 .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px}
 .modal-ov.open{display:flex}
-.modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:var(--sh-lg)}
-.modal-lg{max-width:700px}
-.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
-.modal-hd h2{font-size:15px;font-weight:700}
+.modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg)}
+.modal-lg{max-width:720px}
+.modal-xl{max-width:860px}
+.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:2}
+.modal-hd h2{font-size:15px;font-weight:700;letter-spacing:-.2px}
 .modal-close{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;border-radius:4px;display:flex}
 .modal-close:hover{background:var(--bg)}
 .modal-close svg{width:16px;height:16px}
 .modal-body{padding:22px}
-.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:space-between;gap:8px;align-items:center;position:sticky;bottom:0;background:var(--surface)}
+.modal-footer-right{display:flex;gap:8px}
 
-/* ── FORM ── */
+/* FORM */
 .fg{margin-bottom:14px}
-.fl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);margin-bottom:5px}
+.fl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:5px}
 .fi,.fs,.ft{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:var(--r);font-family:'Sora',sans-serif;font-size:12px;color:var(--text);background:var(--surface);outline:none;transition:border-color .12s}
-.fi:focus,.fs:focus,.ft:focus{border-color:var(--blue)}
-.ft{resize:vertical;min-height:70px}
+.fi:focus,.fs:focus,.ft:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.ft{resize:vertical;min-height:72px}
 .frow{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
 
-/* ── SEARCH ── */
-.search{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;min-width:180px}
+/* SEARCH */
+.search{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:6px 10px;min-width:190px}
 .search input{border:none;outline:none;font-family:'Sora',sans-serif;font-size:12px;background:transparent;width:100%}
 .search svg{color:var(--text3);width:13px;height:13px;flex-shrink:0}
 
-/* ── EMPTY STATE ── */
-.empty{padding:40px;text-align:center;color:var(--text3)}
-.empty svg{width:36px;height:36px;margin:0 auto 10px;opacity:.35}
+/* EMPTY */
+.empty{padding:48px 20px;text-align:center;color:var(--text3)}
+.empty svg{width:38px;height:38px;margin:0 auto 12px;opacity:.3;display:block}
 .empty p{font-size:13px}
+.empty small{font-size:11px;margin-top:4px;display:block}
 
-/* ── TOAST ── */
-#toast{position:fixed;bottom:20px;right:20px;background:#0F172A;color:#fff;padding:10px 18px;border-radius:var(--r);font-size:12px;font-weight:500;z-index:400;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;background:#0F172A;color:#fff;padding:10px 18px;border-radius:var(--r);font-size:12px;font-weight:500;z-index:500;opacity:0;transform:translateY(6px);transition:all .2s;pointer-events:none}
 #toast.show{opacity:1;transform:translateY(0)}
 
-/* ── CONFIRM ── */
-.conf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center}
+/* CONFIRM */
+.conf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
 .conf-ov.open{display:flex}
-.conf-box{background:#fff;border-radius:var(--r-lg);padding:22px;max-width:320px;width:100%;box-shadow:var(--sh-lg);text-align:center}
+.conf-box{background:#fff;border-radius:var(--r-lg);padding:24px;max-width:320px;width:100%;box-shadow:var(--sh-lg);text-align:center}
 .conf-box h3{font-size:15px;font-weight:700;margin-bottom:7px}
 .conf-box p{font-size:12px;color:var(--text2);margin-bottom:18px}
 .conf-box .cbtns{display:flex;gap:8px;justify-content:center}
 
-/* ── PRIORITY ITEM ── */
+/* PRIORITY ITEM */
 .pri-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface);margin-bottom:7px}
 .pri-content{flex:1}
 .pri-title{font-size:12px;font-weight:600}
 .pri-meta{font-size:11px;color:var(--text3);margin-top:2px}
 
-/* ── EMPLOYER COLOR DOTS ── */
-.emp-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;flex-shrink:0}
-
-/* ── INFO FIELDS ── */
+/* INFO FIELDS */
 .ifield{background:var(--bg);border-radius:var(--r);padding:12px;margin-bottom:10px}
-.ifield-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text3);margin-bottom:3px}
-.ifield-value{font-size:13px;color:var(--text)}
+.ifield-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:3px}
+.ifield-value{font-size:12px;color:var(--text);white-space:pre-wrap}
 
-/* ── INLINE STATUS PICKER ── */
-.status-picker{position:absolute;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);padding:4px;min-width:140px}
-.status-picker button{display:block;width:100%;text-align:left;padding:5px 8px;border:none;background:transparent;cursor:pointer;font-family:'Sora',sans-serif;font-size:11px;border-radius:3px;font-weight:500}
+/* STATUS PICKER */
+.status-picker{position:absolute;z-index:50;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-lg);padding:4px;min-width:150px}
+.status-picker button{display:block;width:100%;text-align:left;padding:5px 9px;border:none;background:transparent;cursor:pointer;font-family:'Sora',sans-serif;font-size:11px;border-radius:3px;font-weight:500}
 .status-picker button:hover{background:var(--bg)}
 
-/* ── SCROLLBAR ── */
+/* SCROLLBAR */
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:#9CA3AF}
 
-/* ── PANEL SECTION ── */
+/* PANEL GRID */
 .panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:900px){.panel-grid{grid-template-columns:1fr}}
 
-/* ── CHECKBOX ── */
+/* CHECKBOX */
 .cb-cell{display:flex;align-items:center;gap:5px}
-.cb-cell input[type=checkbox]{width:14px;height:14px;cursor:pointer}
+.cb-cell input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--blue)}
+
+/* ── CALENDAR ── */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;background:var(--surface)}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:#F8FAFC;border-bottom:1px solid var(--border)}
+.cal-day-name{padding:8px 4px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2)}
+.cal-cell{border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-height:110px;padding:6px;position:relative;cursor:pointer;transition:background .1s}
+.cal-cell:nth-child(7n){border-right:none}
+.cal-cell:hover{background:#F8FAFC}
+.cal-cell.other-month{background:#FAFAFA}
+.cal-cell.other-month .cal-date{color:var(--text3)}
+.cal-cell.today{background:rgba(37,99,235,.04)}
+.cal-cell.today .cal-date{background:var(--blue);color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-date{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
+.cal-event{font-size:10px;font-weight:600;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#fff;display:flex;align-items:center;gap:3px;transition:opacity .1s}
+.cal-event:hover{opacity:.85}
+.cal-add-btn{position:absolute;bottom:4px;right:4px;width:18px;height:18px;border-radius:50%;background:var(--blue-l);color:var(--blue);border:none;cursor:pointer;font-size:14px;line-height:1;display:none;align-items:center;justify-content:center;font-weight:700}
+.cal-cell:hover .cal-add-btn{display:flex}
+.cal-more{font-size:10px;color:var(--text2);font-weight:600;padding:1px 5px;cursor:pointer}
+
+/* EMPLOYER CARD */
+.emp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;display:flex;align-items:flex-start;gap:12px;transition:box-shadow .15s}
+.emp-card:hover{box-shadow:var(--sh)}
+.emp-color-bar{width:4px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:40px}
+.emp-card-body{flex:1;min-width:0}
+.emp-card-name{font-size:13px;font-weight:700;letter-spacing:-.1px}
+.emp-card-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.emp-card-vagas{font-size:11px;color:var(--text3);margin-top:4px;white-space:pre-wrap}
+.emp-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
 </style>
 </head>
 <body>
@@ -210,8 +245,12 @@ tbody tr:hover .row-actions{opacity:1}
   <div class="sb-section">
     <div class="sb-label">Planejamento</div>
     <div class="sb-item active" onclick="nav('plan-mensal')">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       Planejamento Mensal
+    </div>
+    <div class="sb-item" onclick="nav('calendario')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><circle cx="12" cy="16" r="1"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/></svg>
+      Calendário
     </div>
     <div class="sb-item" onclick="nav('reunioes')">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -222,19 +261,29 @@ tbody tr:hover .row-actions{opacity:1}
       Resumo Geral
     </div>
   </div>
+  <div class="sb-divider"></div>
   <div class="sb-section">
-    <div class="sb-label">Dossie do Employer</div>
+    <div class="sb-label">Empregadores</div>
+    <div class="sb-item" onclick="nav('employers')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+      Gerenciar Empregadores
+    </div>
     <div class="sb-item" onclick="nav('dossie')">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       Pipeline por Employer
     </div>
   </div>
+  <div class="sb-section" style="margin-top:auto;padding-top:8px">
+    <div class="sb-emp-add" onclick="openEmpModal()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo Empregador
+    </div>
+  </div>
 </nav>
 
-<!-- MAIN -->
 <div class="main">
 
-<!-- ══════════════════ PAGE: PLANEJAMENTO MENSAL ══════════════════ -->
+<!-- PAGE: PLANEJAMENTO MENSAL -->
 <div class="page active" id="page-plan-mensal">
   <div class="ph">
     <div class="ph-left">
@@ -250,13 +299,9 @@ tbody tr:hover .row-actions{opacity:1}
   </div>
   <div class="toolbar">
     <div class="month-nav">
-      <button class="mnav-btn" onclick="changeMonth(-1)">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <span id="month-label">Abril 2026</span>
-      <button class="mnav-btn" onclick="changeMonth(1)">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-      </button>
+      <button class="mnav-btn" onclick="changeMonth(-1)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <span id="month-label"></span>
+      <button class="mnav-btn" onclick="changeMonth(1)"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
     </div>
     <div class="search">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -266,6 +311,9 @@ tbody tr:hover .row-actions{opacity:1}
       <option value="">Todos os status</option>
       <option>A fazer</option><option>Em andamento</option><option>Concluído</option><option>Bloqueado</option><option>Cancelado</option>
     </select>
+    <select class="fi" style="width:auto;padding:6px 10px" id="plan-emp-filter" onchange="renderPlanTable()">
+      <option value="">Todos os empregadores</option>
+    </select>
   </div>
   <div class="pb">
     <div class="card">
@@ -273,14 +321,15 @@ tbody tr:hover .row-actions{opacity:1}
         <table id="plan-table">
           <thead>
             <tr>
+              <th style="min-width:10px"></th>
               <th style="min-width:140px">Empregador</th>
-              <th style="min-width:160px">Etapa / Atividade</th>
+              <th style="min-width:170px">Etapa / Atividade</th>
               <th style="min-width:110px">Responsável</th>
               <th style="min-width:120px">Status</th>
-              <th style="min-width:240px">Observação / Próxima Ação</th>
+              <th style="min-width:250px">Observação / Próxima Ação</th>
               <th style="min-width:100px">Data Início</th>
               <th style="min-width:100px">Data Fim</th>
-              <th style="width:70px"></th>
+              <th style="width:80px"></th>
             </tr>
           </thead>
           <tbody id="plan-tbody"></tbody>
@@ -290,7 +339,38 @@ tbody tr:hover .row-actions{opacity:1}
   </div>
 </div>
 
-<!-- ══════════════════ PAGE: REUNIÕES ══════════════════ -->
+<!-- PAGE: CALENDÁRIO -->
+<div class="page" id="page-calendario">
+  <div class="ph">
+    <div class="ph-left">
+      <h1>Calendário</h1>
+      <p>Visualização de atividades por dia e mês</p>
+    </div>
+    <div class="ph-right">
+      <button class="btn btn-primary" onclick="openPlanModal()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova Atividade
+      </button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="month-nav">
+      <button class="mnav-btn" onclick="changeMonth(-1);renderCalendar()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <span id="cal-month-label"></span>
+      <button class="mnav-btn" onclick="changeMonth(1);renderCalendar()"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
+    <select class="fi" style="width:auto;padding:6px 10px" id="cal-emp-filter" onchange="renderCalendar()">
+      <option value="">Todos os empregadores</option>
+    </select>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center" id="cal-legend"></div>
+  </div>
+  <div class="pb" style="overflow-y:auto">
+    <div class="cal-header" id="cal-header"></div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+</div>
+
+<!-- PAGE: REUNIÕES -->
 <div class="page" id="page-reunioes">
   <div class="ph">
     <div class="ph-left">
@@ -309,12 +389,8 @@ tbody tr:hover .row-actions{opacity:1}
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="meet-search" type="text" placeholder="Buscar..." oninput="renderMeetings()">
     </div>
-    <select class="fi" style="width:auto;padding:6px 10px" id="meet-emp-filter" onchange="renderMeetings()">
-      <option value="">Todos os empregadores</option>
-    </select>
-    <select class="fi" style="width:auto;padding:6px 10px" id="meet-month-filter" onchange="renderMeetings()">
-      <option value="">Todos os meses</option>
-    </select>
+    <select class="fi" style="width:auto;padding:6px 10px" id="meet-emp-filter" onchange="renderMeetings()"><option value="">Todos os empregadores</option></select>
+    <select class="fi" style="width:auto;padding:6px 10px" id="meet-month-filter" onchange="renderMeetings()"><option value="">Todos os meses</option></select>
   </div>
   <div class="pb">
     <div class="card">
@@ -324,13 +400,14 @@ tbody tr:hover .row-actions{opacity:1}
             <tr>
               <th style="min-width:90px">Data</th>
               <th style="min-width:70px">Semana</th>
-              <th style="min-width:130px">Empregador / Tema</th>
+              <th style="min-width:130px">Empregador</th>
+              <th style="min-width:170px">Tema</th>
               <th style="min-width:200px">O que foi decidido</th>
               <th style="min-width:160px">Pendências</th>
               <th style="min-width:160px">Próxima Ação</th>
               <th style="min-width:90px">Responsável</th>
               <th style="min-width:100px">Status</th>
-              <th style="width:70px"></th>
+              <th style="width:80px"></th>
             </tr>
           </thead>
           <tbody id="meet-tbody"></tbody>
@@ -340,17 +417,12 @@ tbody tr:hover .row-actions{opacity:1}
   </div>
 </div>
 
-<!-- ══════════════════ PAGE: RESUMO ══════════════════ -->
+<!-- PAGE: RESUMO -->
 <div class="page" id="page-resumo">
   <div class="ph">
-    <div class="ph-left">
-      <h1>Resumo Geral</h1>
-      <p>Leitura consolidada da operação Talents — Abril a Dezembro 2026</p>
-    </div>
+    <div class="ph-left"><h1>Resumo Geral</h1><p>Leitura consolidada da operação — Abril a Dezembro 2026</p></div>
     <div class="ph-right">
-      <select class="fi" style="width:auto;padding:6px 10px" id="resumo-month-filter" onchange="renderResumo()">
-        <option value="">Todos os meses</option>
-      </select>
+      <select class="fi" style="width:auto;padding:6px 10px" id="resumo-month-filter" onchange="renderResumo()"><option value="">Todos os meses</option></select>
     </div>
   </div>
   <div class="pb">
@@ -366,12 +438,10 @@ tbody tr:hover .row-actions{opacity:1}
       </div>
     </div>
     <div class="card" style="margin-top:16px">
-      <div class="card-hd"><h3>📋 Histórico completo</h3></div>
+      <div class="card-hd"><h3>📋 Histórico completo de atividades</h3></div>
       <div class="tbl-wrap">
         <table>
-          <thead><tr>
-            <th>Mês</th><th>Semana</th><th>Empregador</th><th>O que foi feito</th><th>Resultado</th><th>Próxima Ação</th><th>Responsável</th><th>Status</th>
-          </tr></thead>
+          <thead><tr><th>Mês</th><th>Empregador</th><th>Atividade</th><th>Responsável</th><th>Status</th><th>Observação</th><th>Data Início</th><th style="width:80px"></th></tr></thead>
           <tbody id="resumo-history"></tbody>
         </table>
       </div>
@@ -379,13 +449,32 @@ tbody tr:hover .row-actions{opacity:1}
   </div>
 </div>
 
-<!-- ══════════════════ PAGE: DOSSIE ══════════════════ -->
+<!-- PAGE: EMPREGADORES -->
+<div class="page" id="page-employers">
+  <div class="ph">
+    <div class="ph-left"><h1>Gerenciar Empregadores</h1><p>Adicione, edite e configure todos os empregadores do sistema</p></div>
+    <div class="ph-right">
+      <button class="btn btn-primary" onclick="openEmpModal()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo Empregador
+      </button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <div class="search">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="emp-search" type="text" placeholder="Buscar empregador..." oninput="renderEmployers()">
+    </div>
+  </div>
+  <div class="pb">
+    <div class="emp-cards-grid" id="emp-cards-grid"></div>
+  </div>
+</div>
+
+<!-- PAGE: DOSSIE -->
 <div class="page" id="page-dossie">
   <div class="ph">
-    <div class="ph-left">
-      <h1>Dossie do Employer</h1>
-      <p>Pipeline de candidatos, controle de envios e informações por empregador</p>
-    </div>
+    <div class="ph-left"><h1>Dossie do Employer</h1><p>Pipeline de candidatos, controle de envios e informações por empregador</p></div>
     <div class="ph-right" id="dossie-actions"></div>
   </div>
   <div class="emp-tabs" id="emp-tabs"></div>
@@ -400,8 +489,11 @@ tbody tr:hover .row-actions{opacity:1}
     <div class="sub-page active" id="dossie-info">
       <div class="panel-grid">
         <div class="card">
-          <div class="card-hd"><h3>Informações do Empregador</h3>
-            <button class="btn btn-ghost btn-sm" onclick="openInfoModal()">Editar</button>
+          <div class="card-hd">
+            <h3>Informações do Empregador</h3>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-ghost btn-sm" onclick="openEmpModal(S.currentDossieEmp)">✏️ Editar</button>
+            </div>
           </div>
           <div class="card-bd" id="info-content"></div>
         </div>
@@ -417,10 +509,16 @@ tbody tr:hover .row-actions{opacity:1}
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input id="pipe-search" type="text" placeholder="Buscar candidato..." oninput="renderPipeline()">
         </div>
-        <button class="btn btn-primary" onclick="openCandModal()">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Adicionar Candidato
-        </button>
+        <div style="display:flex;gap:8px">
+          <select class="fi" style="width:auto;padding:6px 10px" id="pipe-etapa-filter" onchange="renderPipeline()">
+            <option value="">Todas as etapas</option>
+            <option>Aguardando envio</option><option>Aguardando resposta</option><option>Gostou</option><option>Não gostou</option><option>Reunião marcada</option><option>Em processo</option><option>Contratado</option>
+          </select>
+          <button class="btn btn-primary" onclick="openCandModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Adicionar Candidato
+          </button>
+        </div>
       </div>
       <div class="card">
         <div class="tbl-wrap">
@@ -430,10 +528,10 @@ tbody tr:hover .row-actions{opacity:1}
               <th style="min-width:150px">Nome</th>
               <th style="min-width:160px">Área / Posição</th>
               <th style="min-width:140px">Encaixe Principal</th>
-              <th style="min-width:60px">Idade</th>
-              <th style="min-width:90px">Idiomas DE</th>
+              <th style="min-width:55px">Idade</th>
+              <th style="min-width:90px">Alemão</th>
               <th style="min-width:100px">Data Envio</th>
-              <th style="min-width:120px">Etapa Atual</th>
+              <th style="min-width:130px">Etapa Atual</th>
               <th style="min-width:160px">Próxima Ação</th>
               <th style="min-width:90px">Responsável</th>
               <th style="width:80px"></th>
@@ -449,9 +547,7 @@ tbody tr:hover .row-actions{opacity:1}
         <div class="card-hd"><h3>Candidatos Removidos ou Rejeitados</h3></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr>
-              <th>Nome</th><th>Área</th><th>Data Envio</th><th>Motivo</th><th>Observações</th><th style="width:70px"></th>
-            </tr></thead>
+            <thead><tr><th>Nome</th><th>Área</th><th>Data Envio</th><th>Motivo</th><th>Observações</th><th style="width:90px"></th></tr></thead>
             <tbody id="removed-tbody"></tbody>
           </table>
         </div>
@@ -469,9 +565,7 @@ tbody tr:hover .row-actions{opacity:1}
       <div class="card">
         <div class="tbl-wrap">
           <table>
-            <thead><tr>
-              <th>Data Solicitação</th><th>Perfil Necessário</th><th>Substitui</th><th>Prioridade</th><th>Status Busca</th><th>Observações</th><th style="width:70px"></th>
-            </tr></thead>
+            <thead><tr><th>Data</th><th>Perfil Necessário</th><th>Substitui</th><th>Prioridade</th><th>Status Busca</th><th>Observações</th><th style="width:80px"></th></tr></thead>
             <tbody id="replace-tbody"></tbody>
           </table>
         </div>
@@ -481,6 +575,62 @@ tbody tr:hover .row-actions{opacity:1}
 </div>
 
 </div><!-- /main -->
+
+<!-- ══════ MODAL: EMPREGADOR ══════ -->
+<div class="modal-ov" id="modal-emp">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2 id="modal-emp-title">Novo Empregador</h2>
+      <button class="modal-close" onclick="closeModal('modal-emp')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="emp-id">
+      <div class="frow">
+        <div class="fg">
+          <label class="fl">Nome do Empregador *</label>
+          <input class="fi" id="emp-name" placeholder="Ex: Müller GmbH">
+        </div>
+        <div class="fg">
+          <label class="fl">Cor de identificação</label>
+          <input type="color" class="fi" id="emp-color" style="height:36px;padding:4px 6px;cursor:pointer">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Descrição</label>
+        <textarea class="ft" id="emp-descricao" placeholder="Descreva a empresa, setor, histórico..."></textarea>
+      </div>
+      <div class="fg">
+        <label class="fl">Vagas abertas</label>
+        <textarea class="ft" id="emp-vagas" placeholder="Liste as posições abertas (uma por linha)..."></textarea>
+      </div>
+      <div class="frow">
+        <div class="fg">
+          <label class="fl">Contato</label>
+          <input class="fi" id="emp-contato" placeholder="Nome ou email do contato">
+        </div>
+        <div class="fg">
+          <label class="fl">Link / CRM</label>
+          <input class="fi" id="emp-link" placeholder="https://...">
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Status de saúde do processo</label>
+        <select class="fs" id="emp-saude">
+          <option>Estável</option><option>Em andamento</option><option>Prioridade</option><option>Em risco</option><option>Pausado</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <div>
+        <button class="btn btn-danger" id="emp-delete-btn" onclick="deleteEmpById()" style="display:none">🗑 Excluir</button>
+      </div>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" onclick="closeModal('modal-emp')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveEmp()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══════ MODAL: PLAN ENTRY ══════ -->
 <div class="modal-ov" id="modal-plan">
@@ -493,16 +643,19 @@ tbody tr:hover .row-actions{opacity:1}
       <input type="hidden" id="plan-id">
       <div class="frow">
         <div class="fg">
-          <label class="fl">Empregador</label>
+          <label class="fl">Empregador *</label>
           <select class="fs" id="plan-employer"></select>
         </div>
         <div class="fg">
-          <label class="fl">Atividade</label>
+          <label class="fl">Atividade *</label>
           <select class="fs" id="plan-activity">
             <option>Pesquisa de perfis</option>
             <option>Triagem / qualificação</option>
             <option>Envio de currículos</option>
             <option>Feedback / próximos passos</option>
+            <option>Reunião / alinhamento</option>
+            <option>Formulário / documentação</option>
+            <option>Outro</option>
           </select>
         </div>
       </div>
@@ -538,8 +691,11 @@ tbody tr:hover .row-actions{opacity:1}
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-plan')">Cancelar</button>
-      <button class="btn btn-primary" onclick="savePlanEntry()">Salvar</button>
+      <div><button class="btn btn-danger btn-sm" id="plan-delete-btn" onclick="deletePlanEntryFromModal()" style="display:none">🗑 Excluir</button></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" onclick="closeModal('modal-plan')">Cancelar</button>
+        <button class="btn btn-primary" onclick="savePlanEntry()">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -554,213 +710,93 @@ tbody tr:hover .row-actions{opacity:1}
     <div class="modal-body">
       <input type="hidden" id="meet-id">
       <div class="frow3">
-        <div class="fg">
-          <label class="fl">Data da Reunião</label>
-          <input type="date" class="fi" id="meet-data">
-        </div>
-        <div class="fg">
-          <label class="fl">Mês</label>
-          <select class="fs" id="meet-mes"></select>
-        </div>
-        <div class="fg">
-          <label class="fl">Semana</label>
-          <input class="fi" id="meet-semana" placeholder="Ex: Semana 2">
-        </div>
+        <div class="fg"><label class="fl">Data da Reunião</label><input type="date" class="fi" id="meet-data"></div>
+        <div class="fg"><label class="fl">Mês</label><select class="fs" id="meet-mes"></select></div>
+        <div class="fg"><label class="fl">Semana</label><input class="fi" id="meet-semana" placeholder="Ex: Semana 2"></div>
       </div>
       <div class="frow">
-        <div class="fg">
-          <label class="fl">Empregador</label>
-          <select class="fs" id="meet-employer"></select>
-        </div>
-        <div class="fg">
-          <label class="fl">Tema</label>
-          <input class="fi" id="meet-tema" placeholder="Resumo do tema discutido">
-        </div>
+        <div class="fg"><label class="fl">Empregador</label><select class="fs" id="meet-employer"></select></div>
+        <div class="fg"><label class="fl">Tema</label><input class="fi" id="meet-tema" placeholder="Resumo do tema discutido"></div>
       </div>
-      <div class="fg">
-        <label class="fl">O que foi decidido / resolvido</label>
-        <textarea class="ft" id="meet-decidido" placeholder="Descreva as decisões tomadas..."></textarea>
+      <div class="fg"><label class="fl">O que foi decidido / resolvido</label><textarea class="ft" id="meet-decidido" placeholder="Descreva as decisões tomadas..."></textarea></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Pendências</label><textarea class="ft" id="meet-pendencias" placeholder="O que ainda está em aberto..."></textarea></div>
+        <div class="fg"><label class="fl">Próxima Ação</label><textarea class="ft" id="meet-proxacao" placeholder="O que deve acontecer a seguir..."></textarea></div>
       </div>
       <div class="frow">
-        <div class="fg">
-          <label class="fl">Pendências</label>
-          <textarea class="ft" id="meet-pendencias" placeholder="O que ainda está em aberto..."></textarea>
-        </div>
-        <div class="fg">
-          <label class="fl">Próxima Ação</label>
-          <textarea class="ft" id="meet-proxacao" placeholder="O que deve acontecer a seguir..."></textarea>
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Responsável</label>
-          <input class="fi" id="meet-responsavel" placeholder="Quem vai executar">
-        </div>
-        <div class="fg">
-          <label class="fl">Status</label>
-          <select class="fs" id="meet-status">
-            <option>A fazer</option><option>Em andamento</option><option>Concluído</option><option>Cancelado</option>
-          </select>
+        <div class="fg"><label class="fl">Responsável</label><input class="fi" id="meet-responsavel" placeholder="Quem vai executar"></div>
+        <div class="fg"><label class="fl">Status</label>
+          <select class="fs" id="meet-status"><option>A fazer</option><option>Em andamento</option><option>Concluído</option><option>Cancelado</option></select>
         </div>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-meet')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveMeeting()">Salvar</button>
+      <div><button class="btn btn-danger btn-sm" id="meet-delete-btn" onclick="deleteMeetFromModal()" style="display:none">🗑 Excluir</button></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" onclick="closeModal('modal-meet')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveMeeting()">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ══════ MODAL: CANDIDATE ══════ -->
+<!-- ══════ MODAL: CANDIDATO ══════ -->
 <div class="modal-ov" id="modal-cand">
-  <div class="modal modal-lg">
+  <div class="modal modal-xl">
     <div class="modal-hd">
       <h2 id="modal-cand-title">Novo Candidato</h2>
       <button class="modal-close" onclick="closeModal('modal-cand')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="cand-id">
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Nome Completo</label>
-          <input class="fi" id="cand-nome" placeholder="Nome do candidato">
-        </div>
-        <div class="fg">
-          <label class="fl">Idade</label>
-          <input type="number" class="fi" id="cand-idade" placeholder="Idade">
-        </div>
+      <div class="frow3">
+        <div class="fg"><label class="fl">Nome *</label><input class="fi" id="cand-nome" placeholder="Nome completo"></div>
+        <div class="fg"><label class="fl">Idade</label><input type="number" class="fi" id="cand-idade" placeholder="Ex: 34"></div>
+        <div class="fg"><label class="fl">Sequência / Ranking</label><input type="number" class="fi" id="cand-seq" placeholder="Ex: 1"></div>
       </div>
       <div class="frow">
-        <div class="fg">
-          <label class="fl">Área / Posição</label>
-          <input class="fi" id="cand-area" placeholder="Ex: CNC-Produktion / industrielle Fertigung">
-        </div>
-        <div class="fg">
-          <label class="fl">Encaixe Principal</label>
-          <input class="fi" id="cand-encaixe" placeholder="Ex: CNC-Produktion">
-        </div>
+        <div class="fg"><label class="fl">Área / Posição</label><input class="fi" id="cand-area" placeholder="Ex: CNC-Produktion / Fertigung"></div>
+        <div class="fg"><label class="fl">Encaixe Principal</label><input class="fi" id="cand-encaixe" placeholder="Ex: CNC-Produktion"></div>
       </div>
       <div class="frow">
-        <div class="fg">
-          <label class="fl">Idiomas</label>
-          <input class="fi" id="cand-idiomas" placeholder="Ex: PT Nativo, DE B1/B2, EN B2">
+        <div class="fg"><label class="fl">Nível de Alemão</label>
+          <select class="fs" id="cand-alemao"><option value="">—</option><option>A1</option><option>A2</option><option>B1</option><option>B1/B2</option><option>B2</option><option>C1</option><option>C2</option><option>Nativo</option><option>Mittelstufe</option><option>fließend</option></select>
         </div>
-        <div class="fg">
-          <label class="fl">Nível Alemão</label>
-          <select class="fs" id="cand-alemao">
-            <option value="">—</option><option>A1</option><option>A2</option><option>B1</option><option>B1/B2</option><option>B2</option><option>C1</option><option>Nativo</option>
-          </select>
+        <div class="fg"><label class="fl">Idiomas (completo)</label><input class="fi" id="cand-idiomas" placeholder="Ex: Português, Alemão B1, Inglês C1"></div>
+      </div>
+      <div class="fg"><label class="fl">Kurz-Profil (resumo em alemão)</label><textarea class="ft" id="cand-kurzprofil" placeholder="Kurzes Berufsprofil..."></textarea></div>
+      <div class="fg"><label class="fl">Justificativa do ranking</label><textarea class="ft" id="cand-justif" placeholder="Por que este candidato se encaixa..."></textarea></div>
+      <div class="frow3">
+        <div class="fg"><label class="fl">Rodada de envio</label><input type="number" class="fi" id="cand-rodada" value="1"></div>
+        <div class="fg"><label class="fl">Data de Envio</label><input type="date" class="fi" id="cand-dataenvio"></div>
+        <div class="fg"><label class="fl">Responsável</label><input class="fi" id="cand-responsavel" placeholder="Ex: Carol"></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Etapa Atual</label>
+          <select class="fs" id="cand-etapa"><option>Aguardando envio</option><option>Aguardando resposta</option><option>Gostou</option><option>Não gostou</option><option>Reunião marcada</option><option>Em processo</option><option>Contratado</option><option>Removido</option></select>
         </div>
+        <div class="fg"><label class="fl">Próxima Ação</label><input class="fi" id="cand-proxacao" placeholder="O que deve acontecer a seguir..."></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Data de Retorno</label><input type="date" class="fi" id="cand-dataretorno"></div>
+        <div class="fg"><label class="fl">Data de Reunião</label><input type="date" class="fi" id="cand-datareuniao"></div>
       </div>
       <div class="fg">
-        <label class="fl">Kurzprofil (Resumo em alemão)</label>
-        <textarea class="ft" id="cand-kurzprofil" placeholder="Breve descrição profissional..."></textarea>
+        <div class="cb-cell" style="margin-bottom:8px"><input type="checkbox" id="cand-apresentado"><label for="cand-apresentado" style="font-size:12px;cursor:pointer">Já apresentado ao empregador</label></div>
+        <div class="cb-cell"><input type="checkbox" id="cand-reposicao"><label for="cand-reposicao" style="font-size:12px;cursor:pointer">Precisa de reposição</label></div>
       </div>
-      <div class="fg">
-        <label class="fl">Justificativa do Ranking</label>
-        <textarea class="ft" id="cand-justif" placeholder="Por que este candidato se encaixa nesta empresa..."></textarea>
-      </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
-      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:12px">Controle de Envio</p>
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Rodada de Envio</label>
-          <input type="number" class="fi" id="cand-rodada" placeholder="1">
-        </div>
-        <div class="fg">
-          <label class="fl">Data de Envio</label>
-          <input type="date" class="fi" id="cand-dataenvio">
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Etapa Atual</label>
-          <select class="fs" id="cand-etapa">
-            <option>Aguardando envio</option><option>Aguardando resposta</option><option>Gostou</option><option>Não gostou</option><option>Reunião marcada</option><option>Em processo</option><option>Contratado</option><option>Removido</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl">Responsável</label>
-          <input class="fi" id="cand-responsavel" placeholder="Ex: Carol">
-        </div>
-      </div>
-      <div class="fg">
-        <label class="fl">Retorno do Empregador</label>
-        <input class="fi" id="cand-retorno" placeholder="O que o empregador respondeu...">
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Data do Retorno</label>
-          <input type="date" class="fi" id="cand-dataretorno">
-        </div>
-        <div class="fg">
-          <label class="fl">Data da Reunião</label>
-          <input type="date" class="fi" id="cand-datareuniao">
-        </div>
-      </div>
-      <div class="fg">
-        <label class="fl">Próxima Ação</label>
-        <textarea class="ft" id="cand-proxacao" placeholder="O que deve ser feito a seguir..."></textarea>
-      </div>
-      <div class="fg">
-        <label class="fl">Observações Internas</label>
-        <textarea class="ft" id="cand-obs" placeholder="Notas internas sobre o candidato..."></textarea>
-      </div>
-      <div style="display:flex;gap:16px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-          <input type="checkbox" id="cand-apresentado"> Apresentado ao empregador
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-          <input type="checkbox" id="cand-reuniao"> Reunião marcada
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
-          <input type="checkbox" id="cand-reposicao"> Precisa reposição
-        </label>
+      <div class="fg"><label class="fl">Observações internas</label><textarea class="ft" id="cand-obs" placeholder="Notas internas, contexto, histórico..."></textarea></div>
+      <div class="fg" id="cand-motivo-wrap" style="display:none">
+        <label class="fl">Motivo de remoção</label>
+        <input class="fi" id="cand-motivo" placeholder="Por que o candidato foi removido/rejeitado?">
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-cand')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveCandidate()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ══════ MODAL: EMPLOYER INFO ══════ -->
-<div class="modal-ov" id="modal-info">
-  <div class="modal">
-    <div class="modal-hd">
-      <h2 id="modal-info-emp">Editar Informações</h2>
-      <button class="modal-close" onclick="closeModal('modal-info')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="fg">
-        <label class="fl">Descrição / Sobre a Empresa</label>
-        <textarea class="ft" id="info-descricao" rows="4"></textarea>
+      <div><button class="btn btn-danger btn-sm" id="cand-delete-btn" onclick="deleteCandFromModal()" style="display:none">🗑 Excluir</button></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" onclick="closeModal('modal-cand')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCandidate()">Salvar</button>
       </div>
-      <div class="fg">
-        <label class="fl">Vagas Abertas</label>
-        <textarea class="ft" id="info-vagas" placeholder="Uma vaga por linha..." rows="5"></textarea>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label class="fl">Contato / E-mail</label>
-          <input class="fi" id="info-contato" placeholder="Pessoa de contato">
-        </div>
-        <div class="fg">
-          <label class="fl">Link / CRM</label>
-          <input class="fi" id="info-link" placeholder="https://...">
-        </div>
-      </div>
-      <div class="fg">
-        <label class="fl">Saúde da Conta</label>
-        <select class="fs" id="info-saude">
-          <option>Estável</option><option>Atenção</option><option>Crítico</option><option>Inativo</option>
-        </select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-info')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveInfo()">Salvar</button>
     </div>
   </div>
 </div>
@@ -769,41 +805,25 @@ tbody tr:hover .row-actions{opacity:1}
 <div class="modal-ov" id="modal-replace">
   <div class="modal">
     <div class="modal-hd">
-      <h2>Nova Solicitação de Reposição</h2>
+      <h2>Solicitação de Reposição</h2>
       <button class="modal-close" onclick="closeModal('modal-replace')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="rep-id">
-      <div class="fg">
-        <label class="fl">Perfil Necessário</label>
-        <input class="fi" id="rep-perfil" placeholder="Ex: CNC Operator, Buchhaltung...">
-      </div>
-      <div class="fg">
-        <label class="fl">Substitui qual candidato</label>
-        <input class="fi" id="rep-substitui" placeholder="Nome do candidato original">
-      </div>
+      <div class="fg"><label class="fl">Perfil necessário</label><textarea class="ft" id="rep-perfil" placeholder="Descreva o perfil buscado..."></textarea></div>
+      <div class="fg"><label class="fl">Substitui qual candidato?</label><input class="fi" id="rep-substitui" placeholder="Nome do candidato removido"></div>
       <div class="frow">
-        <div class="fg">
-          <label class="fl">Prioridade</label>
-          <select class="fs" id="rep-prio">
-            <option>Alta</option><option>Média</option><option>Baixa</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl">Status da Busca</label>
-          <select class="fs" id="rep-status">
-            <option>Aguardando</option><option>Em busca</option><option>Perfil encontrado</option><option>Enviado</option>
-          </select>
-        </div>
+        <div class="fg"><label class="fl">Prioridade</label><select class="fs" id="rep-prio"><option>Alta</option><option>Média</option><option>Baixa</option></select></div>
+        <div class="fg"><label class="fl">Status da busca</label><select class="fs" id="rep-status"><option>Aguardando</option><option>Em busca</option><option>Perfil encontrado</option><option>Concluído</option></select></div>
       </div>
-      <div class="fg">
-        <label class="fl">Observações</label>
-        <textarea class="ft" id="rep-obs"></textarea>
-      </div>
+      <div class="fg"><label class="fl">Observações</label><textarea class="ft" id="rep-obs"></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-replace')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveReplace()">Salvar</button>
+      <div></div>
+      <div class="modal-footer-right">
+        <button class="btn btn-ghost" onclick="closeModal('modal-replace')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveReplace()">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -812,7 +832,7 @@ tbody tr:hover .row-actions{opacity:1}
 <div class="conf-ov" id="confirm-ov">
   <div class="conf-box">
     <h3>Confirmar exclusão</h3>
-    <p>Esta ação não pode ser desfeita.</p>
+    <p id="confirm-msg">Esta ação não pode ser desfeita.</p>
     <div class="cbtns">
       <button class="btn btn-ghost" onclick="document.getElementById('confirm-ov').classList.remove('open')">Cancelar</button>
       <button class="btn btn-danger" id="confirm-ok">Excluir</button>
@@ -820,108 +840,126 @@ tbody tr:hover .row-actions{opacity:1}
   </div>
 </div>
 
-<!-- ══════ TOAST ══════ -->
+<!-- TOAST -->
 <div id="toast"></div>
 
-<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
 <script>
 // ─── CONSTANTS ───
-const EMPLOYERS = ['Winkelwaldklinik','Orbau','Eisen Schmid','J. Schneider','Weber Haus','Beton Mueller','Jaco','SWEG - Fahrer','Böwe','Streit Sägewerk'];
-const ACTIVITIES = ['Pesquisa de perfis','Triagem / qualificação','Envio de currículos','Feedback / próximos passos'];
-const MONTHS = [
+const ACTIVITIES=['Pesquisa de perfis','Triagem / qualificação','Envio de currículos','Feedback / próximos passos','Reunião / alinhamento','Formulário / documentação','Outro'];
+const MONTHS=[
   {k:'2026-04',l:'Abril 2026'},{k:'2026-05',l:'Maio 2026'},{k:'2026-06',l:'Junho 2026'},
   {k:'2026-07',l:'Julho 2026'},{k:'2026-08',l:'Agosto 2026'},{k:'2026-09',l:'Setembro 2026'},
   {k:'2026-10',l:'Outubro 2026'},{k:'2026-11',l:'Novembro 2026'},{k:'2026-12',l:'Dezembro 2026'}
 ];
-const STATUS_COLORS = {
+const STATUS_COLORS={
   '—':'b-gray','A fazer':'b-amber','Em andamento':'b-blue','Concluído':'b-green',
   'Bloqueado':'b-red','Cancelado':'b-gray','Aguardando resposta':'b-amber',
   'Gostou':'b-green','Não gostou':'b-red','Reunião marcada':'b-blue',
   'Em processo':'b-blue','Contratado':'b-green','Removido':'b-red','Aguardando envio':'b-gray',
-  'Alta':'b-red','Média':'b-amber','Baixa':'b-gray'
+  'Alta':'b-red','Média':'b-amber','Baixa':'b-gray','Estável':'b-green','Prioridade':'b-red','Em risco':'b-red','Pausado':'b-gray'
 };
-const EMP_COLORS = {
-  'Winkelwaldklinik':'#2563EB','Orbau':'#7C3AED','Eisen Schmid':'#DC2626',
-  'J. Schneider':'#059669','Weber Haus':'#D97706','Beton Mueller':'#0891B2',
-  'Jaco':'#BE185D','SWEG - Fahrer':'#65A30D','Böwe':'#9333EA','Streit Sägewerk':'#EA580C'
-};
+const DEFAULT_EMP_COLORS=['#2563EB','#7C3AED','#DC2626','#059669','#D97706','#0891B2','#BE185D','#65A30D','#9333EA','#EA580C','#0F766E','#B45309'];
 
-// ─── STATE ───
-function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
+// ─── DEFAULT STATE ───
 function defaultState(){
+  const employers=[
+    {id:uid(),name:'Winkelwaldklinik',color:'#2563EB',descricao:'Clínica hospitalar especializada na região da Floresta Negra, Alemanha.',vagas:'Fisioterapeuta\nEnfermeiro',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Orbau',color:'#7C3AED',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Eisen Schmid',color:'#DC2626',descricao:'Grupo familiar com mais de 100 anos, focado em Stahlhandel, centro próprio de CNC-Bearbeitung, Fachhandel e logística. Atende fornecedores automotivos, construção, metalurgia e handwerker.',vagas:'Ausbildung im Außenhandelsmanagement 2025/2026\nAusbildung zum Industriekaufmann 2025/2026\nLKW-Fahrer für Werksverkehr\nProduktionsmitarbeiter CNC-Produktion\nMitarbeiter für Finanz-/Rechnungswesen',contato:'',link:'https://talents4.github.io/talents4/',saude:'Estável'},
+    {id:uid(),name:'J. Schneider',color:'#059669',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Weber Haus',color:'#D97706',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Beton Mueller',color:'#0891B2',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Jaco',color:'#BE185D',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'SWEG - Fahrer',color:'#65A30D',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Böwe',color:'#9333EA',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+    {id:uid(),name:'Streit Sägewerk',color:'#EA580C',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},
+  ];
+  const dossiers={};
+  employers.forEach(e=>{dossiers[e.name]={candidatos:[],removidos:[],reposicao:[]};});
+
+  // Pre-fill Eisen Schmid candidates
+  dossiers['Eisen Schmid'].candidatos=[
+    {id:uid(),seq:1,nome:'Deivid Wachholz',idade:34,area:'CNC-Produktion / industrielle Fertigung',encaixe:'CNC-Produktion',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch Mittelstufe',alemao:'B1/B2',kurzprofil:'Starkes operatives Profil mit mehr als 12 Jahren Erfahrung in CNC, industrieller Produktion, Montage und Qualitätskontrolle.',justif:'Direkter Treffer für die sichtbare CNC-Produktion: CNC-Erfahrung, industrielle Fertigung, Montage und Qualitätskontrolle; Deutsch B1/B2 erhöht die sofortige Einsetzbarkeit.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reposicao:false,proxacao:'',obs:''},
+    {id:uid(),seq:2,nome:'Diego Cabral',idade:40,area:'Finanz- / Rechnungswesen',encaixe:'Finanz- / Rechnungswesen',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch C1, Italienisch A2',alemao:'B1/B2',kurzprofil:'Erfahrener kaufmännischer Fachspezialist mit Schwerpunkt in Kreditorenbuchhaltung.',justif:'Stärkster Finance-Match.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reposicao:false,proxacao:'',obs:''},
+    {id:uid(),seq:3,nome:'Marcelo Meira da Silva',idade:39,area:'Fahrer / Logistik / Einkauf',encaixe:'Logistik / Fahrer / Einkauf',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch B2',alemao:'B1/B2',kurzprofil:'Erfahrenes Fahrer- und Logistikprofil.',justif:'Sehr guter Fit für Logistik und Materialfluss.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reposicao:false,proxacao:'',obs:''},
+  ];
+
   return {
     currentMonthIdx:0,
     currentDossieEmp:'Eisen Schmid',
     currentDossieTab:'info',
+    employers,
     planEntries:[
       {id:uid(),month:'2026-04',employer:'Winkelwaldklinik',activity:'Pesquisa de perfis',responsavel:'Carol',status:'Concluído',obs:'Pesquisa inicial concluída; perfis levantados.',inicio:'2026-04-07',fim:'2026-04-07'},
       {id:uid(),month:'2026-04',employer:'Winkelwaldklinik',activity:'Triagem / qualificação',responsavel:'Sara',status:'Concluído',obs:'Perfis revisados com Sara.',inicio:'2026-04-11',fim:'2026-04-11'},
-      {id:uid(),month:'2026-04',employer:'Winkelwaldklinik',activity:'Envio de currículos',responsavel:'Sara e Carol',status:'Em andamento',obs:'Hoje 10/04: Enviar perfil do Natan, Fisio.',inicio:'2026-04-14',fim:'2026-04-14'},
+      {id:uid(),month:'2026-04',employer:'Winkelwaldklinik',activity:'Envio de currículos',responsavel:'Sara e Carol',status:'Em andamento',obs:'Enviar perfil do Natan, Fisio.',inicio:'2026-04-14',fim:'2026-04-14'},
       {id:uid(),month:'2026-04',employer:'Winkelwaldklinik',activity:'Feedback / próximos passos',responsavel:'Sara',status:'A fazer',obs:'Cobrar retorno após o envio.',inicio:'',fim:''},
       {id:uid(),month:'2026-04',employer:'Eisen Schmid',activity:'Envio de currículos',responsavel:'Carol',status:'Concluído',obs:'14 candidatos apresentados em 10/04. Aguardando retorno.',inicio:'2026-04-10',fim:'2026-04-10'},
-      {id:uid(),month:'2026-04',employer:'Eisen Schmid',activity:'Feedback / próximos passos',responsavel:'Carol',status:'A fazer',obs:'Achar outros CVs - Finanz/Buchhaltung / ERP Microsoft Dynamics NAVision / Fahrer',inicio:'',fim:''},
+      {id:uid(),month:'2026-04',employer:'Eisen Schmid',activity:'Feedback / próximos passos',responsavel:'Carol',status:'A fazer',obs:'Achar outros CVs - Finanz/Buchhaltung / ERP NAVision / Fahrer',inicio:'',fim:''},
     ],
     meetings:[
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Winkelwaldklinik',tema:'mandar CV Fisioterapia (Natan) e ver outros perfis interessantes',decidido:'Enviar CV do Natan (Fisio) e buscar outros perfis.',pendencias:'Sem pendencia aberta',proxacao:'Enviar currículos na segunda e cobrar feedback.',responsavel:'Sara',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Eisen Schmid',tema:'Apresentação e CVs - Entgeldatlas',decidido:'Apresentação e CVs - Entgeldatlas enviados.',pendencias:'Sem pendencia aberta',proxacao:'Aguardar retorno',responsavel:'Carol',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Eisen Schmid',tema:'Achar outros CVs - Finanz/Buchhaltung / ERP Microsoft Dynamics NAVision / Fahrer',decidido:'Buscar perfis com NAVision e perfis de motorista CE.',pendencias:'Sem pendencia aberta',proxacao:'Pesquisar novos perfis.',responsavel:'Carol',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Eisen Schmid',tema:'Formulário para posições Eisen Schmid',decidido:'Criar formulário para posições Eisen Schmid.',pendencias:'Sem pendencia aberta',proxacao:'Elaborar formulário',responsavel:'Carol',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'J. Schneider',tema:'ver perfis e enviar (Robson)',decidido:'Ver perfis disponíveis e enviar Robson.',pendencias:'Sem pendencia aberta',proxacao:'Enviar candidato Robson.',responsavel:'Sara',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'J. Schneider',tema:'Criar E-mail para envio HOJE',decidido:'Criar e-mail de apresentação para envio imediato.',pendencias:'Sem pendencia aberta',proxacao:'Redigir e enviar e-mail hoje.',responsavel:'Sara',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Orbau',tema:'Orbau - grupos Facebook',decidido:'Buscar perfis nos grupos do Facebook.',pendencias:'Sem pendencia aberta',proxacao:'Postar/pesquisar nos grupos.',responsavel:'Carol',status:'A fazer'},
-      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Beton Mueller',tema:'grupos Facebook',decidido:'Buscar perfis nos grupos do Facebook.',pendencias:'Sem pendencia aberta',proxacao:'Postar/pesquisar nos grupos.',responsavel:'Carol',status:'A fazer'},
+      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Winkelwaldklinik',tema:'Mandar CV Fisioterapia (Natan) e ver outros perfis',decidido:'Enviar CV do Natan (Fisio) e buscar outros perfis.',pendencias:'',proxacao:'Enviar currículos na segunda e cobrar feedback.',responsavel:'Sara',status:'A fazer'},
+      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Eisen Schmid',tema:'Apresentação e CVs - Entgeldatlas',decidido:'14 CVs apresentados. Aguardando retorno.',pendencias:'',proxacao:'Achar outros CVs - Finanz/NAVision/Fahrer',responsavel:'Carol',status:'A fazer'},
+      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'J. Schneider',tema:'Ver perfis e enviar (Robson)',decidido:'Ver perfis disponíveis e enviar Robson.',pendencias:'',proxacao:'Enviar candidato Robson.',responsavel:'Sara',status:'A fazer'},
+      {id:uid(),data:'2026-04-10',mes:'2026-04',semana:'Semana 2',employer:'Orbau',tema:'Grupos Facebook',decidido:'Buscar perfis nos grupos do Facebook.',pendencias:'',proxacao:'Postar/pesquisar nos grupos.',responsavel:'Carol',status:'A fazer'},
     ],
-    dossiers:{
-      'Winkelwaldklinik':{info:{descricao:'Clínica hospitalar especializada na região da Floresta Negra, Alemanha.',vagas:'Fisioterapeuta\nEnfermeiro',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Orbau':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Eisen Schmid':{
-        info:{
-          descricao:'Grupo familiar com mais de 100 anos, focado em Stahlhandel, centro próprio de CNC-Bearbeitung, Fachhandel e logística. Atende fornecedores automotivos, construção, metalurgia e handwerker.',
-          vagas:'Ausbildung im Außenhandelsmanagement 2025/2026\nAusbildung zum Industriekaufmann 2025/2026\nLKW-Fahrer für Werksverkehr\nProduktionsmitarbeiter CNC-Produktion\nMitarbeiter für Finanz-/Rechnungswesen',
-          contato:'',link:'https://talents4.github.io/talents4/',saude:'Estável'
-        },
-        candidatos:[
-          {id:uid(),seq:1,nome:'Deivid Wachholz',idade:34,area:'CNC-Produktion / industrielle Fertigung',encaixe:'CNC-Produktion',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch Mittelstufe',alemao:'B1/B2',kurzprofil:'Starkes operatives Profil mit mehr als 12 Jahren Erfahrung in CNC, industrieller Produktion, Montage und Qualitätskontrolle.',justif:'Direkter Treffer für die sichtbare CNC-Produktion: CNC-Erfahrung, industrielle Fertigung, Montage und Qualitätskontrolle; Deutsch B1/B2 erhöht die sofortige Einsetzbarkeit.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:2,nome:'Diego Cabral',idade:40,area:'Finanz- / Rechnungswesen',encaixe:'Finanz- / Rechnungswesen',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch C1, Italienisch A2',alemao:'B1/B2',kurzprofil:'Erfahrener kaufmännischer Fachspezialist mit Schwerpunkt in Kreditorenbuchhaltung, Procure-to-Pay, SAP-gestützten Finanzprozessen.',justif:'Stärkster Finance-Match: Kreditorenbuchhaltung, Procure-to-Pay und SAP-gestützte Finanzprozesse passen direkt zu Finanz-/Rechnungswesen.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:3,nome:'Marcelo Meira da Silva',idade:39,area:'Fahrer / Logistik / Einkauf',encaixe:'Logistik / Fahrer / Einkauf',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch B2',alemao:'B1/B2',kurzprofil:'Erfahrenes Fahrer- und Logistikprofil mit zusätzlichem kaufmännisch-administrativem Hintergrund in Einkauf, Beschaffung und Lagerkontrolle.',justif:'Sehr guter Fit für Logistik und Materialfluss: Fahrer- und Logistikpraxis plus Einkauf/Beschaffung. Einschränkung: exakte CE-/Fahrerkarte im Material nicht belegt.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:4,nome:'William Inácio',idade:null,area:'Finance Operations / Back Office / internationale Auftragsabwicklung',encaixe:'Kaufmännisch / Back Office',idiomas:'Portugiesisch Muttersprache, Deutsch B1/B2, Englisch fortgeschritten, Spanisch fortgeschritten',alemao:'B1/B2',kurzprofil:'Kaufmännisches Profil mit Erfahrung in Finance Operations, Rechnungsstellung, Forderungsmanagement, Kontenabstimmung sowie internationaler Export- und Dokumentationsabwicklung.',justif:'Guter kaufmännischer Fit für Auftrags-, Dokumentations- und Finance-Operations-Prozesse; SAP- und internationale Abwicklungserfahrung sind relevant.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:5,nome:'Eduardo Bürkner',idade:25,area:'S&OP / Produktionsplanung / Prozessoptimierung',encaixe:'Produktionsplanung / operative Steuerung',idiomas:'Portugiesisch Muttersprache, Deutsch B1, Englisch C1',alemao:'B1',kurzprofil:'Wirtschaftsingenieur mit Erfahrung in S&OP, Bedarfsplanung, Finanzberichterstattung und Prozessoptimierung.',justif:'Starker Industrie- und Planungsfit mit S&OP, Forecasting und Reporting; zusätzlich bereits in Deutschland. Einschränkung: bevorzugt derzeit eher Teilzeit.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:6,nome:'Victor Magar',idade:32,area:'Instandhaltung / Prozessoptimierung',encaixe:'Instandhaltung / CNC / Prozessoptimierung',idiomas:'Portugiesisch Muttersprache, Deutsch A2, Englisch B2/C1',alemao:'A2',kurzprofil:'Vielseitiges technisches Profil mit Erfahrung in industrieller Instandhaltung, Wartungsplanung, CNC-Anlagen und Prozessverbesserung.',justif:'Solider Fit für produktionsnahe Rollen durch Erfahrung in industrieller Instandhaltung, CNC-Anlagen und Prozessverbesserung.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:7,nome:'André Gustavo Schlindwein',idade:29,area:'Fertigungsprozesse / technische Entwicklung',encaixe:'Fertigungsprozesse / CNC / Qualität',idiomas:'Portugiesisch Muttersprache, Deutsch Mittelstufe, Englisch fließend, Spanisch Grundkenntnisse',alemao:'B1',kurzprofil:'Technisch starkes Profil mit Erfahrung in Produktentwicklung, Fertigungsprozessen, CNC-Programmierung und Qualitätskontrolle.',justif:'Guter technischer Fit durch Fertigungsprozesse, CNC-Programmierung und Qualitätskontrolle; eher prozessnah als operativ-logistisch.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:8,nome:'Taís Gabriela Voigt Maas',idade:34,area:'Administration / Steuerwesen / Back Office',encaixe:'Administration / Rechnungswesen-nah',idiomas:'Portugiesisch Muttersprache, Deutsch B1, Englisch A2',alemao:'B1',kurzprofil:'Erfahrenes administratives und steuerliches Profil mit Schwerpunkt auf Steueranalyse, Buchhaltung und Dokumentationsmanagement.',justif:'Für administrative oder rechnungswesennahe Routinen brauchbar, aber Profil ist stärker steuerlich geprägt und damit weniger direkt als Diego/William.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:9,nome:'Robson Daniel Maas',idade:36,area:'Technische Montage / Produktion',encaixe:'Technische Montage / Produktion',idiomas:'Portugiesisch Muttersprache, Deutsch B1',alemao:'B1',kurzprofil:'Sehr erfahrener Industriemechaniker mit über 18 Jahren Praxis in Montage, Demontage, Hydraulik, Pneumatik und technischen Tests.',justif:'Starker Produktions- und Industriemechanik-Hintergrund, jedoch weniger direkt auf die sichtbaren CNC-/Logistik-/Finance-Bedarfe ausgerichtet.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:10,nome:'Josivaldo da Silva Lima',idade:43,area:'Instandhaltung / CNC-nahe Produktion',encaixe:'Instandhaltung / CNC-nahe Produktion',idiomas:'Portugiesisch Muttersprache, Deutsch A1, Englisch Mittelstufe',alemao:'A1',kurzprofil:'Sehr erfahrenes Industrieprofil mit fundierter Praxis in Instandhaltung, CNC, mechanischen Prozessen, Schweißtechnik.',justif:'Technisch passend für Instandhaltung und CNC-nahe Aufgaben; praktische Einsetzbarkeit sinkt wegen Deutsch A1.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:11,nome:'Diogo Ziehlsdorff',idade:23,area:'Logistik / Produktion',encaixe:'Lager / interne Logistik',idiomas:'Portugiesisch Muttersprache',alemao:'—',kurzprofil:'Praktisch orientiertes operatives Profil mit Erfahrung als Lagerist, Kommissionierer und Gabelstaplerfahrer.',justif:'Relevant für Lager, Kommissionierung und Stapler-Themen; Nachteil sind fehlende belegte Deutschkenntnisse und kein belegter LKW-CE-Nachweis.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:12,nome:'Daniel Henrique Lopes Rezende',idade:24,area:'Mechanische Instandhaltung / Produktionsunterstützung',encaixe:'Mechanische Instandhaltung / Produktionsunterstützung',idiomas:'Portugiesisch Muttersprache, Deutsch A1, Englisch Mittelstufe',alemao:'A1',kurzprofil:'Technisches Profil mit Erfahrung in mechanischer Instandhaltung, Produktionsplanung und technischen Verbesserungen.',justif:'Grundsätzlich passend für unterstützende Technikrollen, aber profilseitig noch weniger belastbar und mit Deutsch A1 praktisch eingeschränkt.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:13,nome:'Jaime Siewerdt',idade:45,area:'Mechanische Montage / Produktion',encaixe:'Mechanische Montage',idiomas:'Portugiesisch Muttersprache, Deutsch B1',alemao:'B1',kurzprofil:'Sehr starkes technisches Profil mit langjähriger Erfahrung in der mechanischen Montage von Maschinen, Baugruppen und Dichtungssystemen.',justif:'Mechanische Montage ist verwertbar, aber weniger direkt passend zu Stahlhandel, CNC-Kurzstückfertigung und den aktuell sichtbaren Funktionen.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''},
-          {id:uid(),seq:14,nome:'Sérgio Gonçalves Laiol',idade:33,area:'Metallbau / Schweißen',encaixe:'Metallbau / Schweißen',idiomas:'Portugiesisch Muttersprache, Deutsch A1',alemao:'A1',kurzprofil:'Praxisnahes Profil im Metallbau mit Erfahrung als MIG-Schweißer, Kesselbauer und in der Montage von Metallstrukturen.',justif:'Handwerklich solide, aber am wenigsten deckungsgleich mit den sichtbaren Bedarfen von Eisen Schmid.',rodada:1,dataEnvio:'2026-04-10',etapa:'Aguardando resposta',responsavel:'Carol',apresentado:true,reuniao:false,reposicao:false,retorno:'Aguardando resposta',dataRetorno:'',dataReuniao:'',proxacao:'',obs:''}
-        ],
-        removidos:[],
-        reposicao:[]
-      },
-      'J. Schneider':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Weber Haus':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Beton Mueller':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Jaco':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'SWEG - Fahrer':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Böwe':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]},
-      'Streit Sägewerk':{info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]}
-    }
+    dossiers
   };
 }
 
+// ─── STATE MANAGEMENT ───
 let S;
-try {
-  const saved = localStorage.getItem('t4-crm-v3');
-  S = saved ? JSON.parse(saved) : defaultState();
-} catch(e){ S = defaultState(); }
+function load(){
+  try{const raw=localStorage.getItem('t4crm_v2');S=raw?JSON.parse(raw):defaultState();}
+  catch{S=defaultState();}
+  // Migration: ensure employers array exists
+  if(!S.employers){S=defaultState();}
+}
+function save(){localStorage.setItem('t4crm_v2',JSON.stringify(S));}
+load();
 
-function save(){ try{localStorage.setItem('t4-crm-v3',JSON.stringify(S));}catch(e){} }
-function toast(msg,dur=2200){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),dur);
+// ─── EMPLOYER HELPERS ───
+function getEmpNames(){return S.employers.map(e=>e.name);}
+function getEmpObj(name){return S.employers.find(e=>e.name===name)||{name,color:'#6B7280',descricao:'',vagas:'',contato:'',link:'',saude:'Estável'};}
+function getEmpColor(name){return getEmpObj(name).color||'#6B7280';}
+
+// ─── POPULATE SELECTS ───
+function populateAllSelects(){
+  const names=getEmpNames();
+  // plan employer
+  ['plan-employer','meet-employer'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=el.value;
+    el.innerHTML=names.map(n=>`<option>${n}</option>`).join('');
+    if(names.includes(cur))el.value=cur;
+  });
+  // filter selects
+  ['plan-emp-filter','cal-emp-filter','meet-emp-filter'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=el.value;
+    el.innerHTML='<option value="">Todos os empregadores</option>'+names.map(n=>`<option>${n}</option>`).join('');
+    if(cur)el.value=cur;
+  });
+  // month selects
+  ['plan-month','meet-mes','resumo-month-filter','meet-month-filter'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const cur=el.value;
+    if(id==='resumo-month-filter'||id==='meet-month-filter'){
+      el.innerHTML='<option value="">Todos os meses</option>'+MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
+    } else {
+      el.innerHTML=MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
+    }
+    if(cur)el.value=cur;
+  });
+  // emp tabs
+  renderEmpTabs();
+  // calendar legend
+  renderCalLegend();
 }
 
 // ─── NAVIGATION ───
@@ -929,101 +967,211 @@ function nav(page){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  // highlight sidebar
-  const map={'plan-mensal':0,'reunioes':1,'resumo':2,'dossie':3};
-  document.querySelectorAll('.sb-item')[map[page]]?.classList.add('active');
-  if(page==='plan-mensal') renderPlanTable();
-  if(page==='reunioes') renderMeetings();
-  if(page==='resumo') renderResumo();
-  if(page==='dossie') initDossie();
+  document.querySelectorAll('.sb-item').forEach(i=>{if(i.getAttribute('onclick')?.includes("'"+page+"'"))i.classList.add('active');});
+  populateAllSelects();
+  if(page==='plan-mensal'){document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;renderPlanTable();}
+  if(page==='calendario'){document.getElementById('cal-month-label').textContent=MONTHS[S.currentMonthIdx].l;renderCalendar();}
+  if(page==='reunioes')renderMeetings();
+  if(page==='resumo')renderResumo();
+  if(page==='dossie'){renderEmpTabs();renderDossie();}
+  if(page==='employers')renderEmployers();
 }
 
-// ─── STATUS BADGE ───
-function badge(status){
-  const cls=STATUS_COLORS[status]||'b-gray';
-  return `<span class="badge ${cls}">${status}</span>`;
-}
-
-// ─── CONFIRM ───
-function confirm(cb){
-  document.getElementById('confirm-ov').classList.add('open');
-  document.getElementById('confirm-ok').onclick=()=>{
-    document.getElementById('confirm-ov').classList.remove('open');
-    cb();
-  };
+function changeMonth(d){
+  S.currentMonthIdx=Math.max(0,Math.min(MONTHS.length-1,S.currentMonthIdx+d));
+  const lbl=MONTHS[S.currentMonthIdx].l;
+  document.getElementById('month-label').textContent=lbl;
+  document.getElementById('cal-month-label').textContent=lbl;
+  save();
+  renderPlanTable();
 }
 
 // ─── MODAL HELPERS ───
-function openModal(id){document.getElementById(id).classList.add('open')}
-function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
 
-// ─── MONTH NAVIGATION ───
-function changeMonth(d){
-  S.currentMonthIdx=Math.max(0,Math.min(MONTHS.length-1,S.currentMonthIdx+d));
-  document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;
-  renderPlanTable();save();
+// ─── TOAST ───
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
 }
 
-// ─── POPULATE SELECTS ───
-function populateSelects(){
-  // plan employer
-  const pe=document.getElementById('plan-employer');
-  pe.innerHTML=EMPLOYERS.map(e=>`<option>${e}</option>`).join('');
-  // plan month
-  const pm=document.getElementById('plan-month');
-  pm.innerHTML=MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
-  // meet employer
-  const me=document.getElementById('meet-employer');
-  me.innerHTML=`<option value="">Sem employer específico</option>`+EMPLOYERS.map(e=>`<option>${e}</option>`).join('');
-  // meet month
-  const mm=document.getElementById('meet-mes');
-  mm.innerHTML=MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
-  // meet filter
-  const mef=document.getElementById('meet-emp-filter');
-  mef.innerHTML=`<option value="">Todos</option>`+EMPLOYERS.map(e=>`<option>${e}</option>`).join('');
-  const mmf=document.getElementById('meet-month-filter');
-  mmf.innerHTML=`<option value="">Todos os meses</option>`+MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
-  // resumo month filter
-  const rf=document.getElementById('resumo-month-filter');
-  rf.innerHTML=`<option value="">Todos os meses</option>`+MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
+// ─── CONFIRM ───
+let _confirmCb=null;
+function confirm(msg,cb){
+  _confirmCb=cb;
+  document.getElementById('confirm-msg').textContent=typeof msg==='string'?msg:'Esta ação não pode ser desfeita.';
+  document.getElementById('confirm-ok').onclick=()=>{cb();document.getElementById('confirm-ov').classList.remove('open');};
+  document.getElementById('confirm-ov').classList.add('open');
 }
 
-// ─────────────────────────────────────
-// PLANEJAMENTO MENSAL
-// ─────────────────────────────────────
-function openPlanModal(id){
-  document.getElementById('modal-plan-title').textContent=id?'Editar Atividade':'Nova Atividade';
+// ─── BADGE ───
+function badge(v){return `<span class="badge ${STATUS_COLORS[v]||'b-gray'}">${v||'—'}</span>`;}
+
+// ─── EMPLOYER CRUD ───
+function openEmpModal(name){
+  const isEdit=!!name;
+  document.getElementById('modal-emp-title').textContent=isEdit?'Editar Empregador':'Novo Empregador';
+  document.getElementById('emp-delete-btn').style.display=isEdit?'':'none';
+  document.getElementById('emp-id').value='';
+  document.getElementById('emp-name').value='';
+  document.getElementById('emp-color').value=DEFAULT_EMP_COLORS[S.employers.length%DEFAULT_EMP_COLORS.length];
+  document.getElementById('emp-descricao').value='';
+  document.getElementById('emp-vagas').value='';
+  document.getElementById('emp-contato').value='';
+  document.getElementById('emp-link').value='';
+  document.getElementById('emp-saude').value='Estável';
+  if(isEdit){
+    const e=getEmpObj(name);
+    document.getElementById('emp-id').value=e.id||e.name;
+    document.getElementById('emp-name').value=e.name;
+    document.getElementById('emp-color').value=e.color||'#2563EB';
+    document.getElementById('emp-descricao').value=e.descricao||'';
+    document.getElementById('emp-vagas').value=e.vagas||'';
+    document.getElementById('emp-contato').value=e.contato||'';
+    document.getElementById('emp-link').value=e.link||'';
+    document.getElementById('emp-saude').value=e.saude||'Estável';
+  }
+  openModal('modal-emp');
+}
+
+function saveEmp(){
+  const id=document.getElementById('emp-id').value;
+  const name=document.getElementById('emp-name').value.trim();
+  if(!name){toast('⚠ Nome do empregador é obrigatório');return;}
+  const data={
+    color:document.getElementById('emp-color').value,
+    descricao:document.getElementById('emp-descricao').value,
+    vagas:document.getElementById('emp-vagas').value,
+    contato:document.getElementById('emp-contato').value,
+    link:document.getElementById('emp-link').value,
+    saude:document.getElementById('emp-saude').value,
+  };
+  if(id){
+    // edit existing
+    const existing=S.employers.find(e=>e.id===id||e.name===id);
+    if(existing){
+      const oldName=existing.name;
+      Object.assign(existing,{name,...data});
+      // rename in dossiers if name changed
+      if(oldName!==name&&S.dossiers[oldName]){
+        S.dossiers[name]=S.dossiers[oldName];
+        delete S.dossiers[oldName];
+      }
+      // rename in plan entries and meetings
+      S.planEntries.forEach(e=>{if(e.employer===oldName)e.employer=name;});
+      S.meetings.forEach(m=>{if(m.employer===oldName)m.employer=name;});
+      if(S.currentDossieEmp===oldName)S.currentDossieEmp=name;
+    }
+  } else {
+    // check for duplicate name
+    if(S.employers.find(e=>e.name===name)){toast('⚠ Já existe um empregador com este nome');return;}
+    const newEmp={id:uid(),name,...data};
+    S.employers.push(newEmp);
+    if(!S.dossiers[name])S.dossiers[name]={candidatos:[],removidos:[],reposicao:[]};
+  }
+  save();closeModal('modal-emp');
+  populateAllSelects();
+  renderEmployers();
+  if(document.getElementById('page-dossie').classList.contains('active')){renderEmpTabs();renderDossie();}
+  toast('Empregador salvo ✓');
+}
+
+function deleteEmpById(){
+  const id=document.getElementById('emp-id').value;
+  const emp=S.employers.find(e=>e.id===id||e.name===id);
+  if(!emp)return;
+  confirm(`Excluir "${emp.name}" e todos os seus dados?`,()=>{
+    S.employers=S.employers.filter(e=>e!==emp);
+    delete S.dossiers[emp.name];
+    S.planEntries=S.planEntries.filter(e=>e.employer!==emp.name);
+    S.meetings=S.meetings.filter(m=>m.employer!==emp.name);
+    if(S.currentDossieEmp===emp.name)S.currentDossieEmp=S.employers[0]?.name||'';
+    save();closeModal('modal-emp');populateAllSelects();renderEmployers();toast('Empregador excluído');
+  });
+}
+
+// ─── RENDER EMPLOYERS PAGE ───
+function renderEmployers(){
+  const search=(document.getElementById('emp-search')?.value||'').toLowerCase();
+  const list=S.employers.filter(e=>!search||e.name.toLowerCase().includes(search));
+  const grid=document.getElementById('emp-cards-grid');
+  if(!list.length){grid.innerHTML=`<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/></svg><p>Nenhum empregador encontrado</p><small>Clique em "Novo Empregador" para adicionar</small></div>`;return;}
+  grid.innerHTML=list.map(e=>{
+    const cands=(S.dossiers[e.name]?.candidatos||[]).length;
+    const saude=e.saude||'Estável';
+    return `<div class="emp-card">
+      <div class="emp-color-bar" style="background:${e.color}"></div>
+      <div class="emp-card-body">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div>
+            <div class="emp-card-name">${e.name}</div>
+            <div class="emp-card-meta">${cands} candidato${cands!==1?'s':''} no pipeline &nbsp;·&nbsp; ${badge(saude)}</div>
+          </div>
+          <div style="display:flex;gap:5px;flex-shrink:0">
+            <button class="icon-btn" onclick="openEmpModal('${e.name}')" title="Editar">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="icon-btn" onclick="goToDossie('${e.name}')" title="Ver Pipeline">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            </button>
+          </div>
+        </div>
+        ${e.descricao?`<div class="emp-card-meta" style="margin-top:6px;color:var(--text2)">${e.descricao.substring(0,120)}${e.descricao.length>120?'...':''}</div>`:''}
+        ${e.vagas?`<div class="emp-card-vagas" style="margin-top:6px"><strong style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text3)">VAGAS</strong><br>${e.vagas}</div>`:''}
+        ${e.contato||e.link?`<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          ${e.contato?`<span style="font-size:11px;color:var(--text2)">📧 ${e.contato}</span>`:''}
+          ${e.link?`<a href="${e.link}" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none">🔗 Link</a>`:''}
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function goToDossie(name){S.currentDossieEmp=name;nav('dossie');}
+
+// ─── PLAN TABLE ───
+function openPlanModal(id,datePreset){
+  const isEdit=!!id;
+  document.getElementById('modal-plan-title').textContent=isEdit?'Editar Atividade':'Nova Atividade';
+  document.getElementById('plan-delete-btn').style.display=isEdit?'':'none';
   document.getElementById('plan-id').value='';
-  document.getElementById('plan-employer').value=EMPLOYERS[0];
-  document.getElementById('plan-activity').value=ACTIVITIES[0];
+  // defaults
+  const empNames=getEmpNames();
+  document.getElementById('plan-employer').innerHTML=empNames.map(n=>`<option>${n}</option>`).join('');
+  document.getElementById('plan-activity').value='Pesquisa de perfis';
   document.getElementById('plan-responsavel').value='';
   document.getElementById('plan-status').value='A fazer';
   document.getElementById('plan-obs').value='';
-  document.getElementById('plan-inicio').value='';
+  document.getElementById('plan-inicio').value=datePreset||'';
   document.getElementById('plan-fim').value='';
   document.getElementById('plan-month').value=MONTHS[S.currentMonthIdx].k;
-  if(id){
+  if(isEdit){
     const e=S.planEntries.find(x=>x.id===id);
-    if(!e)return;
-    document.getElementById('plan-id').value=e.id;
-    document.getElementById('plan-employer').value=e.employer;
-    document.getElementById('plan-activity').value=e.activity;
-    document.getElementById('plan-responsavel').value=e.responsavel||'';
-    document.getElementById('plan-status').value=e.status||'A fazer';
-    document.getElementById('plan-obs').value=e.obs||'';
-    document.getElementById('plan-inicio').value=e.inicio||'';
-    document.getElementById('plan-fim').value=e.fim||'';
-    document.getElementById('plan-month').value=e.month||MONTHS[S.currentMonthIdx].k;
+    if(e){
+      document.getElementById('plan-id').value=e.id;
+      document.getElementById('plan-employer').value=e.employer;
+      document.getElementById('plan-activity').value=e.activity;
+      document.getElementById('plan-responsavel').value=e.responsavel||'';
+      document.getElementById('plan-status').value=e.status||'A fazer';
+      document.getElementById('plan-obs').value=e.obs||'';
+      document.getElementById('plan-inicio').value=e.inicio||'';
+      document.getElementById('plan-fim').value=e.fim||'';
+      document.getElementById('plan-month').value=e.month||MONTHS[S.currentMonthIdx].k;
+    }
   }
   openModal('modal-plan');
 }
 
 function savePlanEntry(){
   const id=document.getElementById('plan-id').value;
+  const emp=document.getElementById('plan-employer').value;
+  if(!emp){toast('⚠ Selecione um empregador');return;}
   const entry={
     id:id||uid(),
     month:document.getElementById('plan-month').value,
-    employer:document.getElementById('plan-employer').value,
+    employer:emp,
     activity:document.getElementById('plan-activity').value,
     responsavel:document.getElementById('plan-responsavel').value,
     status:document.getElementById('plan-status').value,
@@ -1031,137 +1179,185 @@ function savePlanEntry(){
     inicio:document.getElementById('plan-inicio').value,
     fim:document.getElementById('plan-fim').value,
   };
-  if(id){
-    const idx=S.planEntries.findIndex(x=>x.id===id);
-    if(idx>=0)S.planEntries[idx]=entry;
-  } else {
-    S.planEntries.push(entry);
-  }
-  save();closeModal('modal-plan');renderPlanTable();
+  if(id){const i=S.planEntries.findIndex(x=>x.id===id);if(i>=0)S.planEntries[i]=entry;}
+  else S.planEntries.push(entry);
+  save();closeModal('modal-plan');renderPlanTable();renderCalendar();
   toast(id?'Atividade atualizada ✓':'Atividade criada ✓');
 }
 
-function deletePlanEntry(id){
-  confirm(()=>{
+function deletePlanEntryFromModal(){
+  const id=document.getElementById('plan-id').value;
+  if(!id)return;
+  confirm('Excluir esta atividade?',()=>{
     S.planEntries=S.planEntries.filter(x=>x.id!==id);
-    save();renderPlanTable();toast('Atividade removida');
+    save();closeModal('modal-plan');renderPlanTable();renderCalendar();toast('Atividade removida');
   });
-}
-
-function setStatus(id,status,type){
-  if(type==='plan'){
-    const e=S.planEntries.find(x=>x.id===id);
-    if(e){e.status=status;save();renderPlanTable();}
-  } else if(type==='meet'){
-    const e=S.meetings.find(x=>x.id===id);
-    if(e){e.status=status;save();renderMeetings();}
-  } else if(type==='cand'){
-    const emp=S.currentDossieEmp;
-    const c=S.dossiers[emp]?.candidatos.find(x=>x.id===id);
-    if(c){c.etapa=status;save();renderPipeline();}
-  }
-  document.querySelectorAll('.status-picker').forEach(p=>p.remove());
-  toast('Status atualizado ✓');
-}
-
-function showStatusPicker(el,id,type,options){
-  document.querySelectorAll('.status-picker').forEach(p=>p.remove());
-  const picker=document.createElement('div');
-  picker.className='status-picker';
-  options.forEach(opt=>{
-    const btn=document.createElement('button');
-    btn.textContent=opt;
-    btn.onclick=()=>setStatus(id,opt,type);
-    picker.appendChild(btn);
-  });
-  el.style.position='relative';
-  el.appendChild(picker);
-  setTimeout(()=>document.addEventListener('click',()=>{
-    picker.remove();
-  },{once:true}),10);
 }
 
 function renderPlanTable(){
-  const tbody=document.getElementById('plan-tbody');
   const month=MONTHS[S.currentMonthIdx].k;
-  const search=(document.getElementById('plan-search').value||'').toLowerCase();
-  const statusF=document.getElementById('plan-status-filter').value;
-
-  let employers=EMPLOYERS.filter(e=>!search||e.toLowerCase().includes(search));
+  const search=(document.getElementById('plan-search')?.value||'').toLowerCase();
+  const statusF=document.getElementById('plan-status-filter')?.value||'';
+  const empF=document.getElementById('plan-emp-filter')?.value||'';
+  const tbody=document.getElementById('plan-tbody');
+  let emps=getEmpNames().filter(e=>(!search||e.toLowerCase().includes(search))&&(!empF||e===empF));
   let rows=[];
-
-  employers.forEach((emp,ei)=>{
-    ACTIVITIES.forEach((act,ai)=>{
-      const entry=S.planEntries.find(e=>e.month===month&&e.employer===emp&&e.activity===act);
+  emps.forEach((emp,ei)=>{
+    const empEntries=S.planEntries.filter(e=>e.month===month&&e.employer===emp);
+    // also show entries with custom activities
+    const allActs=[...new Set([...ACTIVITIES.slice(0,4),...empEntries.map(e=>e.activity)])];
+    allActs.forEach((act,ai)=>{
+      const entry=empEntries.find(e=>e.activity===act);
       if(statusF&&(!entry||entry.status!==statusF))return;
       rows.push({emp,act,entry,isFirst:ai===0,empIdx:ei});
     });
   });
-
-  if(!rows.length){
-    tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Nenhuma atividade para este mês. Clique em "Nova Atividade" para começar.</p></div></td></tr>`;
-    return;
-  }
-
-  tbody.innerHTML=rows.map(({emp,act,entry,isFirst})=>{
-    const dot=`<span class="emp-dot" style="background:${EMP_COLORS[emp]||'#999'}"></span>`;
-    const empCell=isFirst?`<td rowspan="1" class="employer-cell">${dot}${emp}</td>`:`<td style="color:var(--text3);font-size:11px;padding-left:16px">${emp}</td>`;
-    const r=entry||{};
-    const statusBadge=r.status?`<td style="position:relative"><button class="badge ${STATUS_COLORS[r.status]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${r.id}','plan',['—','A fazer','Em andamento','Concluído','Bloqueado','Cancelado'])">${r.status}</button></td>`:`<td class="muted">—</td>`;
-    return `<tr class="${isFirst?'employer-sep':''}" onclick="openPlanModal('${r.id||''}')">
-      ${empCell}
-      <td style="color:var(--text2);font-size:11px">${act}</td>
-      <td>${r.responsavel||'<span class="muted">—</span>'}</td>
-      ${statusBadge}
-      <td style="max-width:220px">${r.obs?`<span title="${r.obs}" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px">${r.obs}</span>`:'<span class="muted">—</span>'}</td>
-      <td style="font-size:11px;color:var(--text2)">${r.inicio||'<span class="muted">—</span>'}</td>
-      <td style="font-size:11px;color:var(--text2)">${r.fim||'<span class="muted">—</span>'}</td>
-      <td onclick="event.stopPropagation()">
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><p>Nenhuma atividade encontrada para ${MONTHS[S.currentMonthIdx].l}.</p><small>Clique em "Nova Atividade" para adicionar</small></div></td></tr>`;return;}
+  const color=name=>getEmpColor(name);
+  tbody.innerHTML=rows.map(({emp,act,entry,isFirst})=>`
+    <tr class="${isFirst?'employer-sep':''}">
+      <td style="width:4px;padding:0"><div style="width:4px;height:100%;min-height:36px;background:${color(emp)};border-radius:2px"></div></td>
+      <td style="font-weight:${isFirst?700:400};color:${isFirst?'var(--text)':'var(--text3)'}">
+        ${isFirst?`<span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${color(emp)};flex-shrink:0;display:inline-block"></span>${emp}</span>`:''}
+      </td>
+      <td style="font-size:12px">${act}</td>
+      <td style="font-size:11px">${entry?.responsavel||'<span style="color:var(--text3)">—</span>'}</td>
+      <td style="position:relative">
+        ${entry?`<button class="badge ${STATUS_COLORS[entry.status]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${entry.id}','plan',['A fazer','Em andamento','Concluído','Bloqueado','Cancelado'])">${entry.status||'—'}</button>`:'<span style="color:var(--text3)">—</span>'}
+      </td>
+      <td style="font-size:11px;max-width:220px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${entry?.obs||''}</span></td>
+      <td style="font-size:11px;color:var(--text2)">${entry?.inicio||''}</td>
+      <td style="font-size:11px;color:var(--text2)">${entry?.fim||''}</td>
+      <td>
         <div class="row-actions">
-          <button class="icon-btn" title="Editar" onclick="openPlanModal('${r.id||''}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          ${r.id?`<button class="icon-btn" title="Excluir" onclick="deletePlanEntry('${r.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}
+          ${entry
+            ?`<button class="icon-btn" onclick="openPlanModal('${entry.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
+            :`<button class="icon-btn" onclick="openPlanModal(null);document.getElementById('plan-employer').value='${emp}';document.getElementById('plan-activity').value='${act}';" title="Adicionar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
         </div>
       </td>
-    </tr>`;
-  }).join('');
+    </tr>`).join('');
 }
 
-// ─────────────────────────────────────
-// REUNIÕES SEMANAIS
-// ─────────────────────────────────────
+// ─── CALENDAR ───
+function renderCalLegend(){
+  const el=document.getElementById('cal-legend');
+  if(!el)return;
+  el.innerHTML=S.employers.slice(0,8).map(e=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:9px;height:9px;border-radius:50%;background:${e.color};flex-shrink:0"></span>${e.name}</span>`).join('');
+}
+
+function renderCalendar(){
+  const headerEl=document.getElementById('cal-header');
+  const gridEl=document.getElementById('cal-grid');
+  if(!headerEl||!gridEl)return;
+  const empF=document.getElementById('cal-emp-filter')?.value||'';
+  const monthKey=MONTHS[S.currentMonthIdx].k;
+  const [year,month]=monthKey.split('-').map(Number);
+  const today=new Date();
+  
+  // Build header
+  const dayNames=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  headerEl.style.gridTemplateColumns='repeat(7,1fr)';
+  headerEl.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);background:#F8FAFC;border:1px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0;overflow:hidden';
+  headerEl.innerHTML=dayNames.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  
+  // First day of month (0=Sun, adjusted to Mon=0)
+  const firstDay=new Date(year,month-1,1);
+  const startDow=(firstDay.getDay()+6)%7; // Monday=0
+  const daysInMonth=new Date(year,month,0).getDate();
+  const prevDays=new Date(year,month-1,0).getDate();
+  
+  // Get entries for display
+  const entries=S.planEntries.filter(e=>e.month===monthKey&&(!empF||e.employer===empF));
+  const meetings=S.meetings.filter(m=>m.mes===monthKey&&(!empF||m.employer===empF));
+  
+  // Group by date
+  const byDate={};
+  entries.forEach(e=>{
+    if(e.inicio){
+      if(!byDate[e.inicio])byDate[e.inicio]=[];
+      byDate[e.inicio].push({type:'plan',data:e});
+    }
+  });
+  meetings.forEach(m=>{
+    if(m.data){
+      if(!byDate[m.data])byDate[m.data]=[];
+      byDate[m.data].push({type:'meet',data:m});
+    }
+  });
+  
+  // Build grid cells
+  const totalCells=Math.ceil((startDow+daysInMonth)/7)*7;
+  let cells='';
+  for(let i=0;i<totalCells;i++){
+    let dayNum,dateStr,isOther=false;
+    if(i<startDow){dayNum=prevDays-startDow+i+1;const d=new Date(year,month-2,dayNum);dateStr=d.toISOString().split('T')[0];isOther=true;}
+    else if(i>=startDow+daysInMonth){dayNum=i-startDow-daysInMonth+1;const d=new Date(year,month,dayNum);dateStr=d.toISOString().split('T')[0];isOther=true;}
+    else{dayNum=i-startDow+1;dateStr=`${year}-${String(month).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;}
+    
+    const isToday=!isOther&&today.getFullYear()===year&&today.getMonth()===month-1&&today.getDate()===dayNum;
+    const evts=byDate[dateStr]||[];
+    const MAX=3;
+    const shown=evts.slice(0,MAX);
+    const extra=evts.length-MAX;
+    
+    cells+=`<div class="cal-cell${isOther?' other-month':''}${isToday?' today':''}" onclick="calDayClick('${dateStr}')">
+      <div class="cal-date">${dayNum}</div>
+      ${shown.map(ev=>{
+        const color=ev.type==='meet'?'#0F172A':getEmpColor(ev.data.employer);
+        const label=ev.type==='meet'?`👥 ${ev.data.employer}`:ev.data.activity;
+        return `<div class="cal-event" style="background:${color}" onclick="event.stopPropagation();${ev.type==='plan'?`openPlanModal('${ev.data.id}')`:`openMeetModal('${ev.data.id}')`}" title="${ev.type==='plan'?ev.data.obs:ev.data.tema}">${label}</div>`;
+      }).join('')}
+      ${extra>0?`<div class="cal-more">+${extra} mais</div>`:''}
+      <button class="cal-add-btn" onclick="event.stopPropagation();openPlanModal(null,'${dateStr}')" title="Adicionar atividade">+</button>
+    </div>`;
+  }
+  
+  gridEl.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;overflow:hidden;background:var(--surface)';
+  gridEl.innerHTML=cells;
+}
+
+function calDayClick(dateStr){
+  openPlanModal(null,dateStr);
+}
+
+// ─── MEETINGS ───
 function openMeetModal(id){
-  document.getElementById('modal-meet-title').textContent=id?'Editar Reunião':'Nova Reunião';
+  populateAllSelects();
+  const isEdit=!!id;
+  document.getElementById('modal-meet-title').textContent=isEdit?'Editar Reunião':'Nova Reunião';
+  document.getElementById('meet-delete-btn').style.display=isEdit?'':'none';
   document.getElementById('meet-id').value='';
-  document.getElementById('meet-data').value=new Date().toISOString().split('T')[0];
+  document.getElementById('meet-data').value='';
   document.getElementById('meet-mes').value=MONTHS[S.currentMonthIdx].k;
   document.getElementById('meet-semana').value='';
-  document.getElementById('meet-employer').value='';
   document.getElementById('meet-tema').value='';
   document.getElementById('meet-decidido').value='';
-  document.getElementById('meet-pendencias').value='Sem pendencia aberta';
+  document.getElementById('meet-pendencias').value='';
   document.getElementById('meet-proxacao').value='';
   document.getElementById('meet-responsavel').value='';
   document.getElementById('meet-status').value='A fazer';
-  if(id){
-    const e=S.meetings.find(x=>x.id===id);if(!e)return;
-    document.getElementById('meet-id').value=e.id;
-    document.getElementById('meet-data').value=e.data||'';
-    document.getElementById('meet-mes').value=e.mes||MONTHS[S.currentMonthIdx].k;
-    document.getElementById('meet-semana').value=e.semana||'';
-    document.getElementById('meet-employer').value=e.employer||'';
-    document.getElementById('meet-tema').value=e.tema||'';
-    document.getElementById('meet-decidido').value=e.decidido||'';
-    document.getElementById('meet-pendencias').value=e.pendencias||'';
-    document.getElementById('meet-proxacao').value=e.proxacao||'';
-    document.getElementById('meet-responsavel').value=e.responsavel||'';
-    document.getElementById('meet-status').value=e.status||'A fazer';
+  if(isEdit){
+    const m=S.meetings.find(x=>x.id===id);
+    if(m){
+      document.getElementById('meet-id').value=m.id;
+      document.getElementById('meet-data').value=m.data||'';
+      document.getElementById('meet-mes').value=m.mes||MONTHS[S.currentMonthIdx].k;
+      document.getElementById('meet-semana').value=m.semana||'';
+      document.getElementById('meet-employer').value=m.employer||'';
+      document.getElementById('meet-tema').value=m.tema||'';
+      document.getElementById('meet-decidido').value=m.decidido||'';
+      document.getElementById('meet-pendencias').value=m.pendencias||'';
+      document.getElementById('meet-proxacao').value=m.proxacao||'';
+      document.getElementById('meet-responsavel').value=m.responsavel||'';
+      document.getElementById('meet-status').value=m.status||'A fazer';
+    }
   }
   openModal('modal-meet');
 }
 
 function saveMeeting(){
   const id=document.getElementById('meet-id').value;
-  const entry={
+  const m={
     id:id||uid(),
     data:document.getElementById('meet-data').value,
     mes:document.getElementById('meet-mes').value,
@@ -1174,343 +1370,329 @@ function saveMeeting(){
     responsavel:document.getElementById('meet-responsavel').value,
     status:document.getElementById('meet-status').value,
   };
-  if(id){const i=S.meetings.findIndex(x=>x.id===id);if(i>=0)S.meetings[i]=entry;}
-  else S.meetings.push(entry);
-  save();closeModal('modal-meet');renderMeetings();
-  toast(id?'Reunião atualizada ✓':'Reunião registrada ✓');
+  if(id){const i=S.meetings.findIndex(x=>x.id===id);if(i>=0)S.meetings[i]=m;}
+  else S.meetings.push(m);
+  save();closeModal('modal-meet');renderMeetings();renderCalendar();
+  toast(id?'Reunião atualizada ✓':'Reunião criada ✓');
 }
 
-function deleteMeeting(id){
-  confirm(()=>{S.meetings=S.meetings.filter(x=>x.id!==id);save();renderMeetings();toast('Reunião removida');});
+function deleteMeetFromModal(){
+  const id=document.getElementById('meet-id').value;
+  if(!id)return;
+  confirm('Excluir esta reunião?',()=>{
+    S.meetings=S.meetings.filter(x=>x.id!==id);
+    save();closeModal('modal-meet');renderMeetings();renderCalendar();toast('Reunião removida');
+  });
 }
 
 function renderMeetings(){
+  const search=(document.getElementById('meet-search')?.value||'').toLowerCase();
+  const empF=document.getElementById('meet-emp-filter')?.value||'';
+  const monF=document.getElementById('meet-month-filter')?.value||'';
   const tbody=document.getElementById('meet-tbody');
-  const search=(document.getElementById('meet-search').value||'').toLowerCase();
-  const empF=document.getElementById('meet-emp-filter').value;
-  const monthF=document.getElementById('meet-month-filter').value;
-  let list=S.meetings.filter(m=>{
-    if(empF&&m.employer!==empF)return false;
-    if(monthF&&m.mes!==monthF)return false;
-    if(search&&!(m.tema+m.decidido+m.employer+m.proxacao).toLowerCase().includes(search))return false;
-    return true;
-  }).sort((a,b)=>b.data.localeCompare(a.data));
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Nenhuma reunião registrada.</p></div></td></tr>`;return;}
-  tbody.innerHTML=list.map(m=>{
-    const dot=m.employer?`<span class="emp-dot" style="background:${EMP_COLORS[m.employer]||'#999'}"></span>`:'';
-    return `<tr onclick="openMeetModal('${m.id}')">
-      <td style="white-space:nowrap;font-size:11px">${m.data||'—'}</td>
-      <td style="font-size:11px;color:var(--text2)">${m.semana||'—'}</td>
-      <td><div style="display:flex;align-items:center">${dot}<div><div style="font-weight:600;font-size:12px">${m.employer||'<span style="color:var(--text3)">—</span>'}</div><div style="font-size:11px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.tema||''}</div></div></div></td>
-      <td style="max-width:180px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;font-size:12px">${m.decidido||'<span class="muted">—</span>'}</span></td>
-      <td style="font-size:11px;color:var(--text2);max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.pendencias||'—'}</span></td>
-      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.proxacao||'<span class="muted">—</span>'}</span></td>
-      <td style="font-size:11px">${m.responsavel||'—'}</td>
-      <td style="position:relative"><button class="badge ${STATUS_COLORS[m.status]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${m.id}','meet',['A fazer','Em andamento','Concluído','Cancelado'])">${m.status||'—'}</button></td>
-      <td onclick="event.stopPropagation()">
-        <div class="row-actions">
-          <button class="icon-btn" onclick="openMeetModal('${m.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-          <button class="icon-btn" onclick="deleteMeeting('${m.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+  let list=S.meetings.filter(m=>
+    (!search||[m.employer,m.tema,m.decidido,m.responsavel].join(' ').toLowerCase().includes(search))&&
+    (!empF||m.employer===empF)&&
+    (!monF||m.mes===monF)
+  ).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><p>Nenhuma reunião encontrada.</p><small>Clique em "Nova Reunião" para registrar</small></div></td></tr>`;return;}
+  const dot=name=>`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(name)};margin-right:5px;vertical-align:middle"></span>`;
+  tbody.innerHTML=list.map(m=>`<tr>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${m.data||'—'}</td>
+    <td style="font-size:11px;color:var(--text2)">${m.semana||'—'}</td>
+    <td style="font-size:12px;font-weight:600">${dot(m.employer)}${m.employer||'—'}</td>
+    <td style="font-size:11px;max-width:150px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.tema||''}">${m.tema||'—'}</span></td>
+    <td style="font-size:11px;max-width:180px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.decidido||''}">${m.decidido||'—'}</span></td>
+    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.pendencias||''}">${m.pendencias||'—'}</span></td>
+    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.proxacao||'—'}</span></td>
+    <td style="font-size:11px">${m.responsavel||'—'}</td>
+    <td style="position:relative"><button class="badge ${STATUS_COLORS[m.status]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${m.id}','meet',['A fazer','Em andamento','Concluído','Cancelado'])">${m.status||'—'}</button></td>
+    <td>
+      <div class="row-actions">
+        <button class="icon-btn" onclick="openMeetModal('${m.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      </div>
+    </td>
+  </tr>`).join('');
 }
 
-// ─────────────────────────────────────
-// RESUMO GERAL
-// ─────────────────────────────────────
+// ─── RESUMO ───
 function renderResumo(){
-  const monthF=document.getElementById('resumo-month-filter').value;
-  const entries=monthF?S.planEntries.filter(e=>e.month===monthF):S.planEntries;
-  const meets=monthF?S.meetings.filter(m=>m.mes===monthF):S.meetings;
-
+  const monF=document.getElementById('resumo-month-filter')?.value||'';
+  let entries=S.planEntries.filter(e=>!monF||e.month===monF);
   // Stats
-  const totalEmployers=new Set(entries.map(e=>e.employer)).size;
-  const pending=entries.filter(e=>e.status==='A fazer'||e.status==='Bloqueado').length;
+  const total=entries.length;
   const done=entries.filter(e=>e.status==='Concluído').length;
-  const inProgress=entries.filter(e=>e.status==='Em andamento').length;
-
+  const pct=total?Math.round(done/total*100):0;
+  const afazer=entries.filter(e=>e.status==='A fazer').length;
+  const cands=Object.values(S.dossiers).reduce((a,d)=>a+(d.candidatos||[]).length,0);
   document.getElementById('resumo-stats').innerHTML=`
-    <div class="stat"><div class="stat-l">Empregadores Ativos</div><div class="stat-v" style="color:var(--blue)">${totalEmployers}</div><div class="stat-s">${EMPLOYERS.length} monitorados no total</div></div>
-    <div class="stat"><div class="stat-l">Atividades Concluídas</div><div class="stat-v" style="color:var(--green)">${done}</div><div class="stat-s">de ${entries.length} atividades registradas</div></div>
-    <div class="stat"><div class="stat-l">Em Andamento</div><div class="stat-v" style="color:var(--blue)">${inProgress}</div><div class="stat-s">atividades em progresso</div></div>
-    <div class="stat"><div class="stat-l">Pendências em Aberto</div><div class="stat-v" style="color:var(--red)">${pending}</div><div class="stat-s">${meets.length} reunião(ões) registradas</div></div>
+    <div class="stat"><div class="stat-l">Total de Atividades</div><div class="stat-v">${total}</div><div class="stat-s">no período selecionado</div></div>
+    <div class="stat"><div class="stat-l">Concluídas</div><div class="stat-v" style="color:var(--green)">${done}</div><div class="stat-s">${pct}% do total</div></div>
+    <div class="stat"><div class="stat-l">A Fazer</div><div class="stat-v" style="color:var(--amber)">${afazer}</div><div class="stat-s">em aberto</div></div>
+    <div class="stat"><div class="stat-l">Candidatos</div><div class="stat-v" style="color:var(--blue)">${cands}</div><div class="stat-s">em todos os pipelines</div></div>
   `;
-
   // Priorities
-  const prioItems=entries.filter(e=>e.status==='A fazer'||e.status==='Bloqueado').slice(0,8);
-  document.getElementById('resumo-priorities').innerHTML=prioItems.length?prioItems.map(e=>`
+  const open=entries.filter(e=>e.status==='A fazer'||e.status==='Bloqueado').slice(0,8);
+  document.getElementById('resumo-priorities').innerHTML=open.length?open.map(e=>`
     <div class="pri-item">
-      <div><span class="badge ${e.status==='Bloqueado'?'b-red':'b-amber'}" style="font-size:10px">${e.status}</span></div>
+      <span style="width:8px;height:8px;border-radius:50%;background:${getEmpColor(e.employer)};flex-shrink:0;margin-top:3px"></span>
       <div class="pri-content">
-        <div class="pri-title">${e.obs||e.activity}</div>
-        <div class="pri-meta">${e.employer} · ${e.activity} · ${MONTHS.find(m=>m.k===e.month)?.l||e.month}</div>
+        <div class="pri-title">${e.employer} — ${e.activity}</div>
+        <div class="pri-meta">${e.obs||''} ${e.responsavel?'· '+e.responsavel:''}</div>
       </div>
-    </div>
-  `).join(''):`<div class="empty"><p>Nenhuma pendência crítica 🎉</p></div>`;
-
+      ${badge(e.status)}
+    </div>`).join(''):'<p style="color:var(--text3);font-size:12px">Nenhuma prioridade em aberto 🎉</p>';
   // By employer
-  const byEmp={};
-  entries.forEach(e=>{
-    if(!byEmp[e.employer])byEmp[e.employer]={total:0,done:0,pending:0};
-    byEmp[e.employer].total++;
-    if(e.status==='Concluído')byEmp[e.employer].done++;
-    if(e.status==='A fazer'||e.status==='Bloqueado')byEmp[e.employer].pending++;
-  });
-  document.getElementById('resumo-by-employer').innerHTML=Object.keys(byEmp).length?
-    Object.entries(byEmp).map(([emp,d])=>`
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:6px"><span class="emp-dot" style="background:${EMP_COLORS[emp]||'#999'}"></span><span style="font-size:12px;font-weight:600">${emp}</span></div>
-        <div style="display:flex;gap:6px">${badge(d.pending>0?'A fazer':'Concluído')}<span style="font-size:11px;color:var(--text2)">${d.done}/${d.total}</span></div>
+  document.getElementById('resumo-by-employer').innerHTML=S.employers.map(emp=>{
+    const e2=entries.filter(e=>e.employer===emp.name);
+    const done2=e2.filter(e=>e.status==='Concluído').length;
+    const pct2=e2.length?Math.round(done2/e2.length*100):0;
+    const cands2=(S.dossiers[emp.name]?.candidatos||[]).length;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="width:9px;height:9px;border-radius:50%;background:${emp.color};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600">${emp.name}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+          <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+            <div style="width:${pct2}%;height:100%;background:${emp.color};border-radius:3px;transition:width .3s"></div>
+          </div>
+          <span style="font-size:10px;color:var(--text2);white-space:nowrap">${done2}/${e2.length} · ${cands2} cand.</span>
+        </div>
       </div>
-    `).join(''):`<div class="empty"><p>Nenhum dado</p></div>`;
-
-  // History table
-  const tbody=document.getElementById('resumo-history');
-  const allMeets=meets.sort((a,b)=>b.data.localeCompare(a.data));
-  tbody.innerHTML=allMeets.length?allMeets.map(m=>`
-    <tr>
-      <td style="font-size:11px">${MONTHS.find(x=>x.k===m.mes)?.l||m.mes}</td>
-      <td style="font-size:11px">${m.semana||'—'}</td>
-      <td style="font-size:12px;font-weight:600">${m.employer||'—'}</td>
-      <td style="font-size:12px;max-width:160px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.decidido||'—'}</span></td>
-      <td style="font-size:11px;color:var(--text2)">${m.pendencias||'—'}</td>
-      <td style="font-size:11px">${m.proxacao||'—'}</td>
-      <td style="font-size:11px">${m.responsavel||'—'}</td>
-      <td>${badge(m.status||'—')}</td>
-    </tr>
-  `).join(''):`<tr><td colspan="8"><div class="empty"><p>Nenhum histórico de reuniões.</p></div></td></tr>`;
+    </div>`;
+  }).join('');
+  // History
+  document.getElementById('resumo-history').innerHTML=entries.length?entries.map(e=>`<tr>
+    <td style="font-size:11px;color:var(--text2)">${MONTHS.find(m=>m.k===e.month)?.l||e.month}</td>
+    <td style="font-size:12px;font-weight:600"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(e.employer)};margin-right:5px;vertical-align:middle"></span>${e.employer}</td>
+    <td style="font-size:11px">${e.activity}</td>
+    <td style="font-size:11px">${e.responsavel||'—'}</td>
+    <td>${badge(e.status)}</td>
+    <td style="font-size:11px;max-width:200px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.obs||'—'}</span></td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${e.inicio||'—'}</td>
+    <td><div class="row-actions"><button class="icon-btn" onclick="openPlanModal('${e.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></td>
+  </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><p>Nenhum dado encontrado</p></div></td></tr>`;
 }
 
-// ─────────────────────────────────────
-// DOSSIE DO EMPLOYER
-// ─────────────────────────────────────
-function initDossie(){
-  // Render employer tabs
-  const tabs=document.getElementById('emp-tabs');
-  tabs.innerHTML=EMPLOYERS.map(e=>`
-    <button class="emp-tab ${e===S.currentDossieEmp?'active':''}" onclick="selectDossieEmp('${e}')">${e}</button>
-  `).join('');
-  renderDossieContent();
+// ─── DOSSIE / EMPLOYER TABS ───
+function renderEmpTabs(){
+  const el=document.getElementById('emp-tabs');
+  if(!el)return;
+  el.innerHTML=S.employers.map(e=>`
+    <button class="emp-tab${S.currentDossieEmp===e.name?' active':''}" 
+      style="${S.currentDossieEmp===e.name?`background:${e.color};border-color:${e.color}`:''}"
+      onclick="selectEmp('${e.name}')">
+      <span class="emp-dot" style="background:${e.color}"></span>${e.name}
+    </button>`).join('');
 }
 
-function selectDossieEmp(emp){
-  S.currentDossieEmp=emp;save();
-  document.querySelectorAll('.emp-tab').forEach(t=>{
-    t.classList.toggle('active',t.textContent===emp);
-  });
-  renderDossieContent();
+function selectEmp(name){
+  S.currentDossieEmp=name;save();
+  renderEmpTabs();renderDossie();
+  // reset tab to info
+  switchDossieTab(S.currentDossieTab||'info');
 }
 
 function switchDossieTab(tab){
-  S.currentDossieTab=tab;save();
-  document.querySelectorAll('.sub-tab').forEach((t,i)=>{
-    const tabs=['info','pipeline','removidos','reposicao'];
-    t.classList.toggle('active',tabs[i]===tab);
-  });
+  S.currentDossieTab=tab;
+  document.querySelectorAll('.sub-tab').forEach((t,i)=>t.classList.toggle('active',['info','pipeline','removidos','reposicao'][i]===tab));
   document.querySelectorAll('.sub-page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('dossie-'+tab)?.classList.add('active');
-  renderDossieContent();
+  document.getElementById('dossie-'+tab).classList.add('active');
+  if(tab==='info')renderInfo();
+  if(tab==='pipeline')renderPipeline();
+  if(tab==='removidos')renderRemovidos();
+  if(tab==='reposicao')renderReposicao();
 }
 
-function renderDossieContent(){
-  const emp=S.currentDossieEmp;
-  if(!S.dossiers[emp])S.dossiers[emp]={info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]};
-  renderInfo();renderPipeline();renderRemovidos();renderReposicao();
+function renderDossie(){
+  renderInfo();
+  if(S.currentDossieTab==='pipeline')renderPipeline();
+  if(S.currentDossieTab==='removidos')renderRemovidos();
+  if(S.currentDossieTab==='reposicao')renderReposicao();
 }
 
-// INFO
 function renderInfo(){
   const emp=S.currentDossieEmp;
-  const d=S.dossiers[emp];
-  if(!d)return;
-  const {info,candidatos}=d;
-  document.getElementById('modal-info-emp').textContent=`Editar — ${emp}`;
-  const dot=`<span class="emp-dot" style="background:${EMP_COLORS[emp]||'#999'};width:10px;height:10px"></span>`;
+  const e=getEmpObj(emp);
+  const d=S.dossiers[emp]||{candidatos:[],removidos:[],reposicao:[]};
+  const cands=d.candidatos||[];
+  const gostou=cands.filter(c=>c.etapa==='Gostou').length;
+  const reuniao=cands.filter(c=>c.etapa==='Reunião marcada').length;
   document.getElementById('info-content').innerHTML=`
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-      ${dot}<strong style="font-size:15px">${emp}</strong>
-      ${badge(info.saude||'Estável')}
+    <div class="ifield"><div class="ifield-label">Descrição</div><div class="ifield-value">${e.descricao||'<em style="color:var(--text3)">Sem descrição. Clique em "Editar" para adicionar.</em>'}</div></div>
+    <div class="ifield"><div class="ifield-label">Vagas abertas</div><div class="ifield-value">${e.vagas||'<em style="color:var(--text3)">Não informado</em>'}</div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="ifield"><div class="ifield-label">Contato</div><div class="ifield-value">${e.contato||'—'}</div></div>
+      <div class="ifield"><div class="ifield-label">Saúde</div><div class="ifield-value">${badge(e.saude||'Estável')}</div></div>
     </div>
-    ${info.descricao?`<div class="ifield"><div class="ifield-label">Sobre a Empresa</div><div class="ifield-value">${info.descricao}</div></div>`:''}
-    ${info.vagas?`<div class="ifield"><div class="ifield-label">Vagas em Aberto</div><div class="ifield-value">${info.vagas.split('\n').map(v=>`• ${v}`).join('<br>')}</div></div>`:''}
-    ${info.contato?`<div class="ifield"><div class="ifield-label">Contato</div><div class="ifield-value">${info.contato}</div></div>`:''}
-    ${info.link?`<div class="ifield"><div class="ifield-label">Link / CRM</div><div class="ifield-value"><a href="${info.link}" target="_blank" style="color:var(--blue)">${info.link}</a></div></div>`:''}
-    ${!info.descricao&&!info.vagas?`<div class="empty"><p>Nenhuma informação cadastrada. Clique em Editar.</p></div>`:''}
+    ${e.link?`<div class="ifield"><div class="ifield-label">Link</div><div class="ifield-value"><a href="${e.link}" target="_blank" style="color:var(--blue);text-decoration:none">${e.link}</a></div></div>`:''}
   `;
-  const cands=candidatos||[];
-  const presented=cands.filter(c=>c.apresentado).length;
-  const liked=cands.filter(c=>c.etapa==='Gostou'||c.etapa==='Reunião marcada'||c.etapa==='Contratado').length;
-  const waiting=cands.filter(c=>c.etapa==='Aguardando resposta').length;
   document.getElementById('info-stats').innerHTML=`
     <div class="stat"><div class="stat-l">Candidatos</div><div class="stat-v">${cands.length}</div><div class="stat-s">no pipeline</div></div>
-    <div class="stat"><div class="stat-l">Apresentados</div><div class="stat-v" style="color:var(--blue)">${presented}</div><div class="stat-s">ao empregador</div></div>
-    <div class="stat"><div class="stat-l">Interesse</div><div class="stat-v" style="color:var(--green)">${liked}</div><div class="stat-s">gostou / reunião</div></div>
-    <div class="stat"><div class="stat-l">Aguardando</div><div class="stat-v" style="color:var(--amber)">${waiting}</div><div class="stat-s">retorno do employer</div></div>
+    <div class="stat"><div class="stat-l">Gostou</div><div class="stat-v" style="color:var(--green)">${gostou}</div><div class="stat-s">feedback positivo</div></div>
+    <div class="stat"><div class="stat-l">Reuniões</div><div class="stat-v" style="color:var(--blue)">${reuniao}</div><div class="stat-s">agendadas</div></div>
+    <div class="stat"><div class="stat-l">Removidos</div><div class="stat-v" style="color:var(--gray)">${(d.removidos||[]).length}</div><div class="stat-s">candidatos</div></div>
   `;
 }
 
-function openInfoModal(){
-  const emp=S.currentDossieEmp;
-  const info=S.dossiers[emp]?.info||{};
-  document.getElementById('info-descricao').value=info.descricao||'';
-  document.getElementById('info-vagas').value=info.vagas||'';
-  document.getElementById('info-contato').value=info.contato||'';
-  document.getElementById('info-link').value=info.link||'';
-  document.getElementById('info-saude').value=info.saude||'Estável';
-  openModal('modal-info');
-}
-
-function saveInfo(){
-  const emp=S.currentDossieEmp;
-  if(!S.dossiers[emp])S.dossiers[emp]={info:{},candidatos:[],removidos:[],reposicao:[]};
-  S.dossiers[emp].info={
-    descricao:document.getElementById('info-descricao').value,
-    vagas:document.getElementById('info-vagas').value,
-    contato:document.getElementById('info-contato').value,
-    link:document.getElementById('info-link').value,
-    saude:document.getElementById('info-saude').value,
-  };
-  save();closeModal('modal-info');renderInfo();toast('Informações salvas ✓');
-}
-
-// PIPELINE
+// ─── PIPELINE ───
 function openCandModal(id){
-  const emp=S.currentDossieEmp;
-  document.getElementById('modal-cand-title').textContent=id?'Editar Candidato':'Novo Candidato';
-  ['cand-id','cand-nome','cand-area','cand-encaixe','cand-idiomas','cand-kurzprofil','cand-justif','cand-retorno','cand-proxacao','cand-obs','cand-responsavel'].forEach(f=>{
-    const el=document.getElementById(f);if(el)el.value='';
-  });
+  const isEdit=!!id;
+  document.getElementById('modal-cand-title').textContent=isEdit?'Editar Candidato':'Novo Candidato';
+  document.getElementById('cand-delete-btn').style.display=isEdit?'':'none';
   document.getElementById('cand-id').value='';
-  document.getElementById('cand-alemao').value='';
-  document.getElementById('cand-etapa').value='Aguardando envio';
+  ['cand-nome','cand-area','cand-encaixe','cand-idiomas','cand-kurzprofil','cand-justif','cand-responsavel','cand-proxacao','cand-obs','cand-motivo'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+  document.getElementById('cand-idade').value='';
+  document.getElementById('cand-seq').value='';
   document.getElementById('cand-rodada').value='1';
   document.getElementById('cand-dataenvio').value='';
   document.getElementById('cand-dataretorno').value='';
   document.getElementById('cand-datareuniao').value='';
+  document.getElementById('cand-alemao').value='';
+  document.getElementById('cand-etapa').value='Aguardando envio';
   document.getElementById('cand-apresentado').checked=false;
-  document.getElementById('cand-reuniao').checked=false;
   document.getElementById('cand-reposicao').checked=false;
-  document.getElementById('cand-idade').value='';
-  if(id){
-    const c=(S.dossiers[emp]?.candidatos||[]).find(x=>x.id===id);if(!c)return;
-    document.getElementById('cand-id').value=c.id;
-    document.getElementById('cand-nome').value=c.nome||'';
-    document.getElementById('cand-idade').value=c.idade||'';
-    document.getElementById('cand-area').value=c.area||'';
-    document.getElementById('cand-encaixe').value=c.encaixe||'';
-    document.getElementById('cand-idiomas').value=c.idiomas||'';
-    document.getElementById('cand-alemao').value=c.alemao||'';
-    document.getElementById('cand-kurzprofil').value=c.kurzprofil||'';
-    document.getElementById('cand-justif').value=c.justif||'';
-    document.getElementById('cand-rodada').value=c.rodada||1;
-    document.getElementById('cand-dataenvio').value=c.dataEnvio||'';
-    document.getElementById('cand-etapa').value=c.etapa||'Aguardando envio';
-    document.getElementById('cand-responsavel').value=c.responsavel||'';
-    document.getElementById('cand-retorno').value=c.retorno||'';
-    document.getElementById('cand-dataretorno').value=c.dataRetorno||'';
-    document.getElementById('cand-datareuniao').value=c.dataReuniao||'';
-    document.getElementById('cand-proxacao').value=c.proxacao||'';
-    document.getElementById('cand-obs').value=c.obs||'';
-    document.getElementById('cand-apresentado').checked=c.apresentado||false;
-    document.getElementById('cand-reuniao').checked=c.reuniao||false;
-    document.getElementById('cand-reposicao').checked=c.reposicao||false;
+  document.getElementById('cand-motivo-wrap').style.display='none';
+  if(isEdit){
+    const emp=S.currentDossieEmp;
+    const c=(S.dossiers[emp]?.candidatos||[]).find(x=>x.id===id)||(S.dossiers[emp]?.removidos||[]).find(x=>x.id===id);
+    if(c){
+      document.getElementById('cand-id').value=c.id;
+      document.getElementById('cand-nome').value=c.nome||'';
+      document.getElementById('cand-idade').value=c.idade||'';
+      document.getElementById('cand-seq').value=c.seq||'';
+      document.getElementById('cand-area').value=c.area||'';
+      document.getElementById('cand-encaixe').value=c.encaixe||'';
+      document.getElementById('cand-idiomas').value=c.idiomas||'';
+      document.getElementById('cand-alemao').value=c.alemao||'';
+      document.getElementById('cand-kurzprofil').value=c.kurzprofil||'';
+      document.getElementById('cand-justif').value=c.justif||'';
+      document.getElementById('cand-rodada').value=c.rodada||1;
+      document.getElementById('cand-dataenvio').value=c.dataEnvio||'';
+      document.getElementById('cand-responsavel').value=c.responsavel||'';
+      document.getElementById('cand-etapa').value=c.etapa||'Aguardando envio';
+      document.getElementById('cand-proxacao').value=c.proxacao||'';
+      document.getElementById('cand-dataretorno').value=c.dataRetorno||'';
+      document.getElementById('cand-datareuniao').value=c.dataReuniao||'';
+      document.getElementById('cand-apresentado').checked=!!c.apresentado;
+      document.getElementById('cand-reposicao').checked=!!c.reposicao;
+      document.getElementById('cand-obs').value=c.obs||'';
+      document.getElementById('cand-motivo').value=c.motivoRemocao||'';
+      document.getElementById('cand-motivo-wrap').style.display=c.etapa==='Removido'?'':'none';
+    }
   }
+  document.getElementById('cand-etapa').onchange=()=>{
+    document.getElementById('cand-motivo-wrap').style.display=document.getElementById('cand-etapa').value==='Removido'?'':'none';
+  };
   openModal('modal-cand');
 }
 
 function saveCandidate(){
   const emp=S.currentDossieEmp;
-  if(!S.dossiers[emp])S.dossiers[emp]={info:{descricao:'',vagas:'',contato:'',link:'',saude:'Estável'},candidatos:[],removidos:[],reposicao:[]};
+  if(!S.dossiers[emp])S.dossiers[emp]={candidatos:[],removidos:[],reposicao:[]};
   const id=document.getElementById('cand-id').value;
-  const cands=S.dossiers[emp].candidatos;
+  const etapa=document.getElementById('cand-etapa').value;
   const c={
     id:id||uid(),
-    seq:id?(cands.find(x=>x.id===id)?.seq||cands.length+1):cands.length+1,
-    nome:document.getElementById('cand-nome').value,
-    idade:document.getElementById('cand-idade').value,
+    seq:parseInt(document.getElementById('cand-seq').value)||undefined,
+    nome:document.getElementById('cand-nome').value.trim(),
+    idade:parseInt(document.getElementById('cand-idade').value)||undefined,
     area:document.getElementById('cand-area').value,
     encaixe:document.getElementById('cand-encaixe').value,
     idiomas:document.getElementById('cand-idiomas').value,
     alemao:document.getElementById('cand-alemao').value,
     kurzprofil:document.getElementById('cand-kurzprofil').value,
     justif:document.getElementById('cand-justif').value,
-    rodada:document.getElementById('cand-rodada').value,
+    rodada:parseInt(document.getElementById('cand-rodada').value)||1,
     dataEnvio:document.getElementById('cand-dataenvio').value,
-    etapa:document.getElementById('cand-etapa').value,
     responsavel:document.getElementById('cand-responsavel').value,
-    apresentado:document.getElementById('cand-apresentado').checked,
-    reuniao:document.getElementById('cand-reuniao').checked,
-    reposicao:document.getElementById('cand-reposicao').checked,
-    retorno:document.getElementById('cand-retorno').value,
+    etapa,
+    proxacao:document.getElementById('cand-proxacao').value,
     dataRetorno:document.getElementById('cand-dataretorno').value,
     dataReuniao:document.getElementById('cand-datareuniao').value,
-    proxacao:document.getElementById('cand-proxacao').value,
+    apresentado:document.getElementById('cand-apresentado').checked,
+    reposicao:document.getElementById('cand-reposicao').checked,
     obs:document.getElementById('cand-obs').value,
+    motivoRemocao:document.getElementById('cand-motivo').value,
   };
-  if(id){const i=cands.findIndex(x=>x.id===id);if(i>=0)cands[i]=c;}
-  else cands.push(c);
-  save();closeModal('modal-cand');renderPipeline();renderInfo();
+  if(!c.nome){toast('⚠ Nome do candidato é obrigatório');return;}
+  
+  // Remove from both lists first
+  S.dossiers[emp].candidatos=S.dossiers[emp].candidatos.filter(x=>x.id!==id);
+  S.dossiers[emp].removidos=S.dossiers[emp].removidos.filter(x=>x.id!==id);
+  
+  if(etapa==='Removido'){S.dossiers[emp].removidos.push(c);}
+  else{S.dossiers[emp].candidatos.push(c);}
+  
+  save();closeModal('modal-cand');renderPipeline();renderRemovidos();renderInfo();
   toast(id?'Candidato atualizado ✓':'Candidato adicionado ✓');
 }
 
-function deleteCandidate(id){
+function deleteCandFromModal(){
+  const id=document.getElementById('cand-id').value;
   const emp=S.currentDossieEmp;
-  confirm(()=>{
-    const cands=S.dossiers[emp]?.candidatos||[];
-    const c=cands.find(x=>x.id===id);
-    if(c){
-      S.dossiers[emp].candidatos=cands.filter(x=>x.id!==id);
-      // Move to removed
-      if(!S.dossiers[emp].removidos)S.dossiers[emp].removidos=[];
-      S.dossiers[emp].removidos.push({...c,motivoRemocao:'Removido manualmente',dataRemocao:new Date().toISOString().split('T')[0]});
-    }
-    save();renderPipeline();renderRemovidos();renderInfo();toast('Candidato removido');
+  if(!id)return;
+  confirm('Excluir este candidato permanentemente?',()=>{
+    S.dossiers[emp].candidatos=S.dossiers[emp].candidatos.filter(x=>x.id!==id);
+    S.dossiers[emp].removidos=S.dossiers[emp].removidos.filter(x=>x.id!==id);
+    save();closeModal('modal-cand');renderPipeline();renderRemovidos();renderInfo();toast('Candidato excluído');
   });
 }
 
 function renderPipeline(){
   const emp=S.currentDossieEmp;
-  const cands=(S.dossiers[emp]?.candidatos||[]).filter(c=>c.etapa!=='Removido');
-  const search=(document.getElementById('pipe-search').value||'').toLowerCase();
-  const list=cands.filter(c=>!search||(c.nome+c.area+c.encaixe).toLowerCase().includes(search))
-    .sort((a,b)=>(a.seq||0)-(b.seq||0));
+  const search=(document.getElementById('pipe-search')?.value||'').toLowerCase();
+  const etapaF=document.getElementById('pipe-etapa-filter')?.value||'';
+  let list=(S.dossiers[emp]?.candidatos||[])
+    .filter(c=>(!search||c.nome.toLowerCase().includes(search)||c.area?.toLowerCase().includes(search))&&(!etapaF||c.etapa===etapaF))
+    .sort((a,b)=>(a.seq||99)-(b.seq||99));
   const tbody=document.getElementById('pipe-tbody');
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><p>Nenhum candidato neste pipeline. Clique em "Adicionar Candidato".</p></div></td></tr>`;return;}
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Nenhum candidato no pipeline.</p><small>Clique em "Adicionar Candidato" para começar</small></div></td></tr>`;return;}
   tbody.innerHTML=list.map(c=>`<tr onclick="openCandModal('${c.id}')">
     <td style="font-size:11px;color:var(--text3);font-weight:700">${c.seq||'—'}</td>
     <td><div style="font-weight:600;font-size:12px">${c.nome}</div><div style="font-size:10px;color:var(--text3)">${c.idade?c.idade+' anos':''}</div></td>
-    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.area||'—'}</span></td>
-    <td style="font-size:11px;color:var(--blue);font-weight:500">${c.encaixe||'—'}</td>
+    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.area||''}">${c.area||'—'}</span></td>
+    <td style="font-size:11px;color:var(--blue);font-weight:500;max-width:120px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.encaixe||'—'}</span></td>
     <td style="font-size:11px;text-align:center">${c.idade||'—'}</td>
     <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px">${c.alemao||'—'}</span></td>
-    <td style="font-size:11px;color:var(--text2)">${c.dataEnvio||'<span class="muted">—</span>'}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${c.dataEnvio||'—'}</td>
     <td style="position:relative"><button class="badge ${STATUS_COLORS[c.etapa]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${c.id}','cand',['Aguardando envio','Aguardando resposta','Gostou','Não gostou','Reunião marcada','Em processo','Contratado','Removido'])">${c.etapa||'—'}</button></td>
-    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.proxacao||'<span class="muted">—</span>'}</span></td>
+    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.proxacao||'—'}</span></td>
     <td style="font-size:11px">${c.responsavel||'—'}</td>
     <td onclick="event.stopPropagation()">
       <div class="row-actions">
-        <button class="icon-btn" onclick="openCandModal('${c.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="icon-btn" onclick="deleteCandidate('${c.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        <button class="icon-btn" onclick="openCandModal('${c.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="icon-btn danger" onclick="event.stopPropagation();deleteCandDirect('${c.id}')" title="Excluir"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
       </div>
     </td>
   </tr>`).join('');
 }
 
-// REMOVIDOS
+function deleteCandDirect(id){
+  const emp=S.currentDossieEmp;
+  confirm('Excluir este candidato?',()=>{
+    S.dossiers[emp].candidatos=S.dossiers[emp].candidatos.filter(x=>x.id!==id);
+    save();renderPipeline();renderInfo();toast('Candidato excluído');
+  });
+}
+
 function renderRemovidos(){
   const emp=S.currentDossieEmp;
   const list=S.dossiers[emp]?.removidos||[];
   const tbody=document.getElementById('removed-tbody');
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><p>Nenhum candidato removido ou rejeitado.</p></div></td></tr>`;return;}
+  if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><p>Nenhum candidato removido.</p></div></td></tr>`;return;}
   tbody.innerHTML=list.map(c=>`<tr>
     <td style="font-weight:600">${c.nome}</td>
     <td style="font-size:11px;color:var(--text2)">${c.area||'—'}</td>
-    <td style="font-size:11px">${c.dataEnvio||'—'}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${c.dataEnvio||'—'}</td>
     <td style="font-size:11px">${c.motivoRemocao||'—'}</td>
     <td style="font-size:11px;color:var(--text2)">${c.obs||'—'}</td>
-    <td><button class="btn btn-ghost btn-sm" onclick="restoreCandidate('${c.id}')">Restaurar</button></td>
+    <td>
+      <div class="row-actions">
+        <button class="btn btn-ghost btn-sm" onclick="restoreCandidate('${c.id}')">Restaurar</button>
+        <button class="icon-btn" onclick="openCandModal('${c.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      </div>
+    </td>
   </tr>`).join('');
 }
 
@@ -1525,7 +1707,7 @@ function restoreCandidate(id){
   save();renderPipeline();renderRemovidos();renderInfo();toast('Candidato restaurado ✓');
 }
 
-// REPOSIÇÃO
+// ─── REPOSIÇÃO ───
 function openReplaceModal(id){
   document.getElementById('rep-id').value='';
   document.getElementById('rep-perfil').value='';
@@ -1552,15 +1734,7 @@ function saveReplace(){
   const emp=S.currentDossieEmp;
   if(!S.dossiers[emp].reposicao)S.dossiers[emp].reposicao=[];
   const id=document.getElementById('rep-id').value;
-  const r={
-    id:id||uid(),
-    data:new Date().toISOString().split('T')[0],
-    perfil:document.getElementById('rep-perfil').value,
-    substitui:document.getElementById('rep-substitui').value,
-    prioridade:document.getElementById('rep-prio').value,
-    status:document.getElementById('rep-status').value,
-    obs:document.getElementById('rep-obs').value,
-  };
+  const r={id:id||uid(),data:new Date().toISOString().split('T')[0],perfil:document.getElementById('rep-perfil').value,substitui:document.getElementById('rep-substitui').value,prioridade:document.getElementById('rep-prio').value,status:document.getElementById('rep-status').value,obs:document.getElementById('rep-obs').value};
   if(id){const i=S.dossiers[emp].reposicao.findIndex(x=>x.id===id);if(i>=0)S.dossiers[emp].reposicao[i]=r;}
   else S.dossiers[emp].reposicao.push(r);
   save();closeModal('modal-replace');renderReposicao();toast('Solicitação salva ✓');
@@ -1572,16 +1746,16 @@ function renderReposicao(){
   const tbody=document.getElementById('replace-tbody');
   if(!list.length){tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><p>Nenhuma solicitação de reposição.</p></div></td></tr>`;return;}
   tbody.innerHTML=list.map(r=>`<tr>
-    <td style="font-size:11px">${r.data||'—'}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${r.data||'—'}</td>
     <td style="font-weight:600">${r.perfil||'—'}</td>
     <td style="font-size:11px;color:var(--text2)">${r.substitui||'—'}</td>
     <td>${badge(r.prioridade||'—')}</td>
     <td>${badge(r.status||'—')}</td>
     <td style="font-size:11px;color:var(--text2)">${r.obs||'—'}</td>
-    <td onclick="event.stopPropagation()">
-      <div class="row-actions" style="opacity:1">
+    <td>
+      <div class="row-actions">
         <button class="icon-btn" onclick="openReplaceModal('${r.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="icon-btn" onclick="deleteReplace('${r.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        <button class="icon-btn danger" onclick="deleteReplace('${r.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
       </div>
     </td>
   </tr>`).join('');
@@ -1589,20 +1763,44 @@ function renderReposicao(){
 
 function deleteReplace(id){
   const emp=S.currentDossieEmp;
-  confirm(()=>{
+  confirm('Excluir esta solicitação?',()=>{
     S.dossiers[emp].reposicao=(S.dossiers[emp].reposicao||[]).filter(x=>x.id!==id);
     save();renderReposicao();toast('Solicitação removida');
   });
 }
 
+// ─── STATUS PICKER ───
+function setStatus(id,status,type){
+  if(type==='plan'){const e=S.planEntries.find(x=>x.id===id);if(e){e.status=status;save();renderPlanTable();}}
+  else if(type==='meet'){const e=S.meetings.find(x=>x.id===id);if(e){e.status=status;save();renderMeetings();}}
+  else if(type==='cand'){const emp=S.currentDossieEmp;const c=S.dossiers[emp]?.candidatos.find(x=>x.id===id);if(c){c.etapa=status;save();renderPipeline();}}
+  document.querySelectorAll('.status-picker').forEach(p=>p.remove());
+  toast('Status atualizado ✓');
+}
+
+function showStatusPicker(el,id,type,options){
+  document.querySelectorAll('.status-picker').forEach(p=>p.remove());
+  const picker=document.createElement('div');
+  picker.className='status-picker';
+  options.forEach(opt=>{
+    const btn=document.createElement('button');
+    btn.textContent=opt;
+    btn.onclick=()=>setStatus(id,opt,type);
+    picker.appendChild(btn);
+  });
+  el.style.position='relative';
+  el.appendChild(picker);
+  setTimeout(()=>document.addEventListener('click',()=>picker.remove(),{once:true}),10);
+}
+
 // ─── INIT ───
 document.addEventListener('DOMContentLoaded',()=>{
-  populateSelects();
+  populateAllSelects();
   document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;
+  document.getElementById('cal-month-label').textContent=MONTHS[S.currentMonthIdx].l;
   renderPlanTable();
 });
 
-// Close modals on overlay click
 document.querySelectorAll('.modal-ov').forEach(ov=>{
   ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
 });
