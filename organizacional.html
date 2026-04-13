@@ -129,8 +129,8 @@ tbody tr:hover .row-actions.hover{opacity:1}
 .sub-page.active{display:block}
 
 /* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px;pointer-events:none}
-.modal-ov.open{display:flex;pointer-events:auto}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal-ov.open{display:flex}
 .modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg)}
 .modal-lg{max-width:720px}
 .modal-xl{max-width:860px}
@@ -168,8 +168,8 @@ tbody tr:hover .row-actions.hover{opacity:1}
 #toast.show{opacity:1;transform:translateY(0)}
 
 /* CONFIRM */
-.conf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;pointer-events:none}
-.conf-ov.open{display:flex;pointer-events:auto}
+.conf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
+.conf-ov.open{display:flex}
 .conf-box{background:#fff;border-radius:var(--r-lg);padding:24px;max-width:320px;width:100%;box-shadow:var(--sh-lg);text-align:center}
 .conf-box h3{font-size:15px;font-weight:700;margin-bottom:7px}
 .conf-box p{font-size:12px;color:var(--text2);margin-bottom:18px}
@@ -402,11 +402,6 @@ tbody tr:hover .row-actions.hover{opacity:1}
     <div class="sb-emp-add" onclick="openEmpModal()">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       Novo Empregador
-    </div>
-    <div class="storage-chip">Dados salvos no navegador e sincronizados com Supabase quando disponível. Use backup JSON como redundância.</div>
-    <div class="storage-tools">
-      <button class="storage-btn" onclick="exportBackup()">⬇ Exportar backup JSON</button>
-      <button class="storage-btn" onclick="document.getElementById('backup-import').click()">⬆ Importar backup JSON</button>
     </div>
     <input type="file" id="backup-import" accept="application/json" style="display:none">
   </div>
@@ -1219,59 +1214,6 @@ async function getSessionSafe(){
     return data.session;
   }catch{return null;}
 }
-let _uiErrorToastTs=0;
-const MAX_LOCAL_SNAPSHOT_CHARS = 2_500_000;
-const MAX_REMOTE_SNAPSHOT_CHARS = 2_500_000;
-function withTimeout(promise, ms, label='Operação'){
-  return Promise.race([
-    Promise.resolve(promise),
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error(`${label} excedeu ${ms}ms`)), ms))
-  ]);
-}
-function logUiError(scope, err){
-  const msg = err?.message || String(err || 'erro desconhecido');
-  console.error(`[T4 Organizacional] ${scope}:`, err);
-  const now = Date.now();
-  if(now - _uiErrorToastTs > 2200){
-    _uiErrorToastTs = now;
-    try{ toast(`${scope} com falha. A interface segue ativa.`); }catch(_){ }
-  }
-  return msg;
-}
-function safeInvoke(scope, fn, fallback=null){
-  try{
-    const result = fn();
-    if(result && typeof result.then === 'function'){
-      return result.catch(err=>{ logUiError(scope, err); return fallback; });
-    }
-    return result;
-  }catch(err){
-    logUiError(scope, err);
-    return fallback;
-  }
-}
-function emergencyUnlockUi(){
-  try{
-    document.documentElement.style.pointerEvents='';
-    document.body.style.pointerEvents='';
-    document.body.style.overflow='';
-    document.querySelectorAll('.modal-ov,.conf-ov').forEach(el=>{
-      if(!el.classList.contains('open')) el.style.display='';
-    });
-    document.querySelectorAll('.modal-ov.open,.conf-ov.open').forEach(el=>el.classList.remove('open'));
-    document.querySelectorAll('.status-picker').forEach(el=>el.remove());
-  }catch(_){ }
-}
-function resetTransientUi(){
-  emergencyUnlockUi();
-}
-window.__t4UnlockUi = emergencyUnlockUi;
-window.addEventListener('error', ev=>{
-  if(ev?.error) logUiError('Erro de interface', ev.error);
-});
-window.addEventListener('unhandledrejection', ev=>{
-  logUiError('Falha assíncrona', ev?.reason || new Error('Promise rejeitada'));
-});
 async function checkAuthAndRedirect(){
   const session=await getSessionSafe();
   if(!session){
@@ -1333,132 +1275,86 @@ function ensureUiState(){
 }
 function load(){
   try{
-    let raw=localStorage.getItem('t4crm_v5') || localStorage.getItem('t4crm_v2');
-    if(raw && raw.length > MAX_LOCAL_SNAPSHOT_CHARS){
-      console.warn('[T4 Organizacional] snapshot local excessivo ignorado para evitar travamento.');
-      raw = null;
-    }
+    const raw=localStorage.getItem('t4crm_v5') || localStorage.getItem('t4crm_v2');
     S=raw?JSON.parse(raw):defaultState();
-  }catch(err){
-    console.warn('[T4 Organizacional] falha ao ler snapshot local, usando estado padrão.', err?.message || err);
-    S=defaultState();
-  }
+  }catch{S=defaultState();}
   if(!S.employers) S=defaultState();
   ensureUiState();
 }
 async function loadRemoteState(){
-  try{
-    const session=await withTimeout(getSessionSafe(), 3500, 'Sessão Supabase');
-    if(!session){
-      _remoteReady=false;
-      return false;
-    }
-    const client=getSupa();
-    const {data,error}=await withTimeout(
-      client.from('org_ui_state_snapshots').select('payload,updated_at').eq('app_key',REMOTE_APP_KEY).limit(1).maybeSingle(),
-      5000,
-      'Leitura remota do snapshot'
-    );
-    if(error){
-      if(!_remoteSyncErrorShown){
-        console.warn('Supabase snapshot indisponível:', error.message);
-        _remoteSyncErrorShown=true;
-      }
-      _remoteReady=false;
-      return false;
-    }
-    _remoteReady=true;
-    _remoteSyncErrorShown=false;
-    _remoteSnapshotUpdatedAt=data?.updated_at||null;
-    if(data?.payload && typeof data.payload==='object'){
-      const remoteSize = JSON.stringify(data.payload).length;
-      if(remoteSize > MAX_REMOTE_SNAPSHOT_CHARS){
-        console.warn('[T4 Organizacional] snapshot remoto excessivo ignorado para evitar travamento.');
-        return false;
-      }
-      _hydratingRemote=true;
-      S=data.payload;
-      ensureUiState();
-      _hydratingRemote=false;
-      return true;
-    }
-    return false;
-  }catch(err){
+  const session=await getSessionSafe();
+  if(!session){
     _remoteReady=false;
-    if(!_remoteSyncErrorShown){
-      console.warn('Falha ao carregar snapshot remoto:', err?.message || err);
-      _remoteSyncErrorShown=true;
-    }
     return false;
   }
+  const client=getSupa();
+  const {data,error}=await client.from('org_ui_state_snapshots').select('payload,updated_at').eq('app_key',REMOTE_APP_KEY).limit(1).maybeSingle();
+  if(error){
+    if(!_remoteSyncErrorShown){
+      console.warn('Supabase snapshot indisponível:', error.message);
+      _remoteSyncErrorShown=true;
+    }
+    _remoteReady=false;
+    return false;
+  }
+  _remoteReady=true;
+  _remoteSyncErrorShown=false;
+  _remoteSnapshotUpdatedAt=data?.updated_at||null;
+  if(data?.payload && typeof data.payload==='object'){
+    _hydratingRemote=true;
+    S=data.payload;
+    ensureUiState();
+    _hydratingRemote=false;
+    return true;
+  }
+  return false;
 }
 async function saveRemoteNow(){
   if(_hydratingRemote || !_remoteReady) return false;
-  try{
-    const session=await withTimeout(getSessionSafe(), 3500, 'Sessão Supabase');
-    if(!session) return false;
-    const client=getSupa();
-    const {data:current,error:readError}=await withTimeout(
-      client.from('org_ui_state_snapshots').select('updated_at').eq('app_key',REMOTE_APP_KEY).limit(1).maybeSingle(),
-      5000,
-      'Validação do snapshot remoto'
-    );
-    if(readError){
-      if(!_remoteSyncErrorShown){
-        console.warn('Falha ao validar snapshot remoto:', readError.message);
-        _remoteSyncErrorShown=true;
-      }
-      return false;
-    }
-    const serverUpdatedAt=current?.updated_at||null;
-    if(serverUpdatedAt && _remoteSnapshotUpdatedAt && serverUpdatedAt!==_remoteSnapshotUpdatedAt){
-      if(!_remoteConflictShown){
-        toast('Conflito de sincronização detectado. Reabra o CRM para evitar sobrescrever dados de outro dispositivo.');
-        _remoteConflictShown=true;
-      }
-      console.warn('Conflito de snapshot detectado. Salvamento remoto cancelado.');
-      return false;
-    }
-    if(serverUpdatedAt && !_remoteSnapshotUpdatedAt){
-      if(!_remoteConflictShown){
-        toast('Sincronização remota bloqueada até recarregar a página.');
-        _remoteConflictShown=true;
-      }
-      return false;
-    }
-    const nextPayload = JSON.stringify(S);
-    if(nextPayload.length > MAX_REMOTE_SNAPSHOT_CHARS){
-      console.warn('[T4 Organizacional] snapshot remoto não enviado porque excede o limite seguro.');
-      return false;
-    }
-    const nextUpdatedAt=new Date().toISOString();
-    const {error}=await withTimeout(
-      client.from('org_ui_state_snapshots').upsert({
-        app_key:REMOTE_APP_KEY,
-        payload:S,
-        updated_at:nextUpdatedAt
-      },{onConflict:'app_key'}),
-      5000,
-      'Gravação do snapshot remoto'
-    );
-    if(error){
-      if(!_remoteSyncErrorShown){
-        console.warn('Falha ao sincronizar com Supabase:', error.message);
-        _remoteSyncErrorShown=true;
-      }
-      return false;
-    }
-    _remoteSnapshotUpdatedAt=nextUpdatedAt;
-    _remoteConflictShown=false;
-    _remoteSyncErrorShown=false;
-    return true;
-  }catch(err){
+  const session=await getSessionSafe();
+  if(!session) return false;
+  const client=getSupa();
+  const {data:current,error:readError}=await client.from('org_ui_state_snapshots').select('updated_at').eq('app_key',REMOTE_APP_KEY).limit(1).maybeSingle();
+  if(readError){
     if(!_remoteSyncErrorShown){
-      console.warn('Falha ao sincronizar com Supabase:', err?.message || err);
+      console.warn('Falha ao validar snapshot remoto:', readError.message);
       _remoteSyncErrorShown=true;
     }
     return false;
   }
+  const serverUpdatedAt=current?.updated_at||null;
+  if(serverUpdatedAt && _remoteSnapshotUpdatedAt && serverUpdatedAt!==_remoteSnapshotUpdatedAt){
+    if(!_remoteConflictShown){
+      toast('Conflito de sincronização detectado. Reabra o CRM para evitar sobrescrever dados de outro dispositivo.');
+      _remoteConflictShown=true;
+    }
+    console.warn('Conflito de snapshot detectado. Salvamento remoto cancelado.');
+    return false;
+  }
+  if(serverUpdatedAt && !_remoteSnapshotUpdatedAt){
+    if(!_remoteConflictShown){
+      toast('Sincronização remota bloqueada até recarregar a página.');
+      _remoteConflictShown=true;
+    }
+    return false;
+  }
+  const nextUpdatedAt=new Date().toISOString();
+  const {error}=await client.from('org_ui_state_snapshots').upsert({
+    app_key:REMOTE_APP_KEY,
+    payload:S,
+    updated_at:nextUpdatedAt
+  },{onConflict:'app_key'});
+  if(error){
+    if(!_remoteSyncErrorShown){
+      console.warn('Falha ao sincronizar com Supabase:', error.message);
+      _remoteSyncErrorShown=true;
+    }
+    return false;
+  }
+  _remoteSnapshotUpdatedAt=nextUpdatedAt;
+  _remoteConflictShown=false;
+  _remoteSyncErrorShown=false;
+  return true;
 }
 function scheduleRemoteSave(){
   clearTimeout(_remoteSaveTimer);
@@ -1631,51 +1527,62 @@ function populateAllSelects(){
     }
     if(cur)el.value=cur;
   });
-  renderEmpTabs();
-  renderCalLegend();
+  if(S.currentPage==='dossie') renderEmpTabs();
+  if(S.currentPage==='calendario') renderCalLegend();
 }
 
 // ─── NAVIGATION ───
+let _pageRenderRaf = 0;
+function renderCurrentPage(page){
+  const current=page||S.currentPage||'plan-mensal';
+  if(current==='plan-mensal'){
+    document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;
+    renderPlanTable();
+    return;
+  }
+  if(current==='calendario'){
+    document.getElementById('cal-month-label').textContent=MONTHS[S.currentMonthIdx].l;
+    renderCalLegend();
+    renderCalendar();
+    return;
+  }
+  if(current==='reunioes'){ renderMeetings(); return; }
+  if(current==='resumo'){ renderResumo(); return; }
+  if(current==='dossie'){
+    renderEmpTabs();
+    renderDossie();
+    return;
+  }
+  if(current==='employers'){ renderEmployers(); return; }
+}
+function scheduleCurrentPageRender(page){
+  if(_pageRenderRaf) cancelAnimationFrame(_pageRenderRaf);
+  const target=page||S.currentPage||'plan-mensal';
+  _pageRenderRaf=requestAnimationFrame(()=>{
+    _pageRenderRaf=0;
+    try{ renderCurrentPage(target); }
+    catch(err){ console.error('Falha ao renderizar página', target, err); toast('Erro ao abrir a aba.'); }
+  });
+}
 function nav(page){
   const allowed=['plan-mensal','calendario','reunioes','resumo','employers','dossie'];
   const target=allowed.includes(page)?page:'plan-mensal';
   S.currentPage=target;
-  resetTransientUi();
-  safeInvoke('Atualização de navegação', ()=>{
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
-    const pageEl=document.getElementById('page-'+target);
-    if(pageEl) pageEl.classList.add('active');
-    document.querySelectorAll('.sb-item').forEach(i=>{if(i.getAttribute('onclick')?.includes("'"+target+"'"))i.classList.add('active');});
-  });
-  safeInvoke('Atualização de filtros', ()=>populateAllSelects());
-  if(target==='plan-mensal'){
-    safeInvoke('Cabeçalho do planejamento', ()=>{document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;});
-    safeInvoke('Planejamento mensal', ()=>renderPlanTable());
-  }
-  if(target==='calendario'){
-    safeInvoke('Cabeçalho do calendário', ()=>{document.getElementById('cal-month-label').textContent=MONTHS[S.currentMonthIdx].l;});
-    safeInvoke('Calendário', ()=>renderCalendar());
-  }
-  if(target==='reunioes') safeInvoke('Reuniões semanais', ()=>renderMeetings());
-  if(target==='resumo') safeInvoke('Resumo geral', ()=>renderResumo());
-  if(target==='dossie'){
-    safeInvoke('Abas de employer', ()=>renderEmpTabs());
-    safeInvoke('Dossiê do employer', ()=>renderDossie());
-  }
-  if(target==='employers') safeInvoke('Empregadores', ()=>renderEmployers());
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('page-'+target)?.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(i=>{if(i.getAttribute('onclick')?.includes("'"+target+"'"))i.classList.add('active');});
+  populateAllSelects();
+  scheduleCurrentPageRender(target);
 }
 
 function changeMonth(d){
   S.currentMonthIdx=Math.max(0,Math.min(MONTHS.length-1,S.currentMonthIdx+d));
   const lbl=MONTHS[S.currentMonthIdx].l;
-  safeInvoke('Atualização do mês', ()=>{
-    document.getElementById('month-label').textContent=lbl;
-    document.getElementById('cal-month-label').textContent=lbl;
-  });
+  document.getElementById('month-label').textContent=lbl;
+  document.getElementById('cal-month-label').textContent=lbl;
   save();
-  if(S.currentPage==='calendario') safeInvoke('Calendário', ()=>renderCalendar());
-  else safeInvoke('Planejamento mensal', ()=>renderPlanTable());
+  scheduleCurrentPageRender(S.currentPage||'plan-mensal');
 }
 
 // ─── MODAL HELPERS ───
@@ -2062,14 +1969,18 @@ function renderCalendar(){
 
   entries.forEach(e=>{
     if(!e.inicio && !e.fim) return;
-    const startDate=e.inicio||e.fim;
-    const endDate=e.fim||e.inicio;
+    const startDate=String(e.inicio||e.fim||'').slice(0,10);
+    const endDate=String(e.fim||e.inicio||'').slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return;
     let cur=startDate;
-    while(cur && cur<=endDate){
+    let guard=0;
+    while(cur && cur<=endDate && guard<62){
       if(cur.startsWith(monthKey)) pushByDate(cur,{type:'plan',data:e});
-      const d=new Date(cur+'T00:00:00');
+      const d=new Date(cur+'T12:00:00');
+      if(Number.isNaN(d.getTime())) break;
       d.setDate(d.getDate()+1);
       cur=d.toISOString().split('T')[0];
+      guard+=1;
     }
   });
   meetings.forEach(m=>{
@@ -2919,46 +2830,37 @@ function showStatusPicker(el,id,type,options){
 
 function renderBootstrap(){
   ensureUiState();
-  resetTransientUi();
-  safeInvoke('Listas de seleção', ()=>populateAllSelects());
-  safeInvoke('Cabeçalhos do mês', ()=>{
-    document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;
-    document.getElementById('cal-month-label').textContent=MONTHS[S.currentMonthIdx].l;
-  });
-  safeInvoke('Renderização inicial', ()=>nav(S.currentPage||'plan-mensal'));
-}
-function scheduleBackgroundRemoteSync(){
-  const runner = async()=>{
-    const session = await safeInvoke('Validação de sessão', ()=>withTimeout(checkAuthAndRedirect(), 2200, 'Validação de sessão'), null);
-    if(!session) return;
-    safeInvoke('Watchdog de autenticação', ()=>initAuthWatchdog());
-    const remoteLoaded = await safeInvoke('Sincronização remota', ()=>loadRemoteState(), false);
-    if(remoteLoaded){
-      renderBootstrap();
-      try{ toast('Dados sincronizados do Supabase ✓'); }catch(_){ }
-    }
-  };
-  if(typeof window.requestIdleCallback === 'function'){
-    window.requestIdleCallback(()=>{ runner(); }, { timeout: 1200 });
-  }else{
-    setTimeout(()=>{ runner(); }, 120);
-  }
+  populateAllSelects();
+  document.getElementById('month-label').textContent=MONTHS[S.currentMonthIdx].l;
+  document.getElementById('cal-month-label').textContent=MONTHS[S.currentMonthIdx].l;
+  nav(S.currentPage||'plan-mensal');
 }
 
 // ─── INIT ───
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('backup-import')?.addEventListener('change',e=>{const f=e.target.files?.[0]; if(f) importBackup(f); e.target.value='';});
-  emergencyUnlockUi();
   renderBootstrap();
-  scheduleBackgroundRemoteSync();
+  loadRemoteState().then(remoteLoaded=>{
+    if(remoteLoaded){
+      renderBootstrap();
+      toast('Dados sincronizados do Supabase ✓');
+    }
+  }).catch(err=>console.warn('Falha no sync inicial:', err));
 });
 
-window.addEventListener('pageshow', ()=>emergencyUnlockUi());
+
+window.addEventListener('pageshow', ()=>{
+  document.querySelectorAll('.modal-ov.open').forEach(ov=>ov.classList.remove('open'));
+  document.body.style.pointerEvents='';
+  scheduleCurrentPageRender(S.currentPage||'plan-mensal');
+});
+
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape') document.querySelectorAll('.modal-ov.open').forEach(ov=>ov.classList.remove('open'));
+});
+
 document.querySelectorAll('.modal-ov').forEach(ov=>{
   ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
-});
-document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape') emergencyUnlockUi();
 });
 </script>
 </body>
