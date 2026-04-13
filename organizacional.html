@@ -390,6 +390,14 @@ tbody tr:hover .row-actions.hover{opacity:1}
       Pipeline por Employer
     </div>
   </div>
+  <div class="sb-divider"></div>
+  <div class="sb-section">
+    <div class="sb-label">Sistema</div>
+    <div class="sb-item" onclick="window.location.href='index.html'">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="M21 3l-7 7"/><path d="M3 21l7-7"/></svg>
+      Voltar para Institucional
+    </div>
+  </div>
   <div class="sb-section" style="margin-top:auto;padding-top:8px">
     <div class="sb-emp-add" onclick="openEmpModal()">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -1068,6 +1076,79 @@ const DEFAULT_EMP_COLORS=['#2563EB','#7C3AED','#DC2626','#059669','#D97706','#08
 function statusClass(v){return STATUS_COLORS[v]||'b-gray';}
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+function escapeHTML(str){
+  return String(str ?? '').replace(/[&<>'"]/g, ch => ({
+    '&':'&amp;',
+    '<':'&lt;',
+    '>':'&gt;',
+    "'":'&#39;',
+    '"':'&quot;'
+  }[ch] || ch));
+}
+function escapeAttr(str){
+  return escapeHTML(str).replace(/`/g,'&#96;').replace(/\r/g,' ').replace(/\n/g,'&#10;');
+}
+function escapeJsString(str){
+  return String(str ?? '')
+    .replace(/\\/g,'\\\\')
+    .replace(/'/g,"\\'")
+    .replace(/\r/g,'\\r')
+    .replace(/\n/g,'\\n')
+    .replace(/</g,'\\x3C')
+    .replace(/>/g,'\\x3E');
+}
+function safeText(str,fallback='—'){
+  const value=String(str ?? '').trim();
+  return value ? escapeHTML(value) : fallback;
+}
+function safeAttrValue(str){
+  return escapeAttr(String(str ?? ''));
+}
+function nl2brSafe(str,fallback=''){
+  const value=String(str ?? '').trim();
+  return value ? escapeHTML(value).replace(/\n/g,'<br>') : fallback;
+}
+function safeUrl(url){
+  const value=String(url ?? '').trim();
+  if(!value) return '';
+  try{
+    const parsed=new URL(value, window.location.href);
+    const protocol=(parsed.protocol||'').toLowerCase();
+    if(!['http:','https:','mailto:','tel:'].includes(protocol)) return '';
+    return escapeAttr(parsed.href);
+  }catch{
+    return '';
+  }
+}
+function findRowByDataAttr(attr, value){
+  const wanted=String(value ?? '');
+  return [...document.querySelectorAll(`[data-${attr}]`)].find(el => el.getAttribute(`data-${attr}`) === wanted) || null;
+}
+function scrollToDataRow(attr, value){
+  const row=findRowByDataAttr(attr, value);
+  if(row) row.scrollIntoView({behavior:'smooth', block:'center'});
+  return row;
+}
+function optionListHtml(list, includeBlankLabel=null){
+  const opts=[];
+  if(includeBlankLabel !== null){
+    opts.push(`<option value="">${escapeHTML(includeBlankLabel)}</option>`);
+  }
+  (list || []).forEach(item => {
+    const value=String(item ?? '');
+    opts.push(`<option>${escapeHTML(value)}</option>`);
+  });
+  return opts.join('');
+}
+function openWeeklyModalFromPreset(encoded){
+  try{
+    const parsed=JSON.parse(decodeURIComponent(String(encoded || '')));
+    openWeeklyModal(null, parsed);
+  }catch{
+    openWeeklyModal();
+  }
+}
+
 
 // ─── DEFAULT STATE ───
 function defaultState(){
@@ -1120,7 +1201,7 @@ function defaultState(){
 const SUPABASE_URL='https://xcxqtjzlqmncwnhbolnl.supabase.co';
 const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjeHF0anpscW1uY3duaGJvbG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1OTU4NjQsImV4cCI6MjA4OTE3MTg2NH0.TJ1KB6mwSE-wu3EBO8UfP7br6byIloDsr0ejJ4_3luc';
 const REMOTE_APP_KEY='talents4_crm_v5';
-let _supa=null,_remoteSaveTimer=null,_remoteReady=false,_remoteSyncErrorShown=false,_hydratingRemote=false;
+let _supa=null,_remoteSaveTimer=null,_remoteReady=false,_remoteSyncErrorShown=false,_hydratingRemote=false,_remoteSnapshotUpdatedAt=null,_remoteConflictShown=false,_authWatchdogInit=false;
 let S;
 function getSupa(){
   if(!window.supabase?.createClient) return null;
@@ -1137,6 +1218,25 @@ async function getSessionSafe(){
     if(error || !data?.session) return null;
     return data.session;
   }catch{return null;}
+}
+async function checkAuthAndRedirect(){
+  const session=await getSessionSafe();
+  if(!session){
+    window.location.replace('index.html');
+    return null;
+  }
+  return session;
+}
+function initAuthWatchdog(){
+  if(_authWatchdogInit) return;
+  try{
+    const client=getSupa();
+    if(!client) return;
+    client.auth.onAuthStateChange((_event, session)=>{
+      if(!session) window.location.replace('index.html');
+    });
+    _authWatchdogInit=true;
+  }catch{}
 }
 function ensureUiState(){
   const defs=defaultState();
@@ -1188,38 +1288,78 @@ function load(){
 }
 async function loadRemoteState(){
   const session=await getSessionSafe();
-  if(!session) return false;
+  if(!session){
+    _remoteReady=false;
+    return false;
+  }
   const client=getSupa();
   const {data,error}=await client.from('org_ui_state_snapshots').select('payload,updated_at').eq('app_key',REMOTE_APP_KEY).limit(1).maybeSingle();
   if(error){
-    if(!_remoteSyncErrorShown){ console.warn('Supabase snapshot indisponível:', error.message); _remoteSyncErrorShown=true; }
+    if(!_remoteSyncErrorShown){
+      console.warn('Supabase snapshot indisponível:', error.message);
+      _remoteSyncErrorShown=true;
+    }
+    _remoteReady=false;
     return false;
   }
+  _remoteReady=true;
+  _remoteSyncErrorShown=false;
+  _remoteSnapshotUpdatedAt=data?.updated_at||null;
   if(data?.payload && typeof data.payload==='object'){
     _hydratingRemote=true;
     S=data.payload;
     ensureUiState();
     _hydratingRemote=false;
-    _remoteReady=true;
     return true;
   }
-  _remoteReady=true;
   return false;
 }
 async function saveRemoteNow(){
-  if(_hydratingRemote) return;
+  if(_hydratingRemote || !_remoteReady) return false;
   const session=await getSessionSafe();
-  if(!session) return;
+  if(!session) return false;
   const client=getSupa();
+  const {data:current,error:readError}=await client.from('org_ui_state_snapshots').select('updated_at').eq('app_key',REMOTE_APP_KEY).limit(1).maybeSingle();
+  if(readError){
+    if(!_remoteSyncErrorShown){
+      console.warn('Falha ao validar snapshot remoto:', readError.message);
+      _remoteSyncErrorShown=true;
+    }
+    return false;
+  }
+  const serverUpdatedAt=current?.updated_at||null;
+  if(serverUpdatedAt && _remoteSnapshotUpdatedAt && serverUpdatedAt!==_remoteSnapshotUpdatedAt){
+    if(!_remoteConflictShown){
+      toast('Conflito de sincronização detectado. Reabra o CRM para evitar sobrescrever dados de outro dispositivo.');
+      _remoteConflictShown=true;
+    }
+    console.warn('Conflito de snapshot detectado. Salvamento remoto cancelado.');
+    return false;
+  }
+  if(serverUpdatedAt && !_remoteSnapshotUpdatedAt){
+    if(!_remoteConflictShown){
+      toast('Sincronização remota bloqueada até recarregar a página.');
+      _remoteConflictShown=true;
+    }
+    return false;
+  }
+  const nextUpdatedAt=new Date().toISOString();
   const {error}=await client.from('org_ui_state_snapshots').upsert({
     app_key:REMOTE_APP_KEY,
     payload:S,
-    updated_at:new Date().toISOString()
+    updated_at:nextUpdatedAt
   },{onConflict:'app_key'});
-  if(error && !_remoteSyncErrorShown){
-    console.warn('Falha ao sincronizar com Supabase:', error.message);
-    _remoteSyncErrorShown=true;
+  if(error){
+    if(!_remoteSyncErrorShown){
+      console.warn('Falha ao sincronizar com Supabase:', error.message);
+      _remoteSyncErrorShown=true;
+    }
+    return false;
   }
+  _remoteSnapshotUpdatedAt=nextUpdatedAt;
+  _remoteConflictShown=false;
+  _remoteSyncErrorShown=false;
+  return true;
 }
 function scheduleRemoteSave(){
   clearTimeout(_remoteSaveTimer);
@@ -1268,9 +1408,9 @@ function renderEmployerOpeningsList(openings, maxItems=4){
   const shown=arr.slice(0,maxItems);
   return `<div class="emp-opening-list">${
     shown.map(o=>`<div class="emp-opening-item">
-      <div class="emp-opening-title">${o.title}</div>
+      <div class="emp-opening-title">${safeText(o.title,'—')}</div>
       <div class="emp-opening-qty">${o.qty&&o.qty>1?`${o.qty} vagas`:'1 vaga'}</div>
-      <div class="emp-opening-status">${o.status||'Aberta'}</div>
+      <div class="emp-opening-status">${safeText(o.status||'Aberta','Aberta')}</div>
     </div>`).join('')
   }${arr.length>maxItems?`<div class="planner-subnote">+ ${arr.length-maxItems} vaga(s) adicional(is)</div>`:''}</div>`;
 }
@@ -1279,9 +1419,9 @@ function renderInfoOpeningsList(openings){
   if(!arr.length) return `<em style="color:var(--text3)">Nenhuma vaga estruturada cadastrada.</em>`;
   return `<div class="info-opening-list">${
     arr.map(o=>`<div class="info-opening-row">
-      <div class="t">${o.title}</div>
+      <div class="t">${safeText(o.title,'—')}</div>
       <div class="q">${o.qty&&o.qty>1?`${o.qty} vagas`:'1 vaga'}</div>
-      <div class="s">${o.status||'Aberta'}</div>
+      <div class="s">${safeText(o.status||'Aberta','Aberta')}</div>
     </div>`).join('')
   }</div>`;
 }
@@ -1323,7 +1463,7 @@ function renderEmployerOpeningsEditor(rows){
   const arr=normalizeOpenings(rows);
   if(!arr.length) arr.push({title:'',qty:1,status:'Aberta'});
   wrap.innerHTML=arr.map((o,i)=>`<div class="opening-row">
-    <input class="fi emp-opening-title" data-i="${i}" value="${(o.title||'').replace(/"/g,'&quot;')}" placeholder="Título da vaga">
+    <input class="fi emp-opening-title" data-i="${i}" value="${safeAttrValue(o.title||'')}" placeholder="Título da vaga">
     <input class="fi emp-opening-qty" data-i="${i}" type="number" min="1" value="${o.qty||1}" placeholder="Qtd">
     <select class="fs emp-opening-status" data-i="${i}"><option ${o.status==='Aberta'?'selected':''}>Aberta</option><option ${o.status==='Em busca'?'selected':''}>Em busca</option><option ${o.status==='Pausada'?'selected':''}>Pausada</option><option ${o.status==='Fechada'?'selected':''}>Fechada</option></select>
     <button type="button" class="icon-btn danger" onclick="removeOpeningRow(${i})" title="Remover"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
@@ -1367,37 +1507,32 @@ function importBackup(file){
 // ─── POPULATE SELECTS ───
 function populateAllSelects(){
   const names=getEmpNames();
-  // plan employer
   ['plan-employer','meet-employer'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     const cur=el.value;
-    el.innerHTML=names.map(n=>`<option>${n}</option>`).join('');
+    el.innerHTML=optionListHtml(names, null);
     if(names.includes(cur))el.value=cur;
   });
-  // filter selects
   ['plan-emp-filter','cal-emp-filter','meet-emp-filter'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     const cur=el.value;
-    el.innerHTML='<option value="">Todos os empregadores</option>'+names.map(n=>`<option>${n}</option>`).join('');
+    el.innerHTML=optionListHtml(names, 'Todos os empregadores');
     if(cur)el.value=cur;
   });
-  // month selects
   ['plan-month','meet-mes','resumo-month-filter','meet-month-filter'].forEach(id=>{
     const el=document.getElementById(id);
     if(!el)return;
     const cur=el.value;
     if(id==='resumo-month-filter'||id==='meet-month-filter'){
-      el.innerHTML='<option value="">Todos os meses</option>'+MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
+      el.innerHTML='<option value="">Todos os meses</option>'+MONTHS.map(m=>`<option value="${escapeAttr(m.k)}">${escapeHTML(m.l)}</option>`).join('');
     } else {
-      el.innerHTML=MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
+      el.innerHTML=MONTHS.map(m=>`<option value="${escapeAttr(m.k)}">${escapeHTML(m.l)}</option>`).join('');
     }
     if(cur)el.value=cur;
   });
-  // emp tabs
   renderEmpTabs();
-  // calendar legend
   renderCalLegend();
 }
 
@@ -1447,7 +1582,7 @@ function confirm(msg,cb){
 }
 
 // ─── BADGE ───
-function badge(v){return `<span class="badge ${STATUS_COLORS[v]||'b-gray'}">${v||'—'}</span>`;}
+function badge(v){const label=String(v||'—').trim()||'—';return `<span class="badge ${STATUS_COLORS[label]||'b-gray'}">${escapeHTML(label)}</span>`;}
 
 // ─── EMPLOYER CRUD ───
 function openEmpModal(name){
@@ -1544,34 +1679,42 @@ function deleteEmpById(){
 // ─── RENDER EMPLOYERS PAGE ───
 function renderEmployers(){
   const search=(document.getElementById('emp-search')?.value||'').toLowerCase();
-  const list=S.employers.filter(e=>!search||e.name.toLowerCase().includes(search));
+  const list=S.employers.filter(e=>!search||String(e.name||'').toLowerCase().includes(search));
   const grid=document.getElementById('emp-cards-grid');
-  if(!list.length){grid.innerHTML=`<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/></svg><p>Nenhum empregador encontrado</p><small>Clique em "Novo Empregador" para adicionar</small></div>`;return;}
+  if(!list.length){
+    grid.innerHTML=`<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/></svg><p>Nenhum empregador encontrado</p><small>Clique em "Novo Empregador" para adicionar</small></div>`;
+    return;
+  }
   grid.innerHTML=list.map(e=>{
     const dossier=S.dossiers[e.name]||{candidatos:[],removidos:[],reposicao:[]};
     const cands=(dossier.candidatos||[]).length;
     const saude=e.saude||'Estável';
-    const resumo=(e.descricao||'').trim();
+    const resumo=String(e.descricao||'').trim();
+    const resumoSafe=resumo?`${escapeHTML(resumo.substring(0,180))}${resumo.length>180?'...':''}`:'<span class="muted">Sem resumo do empregador.</span>';
     const focus=splitFocusAreas(e.focusAreas||'');
+    const contatoSafe=safeText(e.contato,'—');
+    const pastaUrl=safeUrl(e.pasta);
+    const crmUrl=safeUrl(e.crm||e.link);
+    const nameJs=escapeJsString(e.name);
     return `<div class="emp-card" style="--emp:${e.color};border-left:6px solid ${e.color}">
       <div class="emp-color-bar" style="background:${e.color}"></div>
       <div class="emp-card-body">
         <div class="emp-card-head">
           <div>
-            <div class="emp-card-name">${e.name}</div>
+            <div class="emp-card-name">${safeText(e.name,'—')}</div>
             <div class="emp-card-meta">${cands} candidato${cands!==1?'s':''} no pipeline &nbsp;·&nbsp; ${badge(saude)}</div>
           </div>
           <div class="emp-card-actions">
-            <button class="icon-btn" onclick="openEmpModal('${e.name}')" title="Editar">
+            <button class="icon-btn" onclick="openEmpModal('${nameJs}')" title="Editar">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="icon-btn" onclick="goToDossie('${e.name}')" title="Ver Pipeline">
+            <button class="icon-btn" onclick="goToDossie('${nameJs}')" title="Ver Pipeline">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </button>
           </div>
         </div>
 
-        <div class="emp-card-summary" style="background:${alpha(e.color,.07)};border:1px solid ${alpha(e.color,.18)};padding:10px 12px;border-radius:8px">${resumo ? `${resumo.substring(0,180)}${resumo.length>180?'...':''}` : '<span class="muted">Sem resumo do empregador.</span>'}</div>
+        <div class="emp-card-summary" style="background:${alpha(e.color,.07)};border:1px solid ${alpha(e.color,.18)};padding:10px 12px;border-radius:8px">${resumoSafe}</div>
 
         <div class="emp-section" style="background:${alpha(e.color,.06)};border-color:${alpha(e.color,.18)}">
           <div class="emp-section-label">Vagas abertas</div>
@@ -1580,18 +1723,74 @@ function renderEmployers(){
 
         ${focus.length?`<div class="emp-section" style="background:${alpha(e.color,.05)};border-color:${alpha(e.color,.16)}">
           <div class="emp-section-label">Áreas-foco</div>
-          <div class="emp-focus-list">${focus.map(f=>`<span class="emp-focus-chip">${f}</span>`).join('')}</div>
+          <div class="emp-focus-list">${focus.map(f=>`<span class="emp-focus-chip">${escapeHTML(f)}</span>`).join('')}</div>
         </div>`:''}
 
-        ${(e.contato||e.pasta||e.crm)?`<div class="emp-links">
-          <div class="emp-linkbox"><div class="lbl">Contato</div><div class="val">${e.contato||'—'}</div></div>
-          <div class="emp-linkbox"><div class="lbl">Pasta / CRM</div><div class="val">${e.pasta?`<a href="${e.pasta}" target="_blank">Pasta</a>`:''}${e.pasta&&e.crm?' · ':''}${e.crm?`<a href="${e.crm}" target="_blank">CRM</a>`:''}${!e.pasta&&!e.crm?'—':''}</div></div>
+        ${(e.contato||e.pasta||e.crm||e.link)?`<div class="emp-links">
+          <div class="emp-linkbox"><div class="lbl">Contato</div><div class="val">${contatoSafe}</div></div>
+          <div class="emp-linkbox"><div class="lbl">Pasta / CRM</div><div class="val">${pastaUrl?`<a href="${pastaUrl}" target="_blank" rel="noopener noreferrer">Pasta</a>`:''}${pastaUrl&&crmUrl?' · ':''}${crmUrl?`<a href="${crmUrl}" target="_blank" rel="noopener noreferrer">CRM</a>`:''}${!pastaUrl&&!crmUrl?'—':''}</div></div>
         </div>`:''}
       </div>
     </div>`;
   }).join('');
 }
 function goToDossie(name){S.currentDossieEmp=name;nav('dossie');}
+function occursOnDate(entry,dateStr){
+  const target=String(dateStr||'').slice(0,10);
+  if(!target) return false;
+  const start=String(entry?.inicio||entry?.fim||'').slice(0,10);
+  const end=String(entry?.fim||entry?.inicio||'').slice(0,10);
+  if(!start && !end) return false;
+  if(start && end) return target>=start && target<=end;
+  return target===start || target===end;
+}
+function toggleMeeting(id){
+  ensureUiState();
+  const key=String(id||'');
+  S.ui.meetingExpanded[key]=!S.ui.meetingExpanded[key];
+  save();
+  renderMeetings();
+  setTimeout(()=>scrollToDataRow('meet-id', key), 30);
+}
+function goToPlanEntry(id){
+  const entry=S.planEntries.find(x=>x.id===id);
+  if(!entry) return;
+  const monthIdx=MONTHS.findIndex(m=>m.k===entry.month);
+  if(monthIdx>=0) S.currentMonthIdx=monthIdx;
+  nav('plan-mensal');
+  renderPlanTable();
+  setTimeout(()=>{
+    if(!scrollToDataRow('plan-id', entry.id)) openPlanModal(entry.id);
+  }, 30);
+}
+function goToMeeting(id){
+  const meeting=S.meetings.find(x=>x.id===id);
+  if(!meeting) return;
+  ensureUiState();
+  S.ui.meetingExpanded[id]=true;
+  nav('reunioes');
+  renderMeetings();
+  setTimeout(()=>{
+    if(!scrollToDataRow('meet-id', id)) openMeetModal(id);
+  }, 30);
+}
+function goToPipelineFilter(status){
+  nav('dossie');
+  switchDossieTab('pipeline');
+  const select=document.getElementById('pipe-etapa-filter');
+  if(select) select.value=status||'';
+  renderPipeline();
+}
+function goToReposicao(){
+  nav('dossie');
+  switchDossieTab('reposicao');
+  renderReposicao();
+}
+function goToRemovidos(){
+  nav('dossie');
+  switchDossieTab('removidos');
+  renderRemovidos();
+}
 
 // ─── PLAN TABLE ───
 function openPlanModal(id,datePreset){
@@ -1601,7 +1800,7 @@ function openPlanModal(id,datePreset){
   document.getElementById('plan-id').value='';
   // defaults
   const empNames=getEmpNames();
-  document.getElementById('plan-employer').innerHTML=empNames.map(n=>`<option>${n}</option>`).join('');
+  document.getElementById('plan-employer').innerHTML=optionListHtml(empNames, null);
   document.getElementById('plan-activity').value='Pesquisa de perfis';
   document.getElementById('plan-responsavel').value='';
   document.getElementById('plan-status').value='A fazer';
@@ -1662,8 +1861,11 @@ function renderPlanTable(){
   const statusF=document.getElementById('plan-status-filter')?.value||'';
   const empF=document.getElementById('plan-emp-filter')?.value||'';
   const tbody=document.getElementById('plan-tbody');
-  let emps=getEmpNames().filter(e=>(!search||e.toLowerCase().includes(search))&&(!empF||e===empF));
-  if(!emps.length){tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><p>Nenhum empregador encontrado.</p></div></td></tr>`;return;}
+  let emps=getEmpNames().filter(e=>(!search||String(e||'').toLowerCase().includes(search))&&(!empF||e===empF));
+  if(!emps.length){
+    tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><p>Nenhum empregador encontrado.</p></div></td></tr>`;
+    return;
+  }
   const blocks = emps.map(emp=>{
     const empEntries=S.planEntries.filter(e=>e.month===month&&e.employer===emp);
     const fixedActs=['Pesquisa de perfis','Triagem / qualificação','Envio de currículos','Feedback / próximos passos'];
@@ -1672,38 +1874,49 @@ function renderPlanTable(){
     if(!rows.length) return '';
     const color=getEmpColor(emp);
     const openCount=empEntries.filter(e=>['A fazer','Em andamento','Bloqueado'].includes(e.status)).length;
+    const empJs=escapeJsString(emp);
     return `
       <tr class="emp-group-head"><td colspan="9">
-        <div class="gtitle"><span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;box-shadow:0 0 0 4px ${alpha(color,.14)}"></span>${emp}</div>
+        <div class="gtitle"><span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;box-shadow:0 0 0 4px ${alpha(color,.14)}"></span>${escapeHTML(emp)}</div>
         <div class="gmeta">${rows.length} linha(s) visíveis · ${openCount} pendência(s) aberta(s)</div>
       </td></tr>
-      ${rows.map(({act,entry},idx)=>`
-        <tr class="plan-activity-row" data-plan-id="${entry?.id||''}" style="${idx===0?`box-shadow:inset 0 2px 0 ${alpha(color,.22)}`:''}">
+      ${rows.map(({act,entry},idx)=>{
+        const actHtml=escapeHTML(act);
+        const actJs=escapeJsString(act);
+        const entryId=entry?.id||'';
+        const obsText=String(entry?.obs||'').trim();
+        const obsTitle=safeAttrValue(obsText);
+        const empStrong=act===rows[0].act?`<strong>${escapeHTML(emp)}</strong>`:'';
+        return `<tr class="plan-activity-row" data-plan-id="${escapeAttr(entryId)}" style="${idx===0?`box-shadow:inset 0 2px 0 ${alpha(color,.22)}`:''}">
           <td style="width:6px;padding:0;background:${alpha(color,.14)}"><div style="width:6px;height:100%;min-height:38px;background:${color}"></div></td>
-          <td class="plan-emp-cell" style="font-size:11px;color:var(--text2);background:${alpha(color,.06)}">${act===rows[0].act?'<strong>'+emp+'</strong>':''}</td>
-          <td style="font-size:12px;font-weight:700">${act}</td>
-          <td style="font-size:11px">${entry?.responsavel||'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="position:relative">${entry?`<button class="badge ${STATUS_COLORS[entry.status]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${entry.id}','plan',['A fazer','Em andamento','Concluído','Bloqueado','Cancelado'])">${entry.status||'—'}</button>`:'<span style="color:var(--text3)">—</span>'}</td>
-          <td style="font-size:11px;max-width:260px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${entry?.obs||''}">${entry?.obs||''}</span></td>
-          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${entry?.inicio||''}</td>
-          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${entry?.fim||''}</td>
+          <td class="plan-emp-cell" style="font-size:11px;color:var(--text2);background:${alpha(color,.06)}">${empStrong}</td>
+          <td style="font-size:12px;font-weight:700">${actHtml}</td>
+          <td style="font-size:11px">${entry?.responsavel?escapeHTML(entry.responsavel):'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="position:relative">${entry?`<button class="badge ${STATUS_COLORS[entry.status]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${escapeJsString(entry.id)}','plan',['A fazer','Em andamento','Concluído','Bloqueado','Cancelado'])">${escapeHTML(entry.status||'—')}</button>`:'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="font-size:11px;max-width:260px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${obsTitle}">${obsText?escapeHTML(obsText):''}</span></td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${escapeHTML(entry?.inicio||'')}</td>
+          <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${escapeHTML(entry?.fim||'')}</td>
           <td>
             <div class="row-actions">
               ${entry
-                ?`<button class="icon-btn" onclick="openPlanModal('${entry.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
-                :`<button class="icon-btn" onclick="openPlanModal(null);document.getElementById('plan-employer').value='${emp}';document.getElementById('plan-activity').value='${act}';" title="Adicionar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
+                ?`<button class="icon-btn" onclick="openPlanModal('${escapeJsString(entry.id)}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
+                :`<button class="icon-btn" onclick="openPlanModal(null);document.getElementById('plan-employer').value='${empJs}';document.getElementById('plan-activity').value='${actJs}';" title="Adicionar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
             </div>
           </td>
-        </tr>`).join('')}`;
+        </tr>`;
+      }).join('')}`;
   }).join('');
-  if(!blocks.trim()){tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><p>Nenhuma atividade encontrada para ${MONTHS[S.currentMonthIdx].l}.</p><small>Clique em "Nova Atividade" para adicionar</small></div></td></tr>`;return;}
+  if(!blocks.trim()){
+    tbody.innerHTML=`<tr><td colspan="9"><div class="empty"><p>Nenhuma atividade encontrada para ${escapeHTML(MONTHS[S.currentMonthIdx].l)}.</p><small>Clique em "Nova Atividade" para adicionar</small></div></td></tr>`;
+    return;
+  }
   tbody.innerHTML=blocks;
 }
 // ─── CALENDAR ───
 function renderCalLegend(){
   const el=document.getElementById('cal-legend');
   if(!el)return;
-  el.innerHTML=S.employers.slice(0,8).map(e=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:9px;height:9px;border-radius:50%;background:${e.color};flex-shrink:0"></span>${e.name}</span>`).join('');
+  el.innerHTML=S.employers.slice(0,8).map(e=>`<span style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><span style="width:9px;height:9px;border-radius:50%;background:${e.color};flex-shrink:0"></span>${escapeHTML(e.name)}</span>`).join('');
 }
 
 function renderCalendar(){
@@ -1718,12 +1931,11 @@ function renderCalendar(){
   const dayNames=['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
   headerEl.style.gridTemplateColumns='repeat(7,1fr)';
   headerEl.style.cssText='display:grid;grid-template-columns:repeat(7,1fr);background:#F8FAFC;border:1px solid var(--border);border-bottom:none;border-radius:10px 10px 0 0;overflow:hidden';
-  headerEl.innerHTML=dayNames.map(d=>`<div class="cal-day-name">${d}</div>`).join('');
+  headerEl.innerHTML=dayNames.map(d=>`<div class="cal-day-name">${escapeHTML(d)}</div>`).join('');
 
   const firstDay=new Date(year,month-1,1);
   const startDow=(firstDay.getDay()+6)%7;
   const daysInMonth=new Date(year,month,0).getDate();
-  const prevDays=new Date(year,month-1,0).getDate();
 
   const entries=S.planEntries.filter(e=>e.month===monthKey&&(!empF||e.employer===empF));
   const meetings=S.meetings.filter(m=>m.mes===monthKey&&(!empF||m.employer===empF));
@@ -1751,9 +1963,20 @@ function renderCalendar(){
   let cells='';
   for(let i=0;i<totalCells;i++){
     let dayNum,dateStr,isOther=false;
-    if(i<startDow){dayNum=prevDays-startDow+i+1;const d=new Date(year,month-2,dayNum);dateStr=d.toISOString().split('T')[0];isOther=true;}
-    else if(i>=startDow+daysInMonth){dayNum=i-startDow-daysInMonth+1;const d=new Date(year,month,dayNum);dateStr=d.toISOString().split('T')[0];isOther=true;}
-    else{dayNum=i-startDow+1;dateStr=`${year}-${String(month).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;}
+    if(i<startDow){
+      dayNum=new Date(year,month-1,0).getDate()-startDow+i+1;
+      const d=new Date(year,month-2,dayNum);
+      dateStr=d.toISOString().split('T')[0];
+      isOther=true;
+    } else if(i>=startDow+daysInMonth){
+      dayNum=i-startDow-daysInMonth+1;
+      const d=new Date(year,month,dayNum);
+      dateStr=d.toISOString().split('T')[0];
+      isOther=true;
+    } else {
+      dayNum=i-startDow+1;
+      dateStr=`${year}-${String(month).padStart(2,'0')}-${String(dayNum).padStart(2,'0')}`;
+    }
 
     const isToday=!isOther&&today.getFullYear()===year&&today.getMonth()===month-1&&today.getDate()===dayNum;
     const evts=(byDate[dateStr]||[]).sort((a,b)=>{
@@ -1765,30 +1988,30 @@ function renderCalendar(){
     const shown=evts.slice(0,MAX);
     const extra=evts.length-MAX;
 
-    cells+=`<div class="cal-cell${isOther?' other-month':''}${isToday?' today':''}" onclick="calDayClick('${dateStr}')">
+    cells+=`<div class="cal-cell${isOther?' other-month':''}${isToday?' today':''}" onclick="calDayClick('${escapeJsString(dateStr)}')">
       <div class="cal-date">${dayNum}</div>
       ${shown.map(ev=>{
         if(ev.type==='meet'){
-          const label=ev.data.tema||`Reunião · ${ev.data.employer}`;
-          return `<div class="cal-event cal-meet" onclick="event.stopPropagation();openMeetModal('${ev.data.id}')" title="${ev.data.decidido||ev.data.tema||''}">
+          const label=escapeHTML(ev.data.tema||`Reunião · ${ev.data.employer||''}`);
+          return `<div class="cal-event cal-meet" onclick="event.stopPropagation();openMeetModal('${escapeJsString(ev.data.id)}')" title="${safeAttrValue(ev.data.decidido||ev.data.tema||'')}">
             <span class="cal-event-title">${label}</span>
             <div class="cal-event-meta">
-              <span class="cal-mini-badge">${ev.data.employer||'Reunião'}</span>
-              <span class="cal-mini-badge">${ev.data.status||'A fazer'}</span>
+              <span class="cal-mini-badge">${safeText(ev.data.employer,'Reunião')}</span>
+              <span class="cal-mini-badge">${safeText(ev.data.status||'A fazer','A fazer')}</span>
             </div>
           </div>`;
         }
         const cls=statusClass(ev.data.status);
-        return `<div class="cal-event ${cls}" onclick="event.stopPropagation();openPlanModal('${ev.data.id}')" title="${ev.data.obs||''}">
-          <span class="cal-event-title">${ev.data.activity}</span>
+        return `<div class="cal-event ${cls}" onclick="event.stopPropagation();openPlanModal('${escapeJsString(ev.data.id)}')" title="${safeAttrValue(ev.data.obs||'')}">
+          <span class="cal-event-title">${safeText(ev.data.activity,'—')}</span>
           <div class="cal-event-meta">
-            <span class="cal-mini-badge">${ev.data.employer}</span>
-            <span class="cal-mini-badge">${ev.data.status||'—'}</span>
+            <span class="cal-mini-badge">${safeText(ev.data.employer,'—')}</span>
+            <span class="cal-mini-badge">${safeText(ev.data.status,'—')}</span>
           </div>
         </div>`;
       }).join('')}
-      ${extra>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${dateStr}')">+${extra} mais</div>`:''}
-      <button class="cal-add-btn" onclick="event.stopPropagation();openPlanModal(null,'${dateStr}')" title="Adicionar atividade">+</button>
+      ${extra>0?`<div class="cal-more" onclick="event.stopPropagation();openDayModal('${escapeJsString(dateStr)}')">+${extra} mais</div>`:''}
+      <button class="cal-add-btn" onclick="event.stopPropagation();openPlanModal(null,'${escapeJsString(dateStr)}')" title="Adicionar atividade">+</button>
     </div>`;
   }
 
@@ -1798,33 +2021,19 @@ function renderCalendar(){
 function openDayModal(dateStr){
   const plans=S.planEntries
     .filter(e=>occursOnDate(e,dateStr))
-    .map(e=>({
-      type:'Atividade',
-      title:`${e.employer} · ${e.activity}`,
-      meta:e.status||'—',
-      owner:e.responsavel||'Sem responsável',
-      body:[e.obs&&`Observação: ${e.obs}`, e.inicio&&`Início: ${e.inicio}`, e.fim&&`Fim: ${e.fim}`].filter(Boolean).join('\n'),
-      open:`goToPlanEntry('${e.id}')`
-    }));
+    .map(e=>({type:'Atividade',title:`${e.employer} · ${e.activity}`,meta:e.status||'—',owner:e.responsavel||'Sem responsável',body:[e.obs&&`Observação: ${e.obs}`, e.inicio&&`Início: ${e.inicio}`, e.fim&&`Fim: ${e.fim}`].filter(Boolean).join('\n'),id:e.id,target:'plan'}));
   const meetings=S.meetings
     .filter(m=>m.data===dateStr)
-    .map(m=>({
-      type:'Reunião interna',
-      title:`${m.employer} · ${m.tema||'Sem tema'}`,
-      meta:m.status||'—',
-      owner:m.responsavel||'Sem responsável',
-      body:[m.decidido&&`Decidido: ${m.decidido}`, m.pendencias&&`Pendências: ${m.pendencias}`, m.proxacao&&`Próxima ação: ${m.proxacao}`].filter(Boolean).join('\n'),
-      open:`goToMeeting('${m.id}')`
-    }));
+    .map(m=>({type:'Reunião interna',title:`${m.employer} · ${m.tema||'Sem tema'}`,meta:m.status||'—',owner:m.responsavel||'Sem responsável',body:[m.decidido&&`Decidido: ${m.decidido}`, m.pendencias&&`Pendências: ${m.pendencias}`, m.proxacao&&`Próxima ação: ${m.proxacao}`].filter(Boolean).join('\n'),id:m.id,target:'meet'}));
   const items=[...meetings,...plans];
   document.getElementById('modal-day').dataset.date=dateStr;
   document.getElementById('modal-day-title').textContent=`Itens do dia ${dateStr}`;
   document.getElementById('modal-day-body').innerHTML=items.length
     ? `<div class="day-list">${items.map(it=>`<div class="day-item">
-        <h4>${it.title}</h4>
-        <div class="meta"><span class="badge ${STATUS_COLORS[it.meta]||'b-gray'}">${it.type}</span><span class="badge ${STATUS_COLORS[it.meta]||'b-gray'}">${it.meta}</span><span>${it.owner}</span></div>
-        <div class="body">${(it.body||'Sem detalhe.').replace(/\n/g,'<br>')}</div>
-        <div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="${it.open};closeModal('modal-day')">Abrir</button></div>
+        <h4>${escapeHTML(it.title)}</h4>
+        <div class="meta"><span class="badge ${STATUS_COLORS[it.meta]||'b-gray'}">${escapeHTML(it.type)}</span><span class="badge ${STATUS_COLORS[it.meta]||'b-gray'}">${escapeHTML(it.meta)}</span><span>${escapeHTML(it.owner)}</span></div>
+        <div class="body">${nl2brSafe(it.body,'Sem detalhe.')}</div>
+        <div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="${it.target==='plan' ? `goToPlanEntry('${escapeJsString(it.id)}')` : `goToMeeting('${escapeJsString(it.id)}')`};closeModal('modal-day')">Abrir</button></div>
       </div>`).join('')}</div>`
     : `<div class="empty"><p>Nenhum item lançado neste dia.</p><small>Use “Nova atividade neste dia” para registrar algo.</small></div>`;
   openModal('modal-day');
@@ -1908,23 +2117,27 @@ function renderMeetings(){
     (!empF||m.employer===empF)&&
     (!monF||m.mes===monF)
   ).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><p>Nenhuma reunião encontrada.</p><small>Clique em "Nova Reunião" para registrar</small></div></td></tr>`;return;}
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><p>Nenhuma reunião encontrada.</p><small>Clique em "Nova Reunião" para registrar</small></div></td></tr>`;
+    return;
+  }
   const dot=name=>`<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${getEmpColor(name)};margin-right:6px;vertical-align:middle"></span>`;
   tbody.innerHTML=list.map(m=>{
     const expanded=!!S.ui.meetingExpanded[m.id];
-    return `<tr class="expand-row ${expanded?'expanded':''}" data-meet-id="${m.id}" onclick="toggleMeeting('${m.id}')">
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${m.data||'—'}</td>
-      <td style="font-size:11px;color:var(--text2)">${m.semana||'—'}</td>
-      <td style="font-size:12px;font-weight:700">${dot(m.employer)}${m.employer||'—'}</td>
-      <td style="font-size:11px;max-width:150px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.tema||''}">${m.tema||'—'}</span></td>
-      <td style="font-size:11px;max-width:180px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.decidido||''}">${m.decidido||'—'}</span></td>
-      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${m.pendencias||''}">${m.pendencias||'—'}</span></td>
-      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.proxacao||'—'}</span></td>
-      <td style="font-size:11px">${m.responsavel||'—'}</td>
-      <td style="position:relative" onclick="event.stopPropagation()"><button class="badge ${STATUS_COLORS[m.status]||'b-gray'}" onclick="showStatusPicker(this.parentElement,'${m.id}','meet',['A fazer','Em andamento','Concluído','Cancelado'])">${m.status||'—'}</button></td>
+    const meetId=escapeJsString(m.id);
+    return `<tr class="expand-row ${expanded?'expanded':''}" data-meet-id="${escapeAttr(m.id)}" onclick="toggleMeeting('${meetId}')">
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(m.data||'—')}</td>
+      <td style="font-size:11px;color:var(--text2)">${safeText(m.semana,'—')}</td>
+      <td style="font-size:12px;font-weight:700">${dot(m.employer)}${safeText(m.employer,'—')}</td>
+      <td style="font-size:11px;max-width:150px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeAttrValue(m.tema||'')}">${safeText(m.tema,'—')}</span></td>
+      <td style="font-size:11px;max-width:180px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeAttrValue(m.decidido||'')}">${safeText(m.decidido,'—')}</span></td>
+      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeAttrValue(m.pendencias||'')}">${safeText(m.pendencias,'—')}</span></td>
+      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(m.proxacao,'—')}</span></td>
+      <td style="font-size:11px">${safeText(m.responsavel,'—')}</td>
+      <td style="position:relative" onclick="event.stopPropagation()"><button class="badge ${STATUS_COLORS[m.status]||'b-gray'}" onclick="showStatusPicker(this.parentElement,'${meetId}','meet',['A fazer','Em andamento','Concluído','Cancelado'])">${escapeHTML(m.status||'—')}</button></td>
       <td>
         <div class="row-actions">
-          <button class="icon-btn" onclick="event.stopPropagation();openMeetModal('${m.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="icon-btn" onclick="event.stopPropagation();openMeetModal('${meetId}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
         </div>
       </td>
     </tr>
@@ -1933,19 +2146,19 @@ function renderMeetings(){
         <div class="meet-expand-grid">
           <div class="meet-expand-card">
             <div class="ttl">Tema e decisão</div>
-            <div class="txt"><strong>${m.tema||'Sem tema'}</strong>\n${m.decidido||'Sem decisão registrada.'}</div>
+            <div class="txt"><strong>${safeText(m.tema,'Sem tema')}</strong><br>${nl2brSafe(m.decidido,'Sem decisão registrada.')}</div>
           </div>
           <div class="meet-expand-card">
             <div class="ttl">Pendências</div>
-            <div class="txt">${m.pendencias||'Nenhuma pendência registrada.'}</div>
+            <div class="txt">${nl2brSafe(m.pendencias,'Nenhuma pendência registrada.')}</div>
           </div>
           <div class="meet-expand-card">
             <div class="ttl">Próxima ação</div>
-            <div class="txt">${m.proxacao||'Nenhuma próxima ação registrada.'}</div>
+            <div class="txt">${nl2brSafe(m.proxacao,'Nenhuma próxima ação registrada.')}</div>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openMeetModal('${m.id}')">Editar reunião</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openMeetModal('${meetId}')">Editar reunião</button>
         </div>
       </div>
     </td></tr>`:''}`;
@@ -2036,11 +2249,11 @@ function renderResumo(){
   `;
   const open=entries.filter(e=>e.status==='A fazer'||e.status==='Bloqueado').slice(0,8);
   document.getElementById('resumo-priorities').innerHTML=open.length?open.map(e=>`
-    <div class="pri-item linkish" onclick="goToPlanEntry('${e.id}')">
+    <div class="pri-item linkish" onclick="goToPlanEntry('${escapeJsString(e.id)}')">
       <span style="width:8px;height:8px;border-radius:50%;background:${getEmpColor(e.employer)};flex-shrink:0;margin-top:3px"></span>
       <div class="pri-content">
-        <div class="pri-title">${e.employer} — ${e.activity}</div>
-        <div class="pri-meta">${e.obs||''} ${e.responsavel?`· ${e.responsavel}`:''}</div>
+        <div class="pri-title">${escapeHTML(e.employer)} · ${escapeHTML(e.activity)}</div>
+        <div class="pri-meta">${e.obs?escapeHTML(e.obs):''}${e.responsavel?` · ${escapeHTML(e.responsavel)}`:''}</div>
       </div>
       ${badge(e.status)}
     </div>`).join(''):'<p style="color:var(--text3);font-size:12px">Nenhuma prioridade em aberto 🎉</p>';
@@ -2052,7 +2265,7 @@ function renderResumo(){
     return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <span style="width:9px;height:9px;border-radius:50%;background:${emp.color};flex-shrink:0"></span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600">${emp.name}</div>
+        <div style="font-size:12px;font-weight:600">${escapeHTML(emp.name)}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
           <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
             <div style="width:${pct2}%;height:100%;background:${emp.color};border-radius:3px;transition:width .3s"></div>
@@ -2064,39 +2277,43 @@ function renderResumo(){
   }).join('');
 
   const displayRows = monF ? computeWeeklyRows(monF) : MONTHS.flatMap(m=>computeWeeklyRows(m.k));
-  document.getElementById('weekly-tbody').innerHTML=displayRows.length?displayRows.map(w=>`<tr class="${w.source==='manual'?'manual-row':'auto-row'}">
-    <td>${MONTHS.find(m=>m.k===w.month)?.l||w.month||'—'}</td>
-    <td>${w.week||'—'}<div style="margin-top:4px">${w.source==='manual'?'<span class="summary-source manual">Manual</span>':'<span class="summary-source">Auto</span>'}</div></td>
-    <td>${w.period||'—'}</td>
-    <td>${w.employer||'—'}</td>
-    <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${w.done||'—'}</td>
-    <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${w.result||'—'}</td>
-    <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${w.next||'—'}</td>
-    <td>${w.owner||'—'}</td>
-    <td>${badge(w.status||'—')}</td>
-    <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${w.notes||'—'}</td>
-    <td><div class="row-actions">${w.source==='manual'
-      ? `<button class="icon-btn" onclick="openWeeklyModal('${w.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
-      : `<button class="icon-btn" onclick='openWeeklyModal(null,${JSON.stringify({month:w.month,week:w.week,period:w.period,employer:w.employer,done:w.done,result:w.result,next:w.next,owner:w.owner,status:w.status,notes:w.notes}).replace(/'/g,"&#39;")})'><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
-    </div></td>
-  </tr>`).join(''):`<tr><td colspan="11"><div class="empty"><p>Nenhuma linha semanal disponível.</p><small>O quadro semanal mostra automaticamente o que foi registrado em planejamento e reuniões, além das linhas manuais.</small></div></td></tr>`;
+  document.getElementById('weekly-tbody').innerHTML=displayRows.length?displayRows.map(w=>{
+    const presetEncoded=encodeURIComponent(JSON.stringify({month:w.month,week:w.week,period:w.period,employer:w.employer,done:w.done,result:w.result,next:w.next,owner:w.owner,status:w.status,notes:w.notes}));
+    return `<tr class="${w.source==='manual'?'manual-row':'auto-row'}">
+      <td>${escapeHTML(MONTHS.find(m=>m.k===w.month)?.l||w.month||'—')}</td>
+      <td>${escapeHTML(w.week||'—')}<div style="margin-top:4px">${w.source==='manual'?'<span class="summary-source manual">Manual</span>':'<span class="summary-source">Auto</span>'}</div></td>
+      <td>${escapeHTML(w.period||'—')}</td>
+      <td>${escapeHTML(w.employer||'—')}</td>
+      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.done||'—')}</td>
+      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.result||'—')}</td>
+      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.next||'—')}</td>
+      <td>${escapeHTML(w.owner||'—')}</td>
+      <td>${badge(w.status||'—')}</td>
+      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.notes||'—')}</td>
+      <td><div class="row-actions">${w.source==='manual'
+        ? `<button class="icon-btn" onclick="openWeeklyModal('${escapeJsString(w.id)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
+        : `<button class="icon-btn" onclick="openWeeklyModalFromPreset('${escapeJsString(presetEncoded)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
+      </div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="11"><div class="empty"><p>Nenhuma linha semanal disponível.</p><small>O quadro semanal mostra automaticamente o que foi registrado em planejamento e reuniões, além das linhas manuais.</small></div></td></tr>`;
 
   document.getElementById('resumo-history').innerHTML=entries.length?entries.map(e=>`<tr>
-    <td style="font-size:11px;color:var(--text2)">${MONTHS.find(m=>m.k===e.month)?.l||e.month}</td>
-    <td style="font-size:12px;font-weight:600"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(e.employer)};margin-right:5px;vertical-align:middle"></span>${e.employer}</td>
-    <td style="font-size:11px">${e.activity}</td>
-    <td style="font-size:11px">${e.responsavel||'—'}</td>
+    <td style="font-size:11px;color:var(--text2)">${escapeHTML(MONTHS.find(m=>m.k===e.month)?.l||e.month)}</td>
+    <td style="font-size:12px;font-weight:600"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(e.employer)};margin-right:5px;vertical-align:middle"></span>${escapeHTML(e.employer)}</td>
+    <td style="font-size:11px">${escapeHTML(e.activity)}</td>
+    <td style="font-size:11px">${safeText(e.responsavel,'—')}</td>
     <td>${badge(e.status)}</td>
-    <td style="font-size:11px;max-width:200px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.obs||'—'}</span></td>
-    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${e.inicio||'—'}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick="openPlanModal('${e.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></td>
+    <td style="font-size:11px;max-width:200px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(e.obs,'—')}</span></td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(e.inicio||'—')}</td>
+    <td><div class="row-actions"><button class="icon-btn" onclick="openPlanModal('${escapeJsString(e.id)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></td>
   </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><p>Nenhuma atividade registrada.</p></div></td></tr>`;
 }
 function renderDossieActions(){
   const el=document.getElementById('dossie-actions');
   if(!el) return;
   const e=getEmpObj(S.currentDossieEmp);
-  el.innerHTML=`<button class="btn btn-primary" onclick="openCandModal()">Novo candidato</button><button class="btn btn-ghost" onclick="openReplaceModal()">Nova reposição</button>${e.crm?`<a class="btn btn-ghost" href="${e.crm}" target="_blank">Abrir CRM</a>`:''}`;
+  const crmUrl=safeUrl(e.crm);
+  el.innerHTML=`<button class="btn btn-primary" onclick="openCandModal()">Novo candidato</button><button class="btn btn-ghost" onclick="openReplaceModal()">Nova reposição</button>${crmUrl?`<a class="btn btn-ghost" href="${crmUrl}" target="_blank" rel="noopener noreferrer">Abrir CRM</a>`:''}`;
 }
 function renderEmpTabs(){
   const el=document.getElementById('emp-tabs');
@@ -2104,8 +2321,8 @@ function renderEmpTabs(){
   el.innerHTML=S.employers.map(e=>`
     <button class="emp-tab${S.currentDossieEmp===e.name?' active':''}" 
       style="${S.currentDossieEmp===e.name?`background:${e.color};border-color:${e.color}`:''}"
-      onclick="selectEmp('${e.name}')">
-      <span class="emp-dot" style="background:${e.color}"></span>${e.name}
+      onclick="selectEmp('${escapeJsString(e.name)}')">
+      <span class="emp-dot" style="background:${e.color}"></span>${escapeHTML(e.name)}
     </button>`).join('');
 }
 
@@ -2153,22 +2370,24 @@ function renderInfo(){
   const nextActions=S.planEntries.filter(p=>p.employer===emp && ['A fazer','Em andamento','Bloqueado'].includes(p.status||'')).slice(0,4);
   const resumoText = `${cands.length} candidato(s) no pipeline, ${aguardando} aguardando resposta, ${gostou} com feedback positivo, ${naoGostou} recusados e ${reposicao} demanda(s) de reposição abertas.`;
   const focus=splitFocusAreas(e.focusAreas||'');
+  const pastaUrl=safeUrl(e.pasta);
+  const crmUrl=safeUrl(e.crm);
 
   document.getElementById('info-content').innerHTML=`
     <div class="ifield">
       <div class="ifield-label">Descrição</div>
-      <div class="ifield-value">${e.descricao||'<em style="color:var(--text3)">Sem descrição. Clique em “Editar” para adicionar.</em>'}</div>
+      <div class="ifield-value">${e.descricao?nl2brSafe(e.descricao):'<em style="color:var(--text3)">Sem descrição. Clique em “Editar” para adicionar.</em>'}</div>
     </div>
 
     <div class="info-summary-box" style="margin-bottom:10px">
       <div class="info-summary-title">Resumo operacional</div>
-      <div class="info-summary-text">${resumoText}</div>
+      <div class="info-summary-text">${escapeHTML(resumoText)}</div>
     </div>
 
     <div class="ifield-grid-2">
       <div class="ifield">
         <div class="ifield-label">Áreas-foco</div>
-        <div class="ifield-value">${focus.length?`<div class="emp-focus-list">${focus.map(f=>`<span class="emp-focus-chip">${f}</span>`).join('')}</div>`:'<em style="color:var(--text3)">Não informado</em>'}</div>
+        <div class="ifield-value">${focus.length?`<div class="emp-focus-list">${focus.map(f=>`<span class="emp-focus-chip">${escapeHTML(f)}</span>`).join('')}</div>`:'<em style="color:var(--text3)">Não informado</em>'}</div>
       </div>
       <div class="ifield">
         <div class="ifield-label">Saúde do processo</div>
@@ -2182,19 +2401,19 @@ function renderInfo(){
     </div>
 
     <div class="info-meta-grid">
-      <div class="ifield"><div class="ifield-label">Contato</div><div class="ifield-value">${e.contato||'—'}</div></div>
-      <div class="ifield"><div class="ifield-label">Pasta / Drive</div><div class="ifield-value">${e.pasta?`<a href="${e.pasta}" target="_blank">Abrir pasta</a>`:'—'}</div></div>
-      <div class="ifield"><div class="ifield-label">CRM / Link</div><div class="ifield-value">${e.crm?`<a href="${e.crm}" target="_blank">Abrir link</a>`:'—'}</div></div>
+      <div class="ifield"><div class="ifield-label">Contato</div><div class="ifield-value">${safeText(e.contato,'—')}</div></div>
+      <div class="ifield"><div class="ifield-label">Pasta / Drive</div><div class="ifield-value">${pastaUrl?`<a href="${pastaUrl}" target="_blank" rel="noopener noreferrer">Abrir pasta</a>`:'—'}</div></div>
+      <div class="ifield"><div class="ifield-label">CRM / Link</div><div class="ifield-value">${crmUrl?`<a href="${crmUrl}" target="_blank" rel="noopener noreferrer">Abrir link</a>`:'—'}</div></div>
     </div>
 
     <div class="ifield-grid-2" style="margin-top:10px">
-      <div class="ifield linkish" ${nextMeeting?`onclick="goToMeeting('${nextMeeting.id}')"`:''}>
+      <div class="ifield linkish" ${nextMeeting?`onclick="goToMeeting('${escapeJsString(nextMeeting.id)}')"`:''}>
         <div class="ifield-label">Próxima reunião</div>
-        <div class="ifield-value">${nextMeeting?`<strong>${nextMeeting.data}</strong><br>${nextMeeting.tema||'Sem tema'}${nextMeeting.proxacao?`<br><span style="color:var(--text2)">${nextMeeting.proxacao}</span>`:''}`:'Nenhuma reunião agendada'}</div>
+        <div class="ifield-value">${nextMeeting?`<strong>${escapeHTML(nextMeeting.data)}</strong><br>${safeText(nextMeeting.tema,'Sem tema')}${nextMeeting.proxacao?`<br><span style="color:var(--text2)">${escapeHTML(nextMeeting.proxacao)}</span>`:''}`:'Nenhuma reunião agendada'}</div>
       </div>
       <div class="ifield">
         <div class="ifield-label">Próximas ações abertas</div>
-        <div class="ifield-value">${nextActions.length?`<div class="compact-list">${nextActions.map(a=>`<div class="compact-item clickable" onclick="goToPlanEntry('${a.id}')"><div class="compact-item-title">${a.activity}</div><div class="compact-item-sub">${a.obs||'Sem observação'}${a.responsavel?` · ${a.responsavel}`:''}</div></div>`).join('')}</div>`:'<em style="color:var(--text3)">Nenhuma pendência aberta no planejamento mensal.</em>'}</div>
+        <div class="ifield-value">${nextActions.length?`<div class="compact-list">${nextActions.map(a=>`<div class="compact-item clickable" onclick="goToPlanEntry('${escapeJsString(a.id)}')"><div class="compact-item-title">${escapeHTML(a.activity)}</div><div class="compact-item-sub">${a.obs?escapeHTML(a.obs):'Sem observação'}${a.responsavel?` · ${escapeHTML(a.responsavel)}`:''}</div></div>`).join('')}</div>`:'<em style="color:var(--text3)">Nenhuma pendência aberta no planejamento mensal.</em>'}</div>
       </div>
     </div>
   `;
@@ -2204,7 +2423,7 @@ function renderInfo(){
       <div class="small-stat clickable accent-amber" onclick="goToPipelineFilter('Aguardando resposta')"><div class="lbl">Aguardando resposta</div><div class="val" style="color:var(--amber)">${aguardando}</div><div class="sub">retorno do employer</div></div>
       <div class="small-stat clickable accent-green" onclick="goToPipelineFilter('Gostou')"><div class="lbl">Gostou</div><div class="val" style="color:var(--green)">${gostou}</div><div class="sub">feedback positivo</div></div>
       <div class="small-stat clickable accent-red" onclick="goToPipelineFilter('Não gostou')"><div class="lbl">Não gostou</div><div class="val" style="color:var(--red)">${naoGostou}</div><div class="sub">feedback negativo</div></div>
-      <div class="small-stat clickable accent-blue" onclick="${nextMeeting?`goToMeeting('${nextMeeting.id}')`:`nav('reunioes')`}"><div class="lbl">Reuniões</div><div class="val" style="color:var(--blue)">${reuniao}</div><div class="sub">agendadas</div></div>
+      <div class="small-stat clickable accent-blue" onclick="${nextMeeting?`goToMeeting('${escapeJsString(nextMeeting.id)}')`:`nav('reunioes')`}"><div class="lbl">Reuniões</div><div class="val" style="color:var(--blue)">${reuniao}</div><div class="sub">agendadas</div></div>
       <div class="small-stat clickable accent-blue" onclick="goToPipelineFilter('Em processo')"><div class="lbl">Em processo</div><div class="val" style="color:var(--blue)">${emProcesso}</div><div class="sub">follow-up ativo</div></div>
       <div class="small-stat clickable" onclick="openEmpModal(S.currentDossieEmp)"><div class="lbl">Vagas abertas</div><div class="val">${abertas}</div><div class="sub">estruturadas</div></div>
       <div class="small-stat clickable accent-amber" onclick="goToReposicao()"><div class="lbl">Reposição</div><div class="val" style="color:var(--amber)">${reposicao}</div><div class="sub">demanda aberta</div></div>
@@ -2322,28 +2541,34 @@ function renderPipeline(){
   const search=(document.getElementById('pipe-search')?.value||'').toLowerCase();
   const etapaF=document.getElementById('pipe-etapa-filter')?.value||'';
   let list=(S.dossiers[emp]?.candidatos||[])
-    .filter(c=>(!search||c.nome.toLowerCase().includes(search)||c.area?.toLowerCase().includes(search))&&(!etapaF||c.etapa===etapaF))
+    .filter(c=>(!search||String(c.nome||'').toLowerCase().includes(search)||String(c.area||'').toLowerCase().includes(search))&&(!etapaF||c.etapa===etapaF))
     .sort((a,b)=>(a.seq||99)-(b.seq||99));
   const tbody=document.getElementById('pipe-tbody');
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Nenhum candidato no pipeline.</p><small>Clique em "Adicionar Candidato" para começar</small></div></td></tr>`;return;}
-  tbody.innerHTML=list.map(c=>`<tr onclick="openCandModal('${c.id}')">
-    <td style="font-size:11px;color:var(--text3);font-weight:700">${c.seq||'—'}</td>
-    <td><div style="font-weight:600;font-size:12px">${c.nome}</div><div style="font-size:10px;color:var(--text3)">${c.idade?c.idade+' anos':''}</div></td>
-    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.area||''}">${c.area||'—'}</span></td>
-    <td style="font-size:11px;color:var(--blue);font-weight:500;max-width:120px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.encaixe||'—'}</span></td>
-    <td style="font-size:11px;text-align:center">${c.idade||'—'}</td>
-    <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px">${c.alemao||'—'}</span></td>
-    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${c.dataEnvio||'—'}</td>
-    <td style="position:relative"><button class="badge ${STATUS_COLORS[c.etapa]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${c.id}','cand',['Aguardando envio','Aguardando resposta','Gostou','Não gostou','Reunião marcada','Em processo','Contratado','Removido'])">${c.etapa||'—'}</button></td>
-    <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.proxacao||'—'}</span></td>
-    <td style="font-size:11px">${c.responsavel||'—'}</td>
-    <td onclick="event.stopPropagation()">
-      <div class="row-actions">
-        <button class="icon-btn" onclick="openCandModal('${c.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="icon-btn danger" onclick="event.stopPropagation();deleteCandDirect('${c.id}')" title="Excluir"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
-      </div>
-    </td>
-  </tr>`).join('');
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Nenhum candidato no pipeline.</p><small>Clique em "Adicionar Candidato" para começar</small></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=list.map(c=>{
+    const candId=escapeJsString(c.id);
+    return `<tr onclick="openCandModal('${candId}')">
+      <td style="font-size:11px;color:var(--text3);font-weight:700">${c.seq||'—'}</td>
+      <td><div style="font-weight:600;font-size:12px">${safeText(c.nome,'—')}</div><div style="font-size:10px;color:var(--text3)">${c.idade?escapeHTML(`${c.idade} anos`):''}</div></td>
+      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeAttrValue(c.area||'')}">${safeText(c.area,'—')}</span></td>
+      <td style="font-size:11px;color:var(--blue);font-weight:500;max-width:120px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(c.encaixe,'—')}</span></td>
+      <td style="font-size:11px;text-align:center">${c.idade||'—'}</td>
+      <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px">${safeText(c.alemao,'—')}</span></td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${escapeHTML(c.dataEnvio||'—')}</td>
+      <td style="position:relative"><button class="badge ${STATUS_COLORS[c.etapa]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${candId}','cand',['Aguardando envio','Aguardando resposta','Gostou','Não gostou','Reunião marcada','Em processo','Contratado','Removido'])">${escapeHTML(c.etapa||'—')}</button></td>
+      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(c.proxacao,'—')}</span></td>
+      <td style="font-size:11px">${safeText(c.responsavel,'—')}</td>
+      <td onclick="event.stopPropagation()">
+        <div class="row-actions">
+          <button class="icon-btn" onclick="openCandModal('${candId}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="icon-btn danger" onclick="event.stopPropagation();deleteCandDirect('${candId}')" title="Excluir"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 function deleteCandDirect(id){
@@ -2358,17 +2583,20 @@ function renderRemovidos(){
   const emp=S.currentDossieEmp;
   const list=S.dossiers[emp]?.removidos||[];
   const tbody=document.getElementById('removed-tbody');
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><p>Nenhum candidato removido.</p></div></td></tr>`;return;}
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="6"><div class="empty"><p>Nenhum candidato removido.</p></div></td></tr>`;
+    return;
+  }
   tbody.innerHTML=list.map(c=>`<tr>
-    <td style="font-weight:600">${c.nome}</td>
-    <td style="font-size:11px;color:var(--text2)">${c.area||'—'}</td>
-    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${c.dataEnvio||'—'}</td>
-    <td style="font-size:11px">${c.motivoRemocao||'—'}</td>
-    <td style="font-size:11px;color:var(--text2)">${c.obs||'—'}</td>
+    <td style="font-weight:600">${safeText(c.nome,'—')}</td>
+    <td style="font-size:11px;color:var(--text2)">${safeText(c.area,'—')}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(c.dataEnvio||'—')}</td>
+    <td style="font-size:11px">${safeText(c.motivoRemocao,'—')}</td>
+    <td style="font-size:11px;color:var(--text2)">${safeText(c.obs,'—')}</td>
     <td>
       <div class="row-actions">
-        <button class="btn btn-ghost btn-sm" onclick="restoreCandidate('${c.id}')">Restaurar</button>
-        <button class="icon-btn" onclick="openCandModal('${c.id}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-ghost btn-sm" onclick="restoreCandidate('${escapeJsString(c.id)}')">Restaurar</button>
+        <button class="icon-btn" onclick="openCandModal('${escapeJsString(c.id)}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
       </div>
     </td>
   </tr>`).join('');
@@ -2442,21 +2670,24 @@ function renderReposicao(){
   const emp=S.currentDossieEmp;
   const list=S.dossiers[emp]?.reposicao||[];
   const tbody=document.getElementById('replace-tbody');
-  if(!list.length){tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><p>Nenhuma solicitação de reposição.</p></div></td></tr>`;return;}
-  tbody.innerHTML=list.map(r=>`<tr id="rep-row-${r.id}">
-    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${r.dataSolicitacao||r.data||'—'}</td>
-    <td style="font-size:11px;color:var(--text2)">${r.gatilho||'—'}</td>
-    <td style="font-weight:600">${r.perfil||'—'}</td>
-    <td style="font-size:11px;color:var(--text2)">${r.substitui||'—'}</td>
-    <td style="font-size:11px;text-align:center">${r.qtd||'—'}</td>
+  if(!list.length){
+    tbody.innerHTML=`<tr><td colspan="10"><div class="empty"><p>Nenhuma solicitação de reposição.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML=list.map(r=>`<tr id="rep-row-${escapeAttr(r.id)}">
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(r.dataSolicitacao||r.data||'—')}</td>
+    <td style="font-size:11px;color:var(--text2)">${safeText(r.gatilho,'—')}</td>
+    <td style="font-weight:600">${safeText(r.perfil,'—')}</td>
+    <td style="font-size:11px;color:var(--text2)">${safeText(r.substitui,'—')}</td>
+    <td style="font-size:11px;text-align:center">${escapeHTML(r.qtd||'—')}</td>
     <td>${badge(r.prioridade||'—')}</td>
     <td>${badge(r.status||'—')}</td>
-    <td style="font-size:11px;color:var(--text2)">${r.dataNovoEnvio||'—'}</td>
-    <td style="font-size:11px;color:var(--text2)">${r.obs||'—'}</td>
+    <td style="font-size:11px;color:var(--text2)">${escapeHTML(r.dataNovoEnvio||'—')}</td>
+    <td style="font-size:11px;color:var(--text2)">${safeText(r.obs,'—')}</td>
     <td>
       <div class="row-actions">
-        <button class="icon-btn" onclick="openReplaceModal('${r.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-        <button class="icon-btn danger" onclick="deleteReplace('${r.id}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
+        <button class="icon-btn" onclick="openReplaceModal('${escapeJsString(r.id)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="icon-btn danger" onclick="deleteReplace('${escapeJsString(r.id)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
       </div>
     </td>
   </tr>`).join('');
@@ -2474,8 +2705,8 @@ function deleteReplace(id){
 function openWeeklyModal(id,preset){
   ensureWeeklySummaries();
   populateAllSelects();
-  document.getElementById('weekly-month').innerHTML=MONTHS.map(m=>`<option value="${m.k}">${m.l}</option>`).join('');
-  document.getElementById('weekly-employer').innerHTML=getEmpNames().map(n=>`<option>${n}</option>`).join('');
+  document.getElementById('weekly-month').innerHTML=MONTHS.map(m=>`<option value="${escapeAttr(m.k)}">${escapeHTML(m.l)}</option>`).join('');
+  document.getElementById('weekly-employer').innerHTML=optionListHtml(getEmpNames(), null);
   document.getElementById('weekly-id').value='';
   document.getElementById('weekly-week').value='';
   document.getElementById('weekly-period').value='';
