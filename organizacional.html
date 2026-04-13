@@ -129,8 +129,8 @@ tbody tr:hover .row-actions.hover{opacity:1}
 .sub-page.active{display:block}
 
 /* MODAL */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px}
-.modal-ov.open{display:flex}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px;pointer-events:none}
+.modal-ov.open{display:flex;pointer-events:auto}
 .modal{background:var(--surface);border-radius:var(--r-lg);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh-lg)}
 .modal-lg{max-width:720px}
 .modal-xl{max-width:860px}
@@ -168,8 +168,8 @@ tbody tr:hover .row-actions.hover{opacity:1}
 #toast.show{opacity:1;transform:translateY(0)}
 
 /* CONFIRM */
-.conf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center}
-.conf-ov.open{display:flex}
+.conf-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:center;justify-content:center;pointer-events:none}
+.conf-ov.open{display:flex;pointer-events:auto}
 .conf-box{background:#fff;border-radius:var(--r-lg);padding:24px;max-width:320px;width:100%;box-shadow:var(--sh-lg);text-align:center}
 .conf-box h3{font-size:15px;font-weight:700;margin-bottom:7px}
 .conf-box p{font-size:12px;color:var(--text2);margin-bottom:18px}
@@ -1220,6 +1220,8 @@ async function getSessionSafe(){
   }catch{return null;}
 }
 let _uiErrorToastTs=0;
+const MAX_LOCAL_SNAPSHOT_CHARS = 2_500_000;
+const MAX_REMOTE_SNAPSHOT_CHARS = 2_500_000;
 function withTimeout(promise, ms, label='Operação'){
   return Promise.race([
     Promise.resolve(promise),
@@ -1237,12 +1239,33 @@ function logUiError(scope, err){
   return msg;
 }
 function safeInvoke(scope, fn, fallback=null){
-  try{ return fn(); }catch(err){ logUiError(scope, err); return fallback; }
+  try{
+    const result = fn();
+    if(result && typeof result.then === 'function'){
+      return result.catch(err=>{ logUiError(scope, err); return fallback; });
+    }
+    return result;
+  }catch(err){
+    logUiError(scope, err);
+    return fallback;
+  }
+}
+function emergencyUnlockUi(){
+  try{
+    document.documentElement.style.pointerEvents='';
+    document.body.style.pointerEvents='';
+    document.body.style.overflow='';
+    document.querySelectorAll('.modal-ov,.conf-ov').forEach(el=>{
+      if(!el.classList.contains('open')) el.style.display='';
+    });
+    document.querySelectorAll('.modal-ov.open,.conf-ov.open').forEach(el=>el.classList.remove('open'));
+    document.querySelectorAll('.status-picker').forEach(el=>el.remove());
+  }catch(_){ }
 }
 function resetTransientUi(){
-  document.querySelectorAll('.modal-ov.open').forEach(el=>el.classList.remove('open'));
-  document.querySelectorAll('.status-picker').forEach(el=>el.remove());
+  emergencyUnlockUi();
 }
+window.__t4UnlockUi = emergencyUnlockUi;
 window.addEventListener('error', ev=>{
   if(ev?.error) logUiError('Erro de interface', ev.error);
 });
@@ -1310,9 +1333,16 @@ function ensureUiState(){
 }
 function load(){
   try{
-    const raw=localStorage.getItem('t4crm_v5') || localStorage.getItem('t4crm_v2');
+    let raw=localStorage.getItem('t4crm_v5') || localStorage.getItem('t4crm_v2');
+    if(raw && raw.length > MAX_LOCAL_SNAPSHOT_CHARS){
+      console.warn('[T4 Organizacional] snapshot local excessivo ignorado para evitar travamento.');
+      raw = null;
+    }
     S=raw?JSON.parse(raw):defaultState();
-  }catch{S=defaultState();}
+  }catch(err){
+    console.warn('[T4 Organizacional] falha ao ler snapshot local, usando estado padrão.', err?.message || err);
+    S=defaultState();
+  }
   if(!S.employers) S=defaultState();
   ensureUiState();
 }
@@ -1341,6 +1371,11 @@ async function loadRemoteState(){
     _remoteSyncErrorShown=false;
     _remoteSnapshotUpdatedAt=data?.updated_at||null;
     if(data?.payload && typeof data.payload==='object'){
+      const remoteSize = JSON.stringify(data.payload).length;
+      if(remoteSize > MAX_REMOTE_SNAPSHOT_CHARS){
+        console.warn('[T4 Organizacional] snapshot remoto excessivo ignorado para evitar travamento.');
+        return false;
+      }
       _hydratingRemote=true;
       S=data.payload;
       ensureUiState();
@@ -1389,6 +1424,11 @@ async function saveRemoteNow(){
         toast('Sincronização remota bloqueada até recarregar a página.');
         _remoteConflictShown=true;
       }
+      return false;
+    }
+    const nextPayload = JSON.stringify(S);
+    if(nextPayload.length > MAX_REMOTE_SNAPSHOT_CHARS){
+      console.warn('[T4 Organizacional] snapshot remoto não enviado porque excede o limite seguro.');
       return false;
     }
     const nextUpdatedAt=new Date().toISOString();
@@ -2887,27 +2927,38 @@ function renderBootstrap(){
   });
   safeInvoke('Renderização inicial', ()=>nav(S.currentPage||'plan-mensal'));
 }
-
-// ─── INIT ───
-document.addEventListener('DOMContentLoaded', async()=>{
-  document.getElementById('backup-import')?.addEventListener('change',e=>{const f=e.target.files?.[0]; if(f) importBackup(f); e.target.value='';});
-  resetTransientUi();
-  const session = await safeInvoke('Validação de sessão', ()=>checkAuthAndRedirect(), null);
-  if(!session) return;
-  safeInvoke('Watchdog de autenticação', ()=>initAuthWatchdog());
-  renderBootstrap();
-  setTimeout(async()=>{
+function scheduleBackgroundRemoteSync(){
+  const runner = async()=>{
+    const session = await safeInvoke('Validação de sessão', ()=>withTimeout(checkAuthAndRedirect(), 2200, 'Validação de sessão'), null);
+    if(!session) return;
+    safeInvoke('Watchdog de autenticação', ()=>initAuthWatchdog());
     const remoteLoaded = await safeInvoke('Sincronização remota', ()=>loadRemoteState(), false);
     if(remoteLoaded){
       renderBootstrap();
       try{ toast('Dados sincronizados do Supabase ✓'); }catch(_){ }
     }
-  },0);
+  };
+  if(typeof window.requestIdleCallback === 'function'){
+    window.requestIdleCallback(()=>{ runner(); }, { timeout: 1200 });
+  }else{
+    setTimeout(()=>{ runner(); }, 120);
+  }
+}
+
+// ─── INIT ───
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('backup-import')?.addEventListener('change',e=>{const f=e.target.files?.[0]; if(f) importBackup(f); e.target.value='';});
+  emergencyUnlockUi();
+  renderBootstrap();
+  scheduleBackgroundRemoteSync();
 });
 
-window.addEventListener('pageshow', ()=>resetTransientUi());
+window.addEventListener('pageshow', ()=>emergencyUnlockUi());
 document.querySelectorAll('.modal-ov').forEach(ov=>{
   ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') emergencyUnlockUi();
 });
 </script>
 </body>
