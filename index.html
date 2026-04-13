@@ -14168,6 +14168,14 @@ function goToOrganizacional() {
     window.location.href = 'organizacional.html';
   }
 }
+function emergencyUnlockMainUi(){
+  try {
+    document.documentElement.style.pointerEvents = '';
+    document.body.style.pointerEvents = '';
+    document.querySelectorAll('.overlay.open, .modal-ov.open').forEach(el => el.classList.remove('open'));
+  } catch (_e) {}
+}
+window.__t4MainUnlockUi = emergencyUnlockMainUi;
 window.addEventListener('error', (ev) => {
   try {
     console.error('[T4 Principal] erro de interface:', ev?.error || ev?.message || ev);
@@ -14182,10 +14190,9 @@ window.addEventListener('unhandledrejection', (ev) => {
   } catch (_e) {}
 });
 window.addEventListener('pageshow', () => {
-  try {
-    document.querySelectorAll('.overlay.open, .modal-ov.open').forEach(el => el.classList.remove('open'));
-  } catch (_e) {}
+  emergencyUnlockMainUi();
 });
+window.addEventListener('keydown', (e) => { if (e.key === 'Escape') emergencyUnlockMainUi(); });
 
 function getActiveFilterTokens() {
   const tokens = [];
@@ -15682,6 +15689,7 @@ function agNav(dir) {
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    emergencyUnlockMainUi();
     injectSwitch();
     applyLanguage(document.body);
     const mo = new MutationObserver((mutations) => {
