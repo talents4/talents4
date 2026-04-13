@@ -7,30 +7,30 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root{
-      --bg:#f5f7fb; --panel:#ffffff; --muted:#64748b; --text:#102033; --line:#d7dee8;
-      --blue:#153b66; --blue2:#1f4d80; --chip:#eef4fb; --danger:#b42318; --ok:#067647;
-      --shadow:0 10px 25px rgba(16,32,51,.08);
+      --bg:#edf1f5; --panel:#ffffff; --muted:#5f7085; --text:#102033; --line:#c7d1dc;
+      --blue:#254f86; --blue2:#193c66; --chip:#edf3fa; --danger:#b42318; --ok:#067647;
+      --shadow:none;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Aptos,Segoe UI,Arial,sans-serif}
     button,input,textarea{font:inherit}
     input,textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text)}
     textarea{min-height:76px;resize:vertical}
-    .app{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
-    .sidebar{background:#eef3f9;border-right:1px solid var(--line);padding:16px 14px;position:sticky;top:0;height:100vh;overflow:auto}
+    .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+    .sidebar{background:#f4f7fa;border-right:1px solid var(--line);padding:16px 14px;position:sticky;top:0;height:100vh;overflow:auto}
     .brand{display:flex;gap:12px;align-items:center;padding:6px 10px 16px;border-bottom:1px solid var(--line);margin-bottom:16px}
-    .brand-badge{width:46px;height:46px;border-radius:14px;background:linear-gradient(180deg,#f43f5e,#be123c);display:grid;place-items:center;color:#fff;font-weight:900}
+    .brand-badge{width:46px;height:46px;border-radius:14px;background:linear-gradient(180deg,#2e639f,#1b3f6b);display:grid;place-items:center;color:#fff;font-weight:900}
     .brand h1{margin:0;font-size:22px;line-height:1}
     .brand p{margin:4px 0 0;color:var(--muted);font-size:12px}
     .side-title{font-size:12px;text-transform:uppercase;color:#73849a;font-weight:800;letter-spacing:.08em;margin:16px 8px 8px}
     .nav{display:grid;gap:6px}
     .nav button{border:1px solid transparent;background:transparent;text-align:left;padding:11px 12px;border-radius:12px;cursor:pointer;font-weight:700;color:var(--text)}
-    .nav button.active,.nav button:hover{background:#fff;border-color:var(--line);box-shadow:var(--shadow)}
+    .nav button.active,.nav button:hover{background:#fff;border-color:var(--line);box-shadow:none}
     .switch{margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
     .switch-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#fff;border:1px solid var(--line);padding:6px;border-radius:14px}
     .switch-grid button{border:0;border-radius:10px;padding:10px 8px;background:transparent;cursor:pointer;font-weight:800;color:var(--muted)}
     .switch-grid button.active{background:var(--blue);color:#fff}
-    .main{padding:16px 18px 28px;overflow:auto}
+    .main{padding:18px 20px 28px;overflow:auto}
     .topbar{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:14px}
     .topbar h2{margin:0;font-size:30px}
     .topbar p{margin:6px 0 0;color:var(--muted)}
@@ -47,7 +47,7 @@
     .sheet-chip:hover{background:#eef5ff}
     .sheet-chip.active{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:var(--shadow)}
     .sheet-chip.all{background:#fff}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:14px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:none;padding:14px}
     .grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
     .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
     .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
@@ -56,7 +56,7 @@
     .kpi-value{font-size:34px;font-weight:900;margin-top:6px}
     .hidden{display:none!important}
     .chip{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;background:var(--chip);color:var(--blue2)}
-    .table-wrap{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:auto;box-shadow:var(--shadow)}
+    .table-wrap{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:auto;box-shadow:none}
     table{border-collapse:separate;border-spacing:0;width:100%;min-width:max-content}
     th,td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 9px;vertical-align:top;background:#fff}
     th{position:sticky;top:0;background:#f7f9fc;color:#607286;font-size:12px;text-transform:uppercase;font-weight:800;letter-spacing:.06em;z-index:1}
@@ -190,14 +190,44 @@
     .workspace-hero-main.is-watch{background:linear-gradient(135deg,#8a5a00 0%,#b7791f 100%);border-color:#9a6a12}
     .workspace-hero-main .hero-kicker,.workspace-hero-main .hero-sub,.workspace-hero-main .hero-note{color:rgba(255,255,255,.86)}
     .workspace-hero-side{display:grid;gap:12px}
-    .mini-metric{padding:14px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:var(--shadow)}
+    .mini-metric{padding:14px;border-radius:12px;background:#fff;border:1px solid var(--line);box-shadow:none}
     .mini-metric-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:#607286}
     .mini-metric-value{margin-top:6px;font-size:28px;font-weight:900;line-height:1}
     .mini-metric-sub{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.45}
     .muted{color:var(--muted)}
     .emp-w0{background:#ead7ca}.emp-w1{background:#d8d2e2}.emp-w2{background:#d9e6d0}.emp-w3{background:#d9e7f3}.emp-w4{background:#eee3b9}.emp-w5{background:#e9c5c5}.emp-w6{background:#d5e4cf}.emp-w7{background:#dec7d4}.emp-w8{background:#d3e0e6}.emp-w9{background:#e6ebf0}
-    @media (max-width:1200px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
-    @media (max-width:760px){.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero{grid-template-columns:1fr}.hero-stats{grid-template-columns:1fr}.focus-row{grid-template-columns:1fr}.drawer{width:100%}.sheet-picker-wrap{min-width:100%}.inline-actions{min-width:0}.planner-drawer-grid{grid-template-columns:1fr}.planner-drawer-toolbar{flex-direction:column;align-items:flex-start}}
+    .module-subnav{display:flex;gap:8px;flex-wrap:wrap;margin:-2px 0 14px}
+    .module-subnav button{border:1px solid var(--line);background:#f8fbff;color:#51667f;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer}
+    .module-subnav button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+    .sheet-cluster{display:grid;gap:14px}
+    .workbook-note{background:linear-gradient(180deg,#fdfefe 0%,#f6f9fc 100%)}
+    .sheet-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .sheet-stat{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
+    .sheet-stat-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#607286}
+    .sheet-stat-value{margin-top:6px;font-size:30px;font-weight:900;line-height:1}
+    .sheet-stat-sub{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.45}
+    .sheet-stack{display:grid;gap:12px}
+    .sheet-table-title{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#607286;margin-bottom:8px}
+    .book-tabbar{display:flex;gap:8px;flex-wrap:wrap}
+    .book-tabbar button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 12px;cursor:pointer;font-weight:800;color:#5f7085}
+    .book-tabbar button.active{background:var(--blue);border-color:var(--blue);color:#fff}
+    .book-section{display:grid;gap:12px}
+    .sheet-caption{font-size:12px;color:var(--muted);line-height:1.5}
+    .sheet-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#607286}
+    .sheet-empty{padding:14px;border:1px dashed var(--line);border-radius:12px;background:#fbfdff;color:var(--muted)}
+    .ledger-table th{background:#eef3f8;color:#2d4b69}
+    .ledger-table td{background:#fff}
+    .book-grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    .book-grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    .book-info-card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
+    .book-info-card strong{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#607286;margin-bottom:8px}
+    .book-info-card span{font-size:24px;font-weight:900;line-height:1.1}
+    .book-info-card small{display:block;margin-top:6px;color:var(--muted);font-size:12px;line-height:1.4}
+    .table-inline-toolbar{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+    .flat-note{padding:10px 12px;border-radius:10px;background:#f6f9fc;border:1px solid var(--line);font-size:12px;color:var(--muted);line-height:1.5}
+    .hidden-action{display:none!important}
+    @media (max-width:1200px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero,.sheet-summary-grid,.book-grid-2,.book-grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}.hero-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+    @media (max-width:760px){.grid4,.grid3,.grid2,.signal-grid,.home-hero,.workspace-hero,.sheet-summary-grid,.book-grid-2,.book-grid-3{grid-template-columns:1fr}.hero-stats{grid-template-columns:1fr}.focus-row{grid-template-columns:1fr}.drawer{width:100%}.sheet-picker-wrap{min-width:100%}.inline-actions{min-width:0}.planner-drawer-grid{grid-template-columns:1fr}.planner-drawer-toolbar{flex-direction:column;align-items:flex-start}.module-subnav{overflow:auto}}
   </style>
 </head>
 <body>
@@ -205,7 +235,7 @@
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-badge">T4</div>
-      <div><h1>Organizacional</h1><p>home operacional + employer workspace</p></div>
+      <div><h1>Talents 4</h1><p>planejamento mensal + dossie do employer</p></div>
     </div>
     <div class="side-title">Navegação</div>
     <div class="nav">
@@ -482,13 +512,13 @@ const SUPABASE_URL = 'https://xcxqtjzlqmncwnhbolnl.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhjeHF0anpscW1uY3duaGJvbG5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1OTU4NjQsImV4cCI6MjA4OTE3MTg2NH0.TJ1KB6mwSE-wu3EBO8UfP7br6byIloDsr0ejJ4_3luc';
 const OPERATIONAL_URL = 'https://talents4.github.io/talents4/';
 const State = {
-  view:'home',
+  view:'planner',
   workspaceEmployerId:null,
   plannerEmployerId:'',
   calendarEmployerId:'',
   plannerCellContext:null,
   plannerCellDraft:null,
-  wsTab:'summary',
+  wsTab:'panel',
   newRows:{
     employers:null,
     openings:null,
@@ -517,6 +547,302 @@ const State = {
   }
 };
 
+function rebuildStaticShell(){
+  const brandText = document.querySelector('.brand div:last-child');
+  if(brandText) brandText.innerHTML = '<h1>Talents 4</h1><p>planejamento mensal + dossie do employer</p>';
+  const firstSideTitle = document.querySelector('.sidebar .side-title');
+  if(firstSideTitle) firstSideTitle.textContent = 'Modulos';
+  const nav = document.querySelector('.nav');
+  if(nav){
+    nav.innerHTML = `
+      <button class="nav-btn active" data-view="planner">Planejamento Team Talents</button>
+      <button class="nav-btn" data-view="workspace">Dossie do employer</button>
+    `;
+  }
+  const pageTitle = document.getElementById('pageTitle');
+  const pageDesc = document.getElementById('pageDesc');
+  if(pageTitle) pageTitle.textContent = 'Planejamento Team Talents';
+  if(pageDesc) pageDesc.textContent = 'A planilha geral cuida do planejamento mensal, das reunioes semanais e do resumo da operacao.';
+  document.getElementById('newActivityBtn')?.classList.add('hidden-action');
+
+  if(!document.getElementById('planningSubnav')){
+    const topbar = document.querySelector('.topbar');
+    if(topbar){
+      topbar.insertAdjacentHTML('afterend', `
+        <div class="module-subnav" id="planningSubnav">
+          <button class="planning-nav active" data-planning-view="planner">Planejamento mensal</button>
+          <button class="planning-nav" data-planning-view="calendar">Reunioes semanais</button>
+          <button class="planning-nav" data-planning-view="home">Resumo geral</button>
+        </div>
+      `);
+    }
+  }
+
+  document.getElementById('view-home').innerHTML = `
+    <div class="sheet-cluster">
+      <div class="card workbook-note">
+        <div class="sheet-kicker">Resumo geral</div>
+        <h3 style="margin:8px 0 0;font-size:28px">Leitura consolidada do mapeamento</h3>
+        <p class="sheet-caption" style="margin:10px 0 0">Esta folha resume a operacao da Talents no mes, sem misturar com o dossie do employer. O foco aqui e enxergar cadencia, gargalos e proxima acao.</p>
+      </div>
+      <div class="sheet-summary-grid" id="planningOverviewGrid"></div>
+      <div class="book-grid-2">
+        <div class="card">
+          <div class="section-head"><div><h3>Prioridades do periodo</h3><p>O que pede decisao ou follow-up agora.</p></div></div>
+          <div class="focus-list" id="planningPriorityList"></div>
+        </div>
+        <div class="card">
+          <div class="section-head"><div><h3>Resumo por employer</h3><p>Pressao do mes sem abrir o dossie individual.</p></div></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Employer</th><th>Foco</th><th>Pressao</th><th>Proxima acao</th><th>Acoes</th></tr></thead>
+              <tbody id="planningEmployerSummary"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-head"><div><h3>Resumo geral da operacao</h3><p>Leitura inspirada na aba de resumo geral da planilha.</p></div></div>
+        <div class="table-wrap">
+          <table class="dense ledger-table">
+            <thead><tr><th>Mes</th><th>Semana</th><th>Periodo</th><th>Employer</th><th>O que foi feito</th><th>Resultado</th><th>Proxima acao</th><th>Responsavel</th></tr></thead>
+            <tbody id="planningGeneralSummary"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('view-planner').innerHTML = `
+    <div class="sheet-cluster">
+      <div class="card workbook-note">
+        <div class="sheet-kicker">Mapeamento Team Talents</div>
+        <h3 style="margin:8px 0 0;font-size:28px">Planejamento mensal</h3>
+        <p class="sheet-caption" style="margin:10px 0 0">Aqui ficam o planejamento do mes, as etapas fixas e as linhas do dia. A leitura tenta ser mais clara que a planilha, sem deixar de funcionar como planilha.</p>
+      </div>
+      <div class="sheet-summary-grid" id="planningMonthGrid"></div>
+      <div class="card">
+        <div class="table-inline-toolbar">
+          <div>
+            <div class="sheet-table-title">Troca de folha</div>
+            <div class="sheet-caption" id="planningMonthMeta">Selecione o mes e, se quiser, filtre um employer.</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input type="month" id="plannerMonth" style="max-width:220px" />
+          <div class="sheet-picker-wrap">
+            <div class="sheet-picker-head"><span class="sheet-picker-label">Filtro de employer</span><span class="muted">sem misturar com o dossie</span></div>
+            <div class="sheet-picker" id="plannerEmployerPicker"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flat-note">Cada bloco do employer continua com 4 linhas fixas: pesquisa, triagem, envio e feedback. O clique nas datas abre a edicao da propria celula.</div>
+      <div class="planner-grid">
+        <div class="planner-sheet-shell">
+          <div class="planner-sheet-title" id="plannerTitle">Planejamento de recrutamento</div>
+          <div class="planner-sheet-wrap">
+            <table class="planner-sheet" id="plannerSheet"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('view-calendar').innerHTML = `
+    <div class="sheet-cluster">
+      <div class="card workbook-note">
+        <div class="sheet-kicker">Reunioes semanais</div>
+        <h3 style="margin:8px 0 0;font-size:28px">Decisoes, pendencias e proximo passo</h3>
+        <p class="sheet-caption" style="margin:10px 0 0">Esta folha concentra as reunioes da semana e o calendario do mes. O objetivo e fechar o ciclo: decidir, registrar e acompanhar.</p>
+      </div>
+      <div class="card">
+        <div class="cal-toolbar">
+          <input type="month" id="calendarMonth" style="max-width:220px" />
+          <div class="sheet-picker-wrap">
+            <div class="sheet-picker-head"><span class="sheet-picker-label">Filtro de employer</span><span class="muted">visual fixo, sem dropdown</span></div>
+            <div class="sheet-picker" id="calendarEmployerPicker"></div>
+          </div>
+          <button class="btn" id="calendarTodayBtn">Ir para o mes atual</button>
+        </div>
+        <div class="table-wrap" style="margin-top:12px">
+          <table class="dense ledger-table">
+            <thead><tr><th>Data da reuniao</th><th>Mes</th><th>Semana</th><th>Employer / tema</th><th>O que foi decidido / resolvido</th><th>Pendencias</th><th>Proxima acao</th><th>Acoes</th></tr></thead>
+            <tbody id="planningWeeklyBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div id="calendarTitle" style="background:#2b5b8d;color:#fff;padding:10px 14px;font-weight:900;text-align:center;border:1px solid #9fb0c2;border-bottom:0;border-radius:10px 10px 0 0"></div>
+        <div class="cal-shell">
+          <div class="calendar-grid" id="calendarHeads"></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('view-workspace').innerHTML = `
+    <div class="sheet-cluster">
+      <div class="card workbook-note">
+        <div class="sheet-kicker">Planilha do employer</div>
+        <h3 id="workspaceTitle" style="margin:8px 0 0;font-size:28px">Employer</h3>
+        <p class="sheet-caption" id="workspaceDesc" style="margin:10px 0 0">Dossie separado da planilha geral. Aqui ficam apenas os dados do employer e do pipeline dele.</p>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <div class="sheet-picker-wrap">
+            <div class="sheet-picker-head"><span class="sheet-picker-label">Employer</span><span class="muted">clique para trocar a conta</span></div>
+            <div class="sheet-picker" id="workspaceEmployerPicker"></div>
+          </div>
+          <button class="btn" id="workspaceReloadBtn">Recarregar dossie</button>
+        </div>
+        <div class="book-tabbar" style="margin-top:10px">
+          <button class="ws-tab active" data-tab="info">INFO</button>
+          <button class="ws-tab" data-tab="send">01 Envio empregador</button>
+          <button class="ws-tab" data-tab="control">02 Controle interno</button>
+          <button class="ws-tab" data-tab="panel">03 Painel resumo</button>
+          <button class="ws-tab" data-tab="removed">04 Removidos</button>
+          <button class="ws-tab" data-tab="profiles">05 Novos perfis</button>
+          <button class="ws-tab" data-tab="base">06 Base candidatos</button>
+        </div>
+      </div>
+
+      <div id="book-info" class="book-section">
+        <div class="book-grid-3" id="employerInfoBoard"></div>
+        <div class="book-grid-2">
+          <div class="card">
+            <div class="section-head"><div><h3>Documentacao da conta</h3><p>Documentos ligados a este employer.</p></div></div>
+            <div class="table-wrap">
+              <table class="dense ledger-table">
+                <thead><tr><th>Documento</th><th>Tipo</th><th>Status</th><th>Prazo</th><th>Acoes</th></tr></thead>
+                <tbody id="tblInfoDocs"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-head"><div><h3>Historico recente</h3><p>Ultimos movimentos para contexto rapido.</p></div></div>
+            <div class="focus-list" id="employerInfoHistory"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="book-send" class="book-section hidden">
+        <div class="card">
+          <div class="section-head"><div><h3>01 Envio ao employer</h3><p>Candidatos ja apresentados ao empregador.</p></div></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Candidate ID</th><th>Vaga</th><th>Presented at</th><th>Feedback at</th><th>Stage</th><th>Due date</th></tr></thead>
+              <tbody id="tblPresented"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="book-control" class="book-section hidden">
+        <div class="card">
+          <div class="table-inline-toolbar"><div><h3 style="margin:0">02 Controle interno</h3><p class="sheet-caption" style="margin:4px 0 0">Pipeline vivo, reunioes, atividades e documentos desta conta.</p></div><button class="btn primary" id="newPipelineBtn">Novo match/pipeline</button></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Vaga</th><th>Candidate ID</th><th>Stage</th><th>Status</th><th>Priority</th><th>Next action</th><th>Due date</th><th>Match status</th><th>Acoes</th></tr></thead>
+              <tbody id="tblPipeline"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="book-grid-2">
+          <div class="card">
+            <div class="table-inline-toolbar"><div><h3 style="margin:0">Reunioes</h3><p class="sheet-caption" style="margin:4px 0 0">Registro vivo de encontros e combinados.</p></div><button class="btn primary" id="newMeetingBtn">Nova reuniao</button></div>
+            <div class="table-wrap">
+              <table class="dense ledger-table">
+                <thead><tr><th>Titulo</th><th>Data</th><th>Status</th><th>Priority</th><th>Next action</th><th>Resumo</th><th>Acoes</th></tr></thead>
+                <tbody id="tblWsMeetings"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="table-inline-toolbar"><div><h3 style="margin:0">Atividades</h3><p class="sheet-caption" style="margin:4px 0 0">Execucao do dia a dia da conta.</p></div><button class="btn primary" id="newActivityWorkspaceBtn">Nova atividade</button></div>
+            <div class="table-wrap">
+              <table class="dense ledger-table">
+                <thead><tr><th>Titulo</th><th>Tipo</th><th>Status</th><th>Priority</th><th>Planned for</th><th>Due date</th><th>Acoes</th></tr></thead>
+                <tbody id="tblActivities"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-inline-toolbar"><div><h3 style="margin:0">Documentos</h3><p class="sheet-caption" style="margin:4px 0 0">Pendencias, recebimentos e aprovacoes.</p></div><button class="btn primary" id="newDocumentBtn">Novo documento</button></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Titulo</th><th>Tipo</th><th>Status</th><th>Drive URL</th><th>Due date</th><th>Acoes</th></tr></thead>
+              <tbody id="tblDocuments"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="book-panel" class="book-section hidden">
+        <div class="workspace-hero" id="workspaceHero"></div>
+        <div class="grid4" id="workspaceSummaryKpis"></div>
+        <div class="book-grid-2">
+          <div class="card">
+            <div class="section-head"><div><h3>Plano de ataque</h3><p>Fila priorizada da conta.</p></div><span class="chip" id="workspaceActionCount">0</span></div>
+            <div class="focus-list" id="workspaceActionList"></div>
+          </div>
+          <div class="card">
+            <div class="section-head"><div><h3>Ultimos movimentos</h3><p>Leitura rapida do historico recente.</p></div><span class="chip" id="workspaceSignalCount">0</span></div>
+            <div class="focus-list" id="workspaceSignalList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="book-removed" class="book-section hidden">
+        <div class="card">
+          <div class="section-head"><div><h3>04 Removidos</h3><p>Historico de perfis que sairam do fluxo.</p></div></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Candidate ID</th><th>Vaga</th><th>Status final</th><th>Stage</th><th>Observacao</th></tr></thead>
+              <tbody id="tblRemoved"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="book-profiles" class="book-section hidden">
+        <div class="card">
+          <div class="table-inline-toolbar"><div><h3 style="margin:0">05 Novos perfis</h3><p class="sheet-caption" style="margin:4px 0 0">Aberturas, reposicoes e novas demandas.</p></div><button class="btn primary" id="newOpeningBtn">Nova vaga</button></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Titulo</th><th>Departamento</th><th>Status</th><th>Qtd solicitada</th><th>Qtd aberta</th><th>Priority</th><th>Next action</th><th>Due date</th><th>Acoes</th></tr></thead>
+              <tbody id="tblOpenings"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="book-base" class="book-section hidden">
+        <div class="card">
+          <div class="section-head"><div><h3>06 Base de candidatos</h3><p>Base consolidada desta conta.</p></div></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Candidate ID</th><th>Vaga</th><th>Stage</th><th>Status</th><th>Match status</th><th>Next action</th><th>Due date</th></tr></thead>
+              <tbody id="tblBaseCandidates"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-inline-toolbar"><div><h3 style="margin:0">Notas e historico</h3><p class="sheet-caption" style="margin:4px 0 0">Registro textual desta conta.</p></div><button class="btn primary" id="newNoteBtn">Nova nota</button></div>
+          <div class="table-wrap">
+            <table class="dense ledger-table">
+              <thead><tr><th>Tipo</th><th>Data</th><th>Conteudo</th></tr></thead>
+              <tbody id="tblHistory"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+rebuildStaticShell();
+
 const ENUMS = {
   priority:['low','medium','high','critical'],
   opening_status:['draft','open','paused','closed','cancelled'],
@@ -542,10 +868,22 @@ function badgeClass(v=''){
 }
 function showAlert(msg, type=''){document.getElementById('alertBox').innerHTML = `<div class="alert ${type}">${msg}</div>`;}
 function clearAlert(){document.getElementById('alertBox').innerHTML='';}
+function isPlanningView(v){
+  return ['home','planner','calendar'].includes(v);
+}
+function syncPlanningSubnav(){
+  const mount = document.getElementById('planningSubnav');
+  if(!mount) return;
+  mount.classList.toggle('hidden', !isPlanningView(State.view));
+  mount.querySelectorAll('.planning-nav').forEach(btn=>btn.classList.toggle('active', btn.dataset.planningView===State.view));
+}
 function setView(v){
   State.view=v;
   ['home','employers','workspace','planner','calendar'].forEach(x=>document.getElementById('view-'+x).classList.toggle('hidden', x!==v));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.view===v));
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    const active = b.dataset.view === 'planner' ? isPlanningView(v) : b.dataset.view===v;
+    b.classList.toggle('active', active);
+  });
   const meta = {
     home:['Home operacional','Leitura instantânea e ação rápida a partir das filas operacionais derivadas.'],
     employers:['Empregadores','Resumo relacional por employer.'],
@@ -555,8 +893,21 @@ function setView(v){
   };
   document.getElementById('pageTitle').textContent = meta[v][0];
   document.getElementById('pageDesc').textContent = meta[v][1];
+  if(isPlanningView(v)){
+    document.getElementById('pageTitle').textContent = 'Planejamento Team Talents';
+    document.getElementById('pageDesc').textContent = v === 'calendar'
+      ? 'Reunioes semanais e calendario mensal da operacao.'
+      : v === 'home'
+        ? 'Resumo geral da operacao do mapeamento mensal.'
+        : 'Planejamento mensal da Talents com estrutura inspirada na planilha de mapeamento.';
+  } else if(v === 'workspace'){
+    document.getElementById('pageTitle').textContent = 'Dossie do employer';
+    document.getElementById('pageDesc').textContent = 'Dados do empregador, pipeline e documentacao sem misturar com a planilha geral.';
+  }
+  syncPlanningSubnav();
 }
 document.querySelectorAll('.nav-btn').forEach(btn=>btn.onclick=()=>setView(btn.dataset.view));
+document.querySelectorAll('.planning-nav').forEach(btn=>btn.onclick=()=>setView(btn.dataset.planningView));
 document.getElementById('btnOperational').onclick=()=>{localStorage.setItem('crm_mode','operational'); location.href=OPERATIONAL_URL;};
 document.getElementById('btnOrganizational').onclick=()=>localStorage.setItem('crm_mode','organizational');
 
@@ -2196,10 +2547,461 @@ async function saveNewPipeline(){
   await Promise.all([loadWorkspace(employerId), loadHome()]);
 }
 
+function normalizeWorkspaceTab(tab){
+  const map = {
+    summary:'panel',
+    openings:'profiles',
+    pipeline:'control',
+    presented:'send',
+    meetings:'control',
+    activities:'control',
+    documents:'control',
+    history:'base',
+    info:'info',
+    send:'send',
+    control:'control',
+    panel:'panel',
+    removed:'removed',
+    profiles:'profiles',
+    base:'base'
+  };
+  return map[String(tab || 'panel')] || 'panel';
+}
 function setWorkspaceTab(tab){
-  State.wsTab = tab || 'summary';
+  State.wsTab = normalizeWorkspaceTab(tab);
   document.querySelectorAll('.ws-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===State.wsTab));
-  ['summary','openings','pipeline','presented','meetings','activities','documents','history'].forEach(t=>document.getElementById('ws-'+t).classList.toggle('hidden', t!==State.wsTab));
+  ['info','send','control','panel','removed','profiles','base'].forEach(t=>{
+    const node = document.getElementById('book-'+t);
+    if(node) node.classList.toggle('hidden', t!==State.wsTab);
+  });
+}
+function currentPlanningMonth(){
+  return document.getElementById('plannerMonth')?.value || document.getElementById('calendarMonth')?.value || new Date().toISOString().slice(0,7);
+}
+function syncMonthInputs(yyyyMm){
+  const plannerInput = document.getElementById('plannerMonth');
+  const calendarInput = document.getElementById('calendarMonth');
+  if(plannerInput && yyyyMm && plannerInput.value !== yyyyMm) plannerInput.value = yyyyMm;
+  if(calendarInput && yyyyMm && calendarInput.value !== yyyyMm) calendarInput.value = yyyyMm;
+}
+function pickRowDate(row, fields){
+  for(const field of fields){
+    if(row?.[field]) return row[field];
+  }
+  return '';
+}
+function rowsByMonth(rows, yyyyMm, fields, employerId=''){
+  return (rows || []).filter(row => {
+    const sameMonth = String(pickRowDate(row, fields) || '').slice(0,7) === yyyyMm;
+    const sameEmployer = !employerId || String(row.employer_id || '') === String(employerId);
+    return sameMonth && sameEmployer;
+  });
+}
+function weekInMonthLabel(value){
+  const d = parseDateSafe(value);
+  if(!d) return 'Semana 1';
+  return `Semana ${Math.floor((d.getDate() - 1) / 7) + 1}`;
+}
+function formatDateShort(value){
+  const d = parseDateSafe(value);
+  if(!d) return '—';
+  return d.toLocaleDateString('pt-BR');
+}
+function formatPeriodRange(values){
+  const dates = (values || []).map(parseDateSafe).filter(Boolean).sort((a,b)=>a-b);
+  if(!dates.length) return 'sem data registrada';
+  const first = dates[0].toLocaleDateString('pt-BR');
+  const last = dates[dates.length - 1].toLocaleDateString('pt-BR');
+  return first === last ? first : `${first} a ${last}`;
+}
+function buildPlanningGeneralRows(yyyyMm){
+  const employers = new Map((State.cache.employers || []).map(row => [String(row.employer_id), row.employer_name]));
+  const activities = rowsByMonth(State.cache.calendar.activities || [], yyyyMm, ['planned_for','due_date']);
+  const grouped = new Map();
+  activities.forEach(row => {
+    const employerName = employers.get(String(row.employer_id || '')) || row.employer_name || 'Sem employer';
+    const week = weekInMonthLabel(pickRowDate(row, ['planned_for','due_date']));
+    const key = `${employerName}::${week}`;
+    if(!grouped.has(key)) grouped.set(key, {employerName, week, rows:[]});
+    grouped.get(key).rows.push(row);
+  });
+  return Array.from(grouped.values()).map(group => {
+    const done = group.rows.filter(row => ['done','completed'].includes(String(row.status || '').toLowerCase())).length;
+    const open = group.rows.length - done;
+    const titles = [...new Set(group.rows.map(row => String(row.title || '').trim()).filter(Boolean))];
+    const next = group.rows.find(row => !['done','completed','cancelled'].includes(String(row.status || '').toLowerCase()));
+    return {
+      month: monthLabelPt(yyyyMm),
+      week: group.week,
+      period: formatPeriodRange(group.rows.map(row => pickRowDate(row, ['planned_for','due_date']))),
+      employerName: group.employerName,
+      whatWasDone: titles.slice(0,3).join(' · ') || 'Sem atividade descrita',
+      result: `${done} concluida(s) · ${open} em aberto`,
+      nextAction: next?.next_action || next?.title || 'Sem proxima acao registrada',
+      owner: 'Equipe Talents'
+    };
+  }).sort((a,b) => a.employerName.localeCompare(b.employerName, 'pt-BR') || a.week.localeCompare(b.week, 'pt-BR'));
+}
+function renderPlanningHome(){
+  const home = State.cache.home || {};
+  const pulse = buildEmployerPulse(home, State.cache.employers || []);
+  const priorities = buildHomePriorityItems(home);
+  const selectedMonth = currentPlanningMonth();
+  const monthActivities = rowsByMonth(State.cache.calendar.activities || [], selectedMonth, ['planned_for','due_date']);
+  const monthMeetings = rowsByMonth(State.cache.calendar.meetings || [], selectedMonth, ['meeting_date']);
+  const generalRows = buildPlanningGeneralRows(selectedMonth);
+  const overview = document.getElementById('planningOverviewGrid');
+  if(overview){
+    overview.innerHTML = [
+      {label:'employers ativos', value:uniqueCount(monthActivities.concat(monthMeetings), row => String(row.employer_id || '')), sub:`${pulse.length} employer(s) monitorados no geral`},
+      {label:'linhas do mes', value:monthActivities.length, sub:`${monthMeetings.length} reuniao(oes) registradas no mes`},
+      {label:'pendencias criticas', value:(home.awaiting || []).length + (home.docs || []).length + (home.replacement || []).length, sub:'feedback, documentos e reposicoes em aberto'},
+      {label:'foco imediato', value:(home.today || []).length, sub:`${(home.next7 || []).length} atividade(s) ainda nesta janela curta`}
+    ].map(card => `<div class="sheet-stat"><div class="sheet-stat-label">${esc(card.label)}</div><div class="sheet-stat-value">${esc(card.value)}</div><div class="sheet-stat-sub">${esc(card.sub)}</div></div>`).join('');
+  }
+  const priorityList = document.getElementById('planningPriorityList');
+  if(priorityList) priorityList.innerHTML = renderFocusList(priorities, 'Sem prioridades abertas neste periodo.');
+  const employerSummary = document.getElementById('planningEmployerSummary');
+  if(employerSummary){
+    employerSummary.innerHTML = rowsHtml(pulse, 5, row => `<tr>
+      <td><strong>${esc(row.employer_name)}</strong></td>
+      <td><span class="badge ${row.tone.badge}">${esc(row.tone.label)}</span></td>
+      <td>${esc(row.pressure)}</td>
+      <td><strong>${esc(row.nextLabel)}</strong><div class="muted" style="margin-top:4px">${esc(shortText(row.nextSub || '', 82))}</div></td>
+      <td><button class="btn small" onclick='goEmployer("${esc(row.employer_id)}")'>Abrir dossie</button></td>
+    </tr>`);
+  }
+  const generalTable = document.getElementById('planningGeneralSummary');
+  if(generalTable){
+    generalTable.innerHTML = rowsHtml(generalRows, 8, row => `<tr>
+      <td>${esc(row.month)}</td>
+      <td>${esc(row.week)}</td>
+      <td>${esc(row.period)}</td>
+      <td><strong>${esc(row.employerName)}</strong></td>
+      <td>${esc(shortText(row.whatWasDone, 90))}</td>
+      <td>${esc(row.result)}</td>
+      <td>${esc(shortText(row.nextAction, 78))}</td>
+      <td>${esc(row.owner)}</td>
+    </tr>`);
+  }
+}
+function renderPlanningMonthShell(){
+  const selectedMonth = currentPlanningMonth();
+  syncMonthInputs(selectedMonth);
+  const employerId = State.plannerEmployerId || '';
+  const monthActivities = rowsByMonth(State.cache.calendar.activities || [], selectedMonth, ['planned_for','due_date'], employerId);
+  const monthMeetings = rowsByMonth(State.cache.calendar.meetings || [], selectedMonth, ['meeting_date'], employerId);
+  const affectedEmployers = uniqueCount(monthActivities.concat(monthMeetings), row => String(row.employer_id || ''));
+  const meta = document.getElementById('planningMonthMeta');
+  if(meta) meta.textContent = `Folha ativa: ${monthLabelPt(selectedMonth)}${employerId ? ' · employer filtrado' : ' · todos os employers'}.`;
+  const grid = document.getElementById('planningMonthGrid');
+  if(grid){
+    grid.innerHTML = [
+      {label:'atividades no mes', value:monthActivities.length, sub:'linhas registradas na operacao'},
+      {label:'reunioes do mes', value:monthMeetings.length, sub:'encontros ligados ao planejamento'},
+      {label:'employers visiveis', value:affectedEmployers || ((State.cache.employers || []).length || 0), sub:'contas consideradas nesta folha'},
+      {label:'feedbacks abertos', value:monthActivities.filter(row => inferPlannerBucket(row) === 'feedback' && !['done','completed','cancelled'].includes(String(row.status || '').toLowerCase())).length, sub:'itens do bucket de feedback ainda em aberto'}
+    ].map(card => `<div class="sheet-stat"><div class="sheet-stat-label">${esc(card.label)}</div><div class="sheet-stat-value">${esc(card.value)}</div><div class="sheet-stat-sub">${esc(card.sub)}</div></div>`).join('');
+  }
+}
+function renderPlanningWeekly(){
+  const selectedMonth = document.getElementById('calendarMonth')?.value || currentPlanningMonth();
+  syncMonthInputs(selectedMonth);
+  const employerId = State.calendarEmployerId || '';
+  const meetings = rowsByMonth(State.cache.calendar.meetings || [], selectedMonth, ['meeting_date'], employerId);
+  const weeklyBody = document.getElementById('planningWeeklyBody');
+  if(weeklyBody){
+    weeklyBody.innerHTML = rowsHtml(meetings, 8, row => `<tr>
+      <td>${esc(formatDateShort(row.meeting_date))}</td>
+      <td>${esc(monthLabelPt(selectedMonth))}</td>
+      <td>${esc(weekInMonthLabel(row.meeting_date))}</td>
+      <td><strong>${esc(row.employer_name || (State.cache.employers || []).find(item => String(item.employer_id) === String(row.employer_id))?.employer_name || 'Employer')}</strong><div class="muted" style="margin-top:4px">${esc(shortText(row.title || '', 54))}</div></td>
+      <td>${esc(shortText(row.summary || row.title || 'Sem resumo informado', 90))}</td>
+      <td>${esc(['completed','cancelled'].includes(String(row.status || '').toLowerCase()) ? 'Sem pendencia aberta' : 'Ha pendencias para acompanhar')}</td>
+      <td>${esc(shortText(row.next_action || 'Sem proxima acao registrada', 78))}</td>
+      <td><button class="btn small" onclick='openMeeting("${esc(row.id)}","${esc(row.employer_id)}")'>Abrir</button></td>
+    </tr>`);
+  }
+}
+async function loadHome(){
+  const [today,next7,awaiting,stale,ready,replacement,meetings,docs] = await Promise.all([
+    q('v_org_home_tasks_today'),
+    q('v_org_home_next_7_days'),
+    q('v_org_home_awaiting_feedback'),
+    q('v_org_home_employers_without_touch'),
+    q('v_org_home_candidates_ready_to_send'),
+    q('v_org_home_openings_needing_replacement'),
+    q('v_org_home_upcoming_meetings'),
+    q('v_org_home_document_pendencies')
+  ]);
+  State.cache.home = {today,next7,awaiting,stale,ready,replacement,meetings,docs};
+  renderPlanningHome();
+  if(Array.isArray(State.cache.employers) && State.cache.employers.length){
+    await loadEmployers();
+  }
+}
+function renderPlanner(){
+  renderPlanningHome();
+  renderPlanningMonthShell();
+  const monthInput = document.getElementById('plannerMonth');
+  const selected = monthInput.value || new Date().toISOString().slice(0,7);
+  const employerId = State.plannerEmployerId || '';
+  document.getElementById('plannerTitle').textContent = `Planejamento de recrutamento - ${monthLabelPt(selected)}`;
+  const employers = (State.cache.employers || []).filter(e => !employerId || String(e.employer_id) === String(employerId));
+  const days = daysInMonth(selected);
+  const buckets = ['research','screening','send','feedback'];
+
+  let htmlRows = `<thead>
+    <tr>
+      <th class="headblue"></th>
+      <th class="title-legend legend-pesquisa">Pesquisa</th>
+      <th class="title-legend legend-triagem">Triagem</th>
+      <th class="title-legend legend-envio">Envio</th>
+      <th class="title-legend legend-feedback">Feedback</th>
+      ${days.map(d => `<th class="headblue">${esc(d.weekday)}</th>`).join('')}
+    </tr>
+    <tr>
+      <th class="headblue">Empregador</th>
+      <th class="headblue">Etapa / atividade</th>
+      <th class="headblue">Responsavel</th>
+      <th class="headblue">Status</th>
+      <th class="headblue">Observacao / proxima acao</th>
+      ${days.map(d => `<th class="headblue">${esc(d.day)}</th>`).join('')}
+    </tr>
+  </thead><tbody>`;
+
+  employers.forEach((emp, idx) => {
+    buckets.forEach((bucket, rowIdx) => {
+      const meta = bucketMeta(bucket);
+      const summary = plannerBucketSummary(emp.employer_id, selected, bucket);
+      htmlRows += `<tr>`;
+      if(rowIdx === 0){
+        htmlRows += `<td class="emp ${employerColorClassByIndex(idx, emp.employer_id || emp.employer_name || idx)}" rowspan="4">${esc(emp.employer_name)}</td>`;
+      }
+      htmlRows += `<td class="stage">${esc(meta.label)}</td>`;
+      htmlRows += `<td class="owner">${esc(summary.owner)}</td>`;
+      htmlRows += `<td class="status"><span class="badge ${badgeClass(summary.status)}">${esc(summary.status)}</span></td>`;
+      htmlRows += `<td class="note">${esc(summary.next)}<div class="planner-subnote">${summary.count ? `${summary.count} atividade(s) no mes` : 'sem atividade neste bucket'}</div></td>`;
+      htmlRows += days.map(d => {
+        const entries = plannerCellDetails(emp.employer_id, d.iso, bucket);
+        const openCell = `openPlannerCell(${jsArg(emp.employer_id)},${jsArg(d.iso)},${jsArg(bucket)})`;
+        if(!entries.length){
+          return `<td class="daycol"><div class="daybox planner-empty is-clickable" onclick='${openCell}'><div>—</div><div class="planner-more">clique para adicionar</div></div></td>`;
+        }
+        const preview = entries.map(a => `<span class="planner-chip ${meta.css}" title="${esc(a.title)}">${esc(a.title)}</span>`).join('');
+        return `<td class="daycol"><div class="daybox is-clickable" onclick='${openCell}'><div class="planner-count">${entries.length}</div>${preview}<div class="planner-more">clique para editar esta celula</div></div></td>`;
+      }).join('');
+      htmlRows += `</tr>`;
+    });
+  });
+
+  if(!employers.length){
+    htmlRows += `<tr><td colspan="${5 + days.length}" class="muted">Sem employers para este filtro.</td></tr>`;
+  }
+  htmlRows += `</tbody>`;
+  document.getElementById('plannerSheet').innerHTML = htmlRows;
+}
+function renderCalendar(){
+  renderPlanningHome();
+  renderPlanningWeekly();
+  const monthInput = document.getElementById('calendarMonth');
+  const selected = monthInput.value || new Date().toISOString().slice(0,7);
+  document.getElementById('calendarTitle').textContent = 'Calendario operacional - ' + monthLabelPt(selected);
+  const employerId = State.calendarEmployerId || '';
+  const [y,m] = selected.split('-').map(Number);
+  const first = new Date(y, m-1, 1);
+  const startWeekday = first.getDay();
+  const lastDay = new Date(y, m, 0).getDate();
+  const heads = ['Dom','Seg','Ter','Qua','Qui','Sex','Sab'];
+  document.getElementById('calendarHeads').innerHTML = heads.map(h => `<div class="calendar-head">${esc(h)}</div>`).join('');
+
+  const cells = [];
+  for(let i=0;i<startWeekday;i++) cells.push(null);
+  for(let day=1; day<=lastDay; day++) cells.push(new Date(y, m-1, day));
+  while(cells.length % 7 !== 0) cells.push(null);
+
+  const acts = (State.cache.calendar.activities || []).filter(a => {
+    const ds = String(a.due_date || a.planned_for || '').slice(0,7);
+    const sameMonth = ds === selected;
+    const sameEmployer = !employerId || String(a.employer_id) === String(employerId);
+    return sameMonth && sameEmployer;
+  });
+  const meets = (State.cache.calendar.meetings || []).filter(me => {
+    const ds = String(me.meeting_date || '').slice(0,7);
+    const sameMonth = ds === selected;
+    const sameEmployer = !employerId || String(me.employer_id) === String(employerId);
+    return sameMonth && sameEmployer;
+  });
+  const employerMap = Object.fromEntries((State.cache.employers || []).map(e => [String(e.employer_id), e.employer_name]));
+
+  document.getElementById('calendarGrid').innerHTML = cells.map(d => {
+    if(!d) return `<div class="calendar-cell muted-day"></div>`;
+    const ds = d.toISOString().slice(0,10);
+    const dayActs = acts.filter(a => String(a.due_date || a.planned_for || '').slice(0,10) === ds);
+    const dayMeets = meets.filter(me => String(me.meeting_date || '').slice(0,10) === ds);
+    const items = [
+      ...dayActs.map(a => `<div class="calendar-item activity" onclick="openCalendarCell('activity','${esc(a.id)}','${esc(a.employer_id || '')}')">${esc(a.title)}<small>${esc(employerMap[String(a.employer_id)] || '')}</small></div>`),
+      ...dayMeets.map(me => `<div class="calendar-item meeting" onclick="openCalendarCell('meeting','${esc(me.id)}','${esc(me.employer_id || '')}')">${esc(me.title)}<small>${esc(employerMap[String(me.employer_id)] || '')}</small></div>`)
+    ];
+    return `<div class="calendar-cell">
+      <div class="calendar-date"><span class="n">${d.getDate()}</span><span class="muted">${heads[d.getDay()]}</span></div>
+      ${items.join('') || `<div class="planner-subnote">sem registro neste dia</div>`}
+    </div>`;
+  }).join('');
+}
+function renderWorkspace(){
+  const ws = State.cache.workspace;
+  const s = ws.summary || {};
+  const snapshot = buildWorkspaceSnapshot(ws);
+  const healthLead = snapshot.tone.key === 'critical'
+    ? 'Conta com backlog alto e risco real de perda de timing.'
+    : snapshot.tone.key === 'watch'
+      ? 'Conta pedindo acompanhamento proximo para nao virar gargalo.'
+      : 'Conta sob controle, pronta para ganhar velocidade.';
+  const nextAction = snapshot.actions[0]?.label || 'Sem acao critica registrada';
+  document.getElementById('workspaceTitle').textContent = s.employer_name || 'Employer';
+  document.getElementById('workspaceDesc').textContent = `${healthLead} Openings abertas: ${s.openings_open||0} · apresentados: ${s.matches_presented||0} · docs pendentes: ${s.document_pendencies||0}.`;
+  document.getElementById('employerInfoBoard').innerHTML = [
+    {label:'saude da conta', value:snapshot.tone.label, sub:`score ${snapshot.healthScore}`},
+    {label:'ultimo toque', value:snapshot.lastTouch ? formatDateShort(snapshot.lastTouch) : 'Sem registro', sub:`${daysAgo(snapshot.lastTouch) ?? 0} dia(s) desde o ultimo movimento`},
+    {label:'openings abertas', value:s.openings_open || 0, sub:`${snapshot.replacement.length} ainda pedem cobertura`},
+    {label:'aguardando feedback', value:s.awaiting_feedback || snapshot.awaiting.length || 0, sub:'retornos ainda pendentes do employer'},
+    {label:'docs pendentes', value:s.document_pendencies || snapshot.docsPending.length || 0, sub:'documentos que podem travar a conta'},
+    {label:'proxima acao', value:nextAction, sub:'leitura rapida do proximo passo prioritario'}
+  ].map(card => `<div class="book-info-card"><strong>${esc(card.label)}</strong><span>${esc(card.value)}</span><small>${esc(card.sub)}</small></div>`).join('');
+  document.getElementById('employerInfoHistory').innerHTML = renderFocusList(snapshot.recentRows.slice(0,5), 'Sem historico recente para esta conta.');
+  document.getElementById('tblInfoDocs').innerHTML = rowsHtml(ws.documents, 5, d => `<tr>
+    <td><strong>${esc(d.title)}</strong></td>
+    <td>${esc(prettyEnum(d.document_type))}</td>
+    <td><span class="badge ${badgeClass(d.status)}">${esc(prettyEnum(d.status))}</span></td>
+    <td>${esc(dateOnly(d.due_date) || '—')}</td>
+    <td><button class="btn small" onclick='openDocument("${esc(d.id)}","${esc(d.employer_id || '')}")'>Abrir</button></td>
+  </tr>`);
+
+  document.getElementById('workspaceHero').innerHTML = `
+    <div class="workspace-hero-main ${snapshot.tone.key === 'critical' ? 'is-critical' : snapshot.tone.key === 'watch' ? 'is-watch' : ''}">
+      <div class="hero-kicker">Painel resumo</div>
+      <div class="hero-title">${snapshot.tone.label} · saude ${snapshot.healthScore}</div>
+      <div class="hero-sub">${healthLead}</div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-label">Feedback parado</div><div class="hero-stat-value">${snapshot.awaiting.length}</div></div>
+        <div class="hero-stat"><div class="hero-stat-label">Docs pendentes</div><div class="hero-stat-value">${snapshot.docsPending.length}</div></div>
+        <div class="hero-stat"><div class="hero-stat-label">Ativ. abertas</div><div class="hero-stat-value">${snapshot.activitiesOpen.length}</div></div>
+      </div>
+      <div class="hero-note">${snapshot.lastTouch ? `Ultimo movimento: ${humanDate(snapshot.lastTouch)}.` : 'Sem historico recente de toque.'}</div>
+    </div>
+    <div class="workspace-hero-side">
+      <div class="mini-metric">
+        <div class="mini-metric-label">Agenda curta</div>
+        <div class="mini-metric-value">${snapshot.meetingsNext7.length}</div>
+        <div class="mini-metric-sub">reuniao(oes) nos proximos 7 dias</div>
+      </div>
+      <div class="mini-metric">
+        <div class="mini-metric-label">Ready pool</div>
+        <div class="mini-metric-value">${snapshot.ready.length}</div>
+        <div class="mini-metric-sub">${snapshot.replacement.length} gap(s) de reposicao na conta</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('workspaceSummaryKpis').innerHTML = [
+    {label:'openings abertas', value:s.openings_open || 0, sub:`${snapshot.replacement.length} com gap de cobertura`},
+    {label:'matches apresentados', value:s.matches_presented || 0, sub:`${snapshot.ready.length} ainda prontos para proximo envio`},
+    {label:'aguardando feedback', value:s.awaiting_feedback || snapshot.awaiting.length || 0, sub:'ponto de atrito comercial no employer'},
+    {label:'documentos pendentes', value:s.document_pendencies || snapshot.docsPending.length || 0, sub:'itens que podem travar conversao'},
+    {label:'atividades abertas', value:snapshot.activitiesOpen.length, sub:`${snapshot.activitiesOverdue.length} vencida(s)`},
+    {label:'agenda viva', value:snapshot.meetingsOpen.length, sub:`${snapshot.meetingsNext7.length} nos proximos 7 dias`}
+  ].map(card=>`<div class="card"><div class="kpi-label">${esc(card.label)}</div><div class="kpi-value">${esc(card.value)}</div><div class="mini-metric-sub">${esc(card.sub)}</div></div>`).join('');
+  document.getElementById('workspaceActionCount').textContent = snapshot.actions.length;
+  document.getElementById('workspaceActionList').innerHTML = renderFocusList(snapshot.actions, 'Sem acoes prioritarias nesta conta no momento.');
+  document.getElementById('workspaceSignalCount').textContent = snapshot.recentRows.length;
+  document.getElementById('workspaceSignalList').innerHTML = renderFocusList(snapshot.recentRows, 'Sem historico recente para esta conta.');
+  renderEmployerPickers();
+  syncCreateButtons();
+
+  document.getElementById('tblOpenings').innerHTML = composeRows(renderOpeningDraftRow(), ws.openings, 9, o=>`<tr>
+    <td><input value="${esc(o.title)}" onchange='mut("openings","${esc(o.id)}","title",this.value)'></td>
+    <td><input value="${esc(o.department||"")}" onchange='mut("openings","${esc(o.id)}","department",this.value)'></td>
+    <td>${cycleButtonMarkup('openings', o.id, 'status', 'opening_status', o.status)}</td>
+    <td><input value="${esc(o.quantity_requested)}" onchange='mut("openings","${esc(o.id)}","quantity_requested",this.value)'></td>
+    <td><input value="${esc(o.quantity_open)}" onchange='mut("openings","${esc(o.id)}","quantity_open",this.value)'></td>
+    <td>${cycleButtonMarkup('openings', o.id, 'priority', 'priority', o.priority)}</td>
+    <td><input value="${esc(o.next_action||"")}" onchange='mut("openings","${esc(o.id)}","next_action",this.value)'></td>
+    <td><input type="date" value="${esc(dateOnly(o.due_date))}" onchange='mut("openings","${esc(o.id)}","due_date",this.value)'></td>
+    <td><button class="btn small" onclick='saveOpening("${esc(o.id)}")'>Salvar</button></td>
+  </tr>`);
+
+  document.getElementById('tblPipeline').innerHTML = composeRows(renderPipelineDraftRow(), ws.pipeline, 9, p=>`<tr>
+    <td>${esc(p.opening_title)}</td>
+    <td>${esc(p.candidate_id)}</td>
+    <td>${cycleButtonMarkup('pipeline', p.pipeline_item_id, 'stage', 'pipeline_stage', p.stage)}</td>
+    <td>${cycleButtonMarkup('pipeline', p.pipeline_item_id, 'pipeline_status', 'pipeline_status', p.pipeline_status)}</td>
+    <td>${cycleButtonMarkup('pipeline', p.pipeline_item_id, 'priority', 'priority', p.priority)}</td>
+    <td><input value="${esc(p.next_action||"")}" onchange='mut("pipeline","${esc(p.pipeline_item_id)}","next_action",this.value)'></td>
+    <td><input type="date" value="${esc(dateOnly(p.due_date))}" onchange='mut("pipeline","${esc(p.pipeline_item_id)}","due_date",this.value)'></td>
+    <td>${cycleButtonMarkup('pipelineMatch', p.match_id, 'match_status', 'match_status', p.match_status)}</td>
+    <td><button class="btn small" onclick='savePipeline("${esc(p.pipeline_item_id)}","${esc(p.match_id)}")'>Salvar</button></td>
+  </tr>`);
+
+  document.getElementById('tblPresented').innerHTML = rowsHtml(ws.presented,6,p=>`<tr>
+    <td>${esc(p.candidate_id)}</td><td>${esc(p.opening_title)}</td><td>${esc(humanDate(p.presented_at))}</td><td>${esc(humanDate(p.feedback_at))}</td><td>${esc(p.stage)}</td><td>${esc(p.due_date||'')}</td>
+  </tr>`);
+
+  document.getElementById('tblWsMeetings').innerHTML = composeRows(renderMeetingDraftRow(), ws.meetings, 7, m=>`<tr>
+    <td><input value="${esc(m.title)}" onchange='mut("meetings","${esc(m.id)}","title",this.value)'></td>
+    <td><input type="datetime-local" value="${esc(dtLocal(m.meeting_date))}" onchange='mut("meetings","${esc(m.id)}","meeting_date",this.value)'></td>
+    <td>${cycleButtonMarkup('meetings', m.id, 'status', 'meeting_status', m.status)}</td>
+    <td>${cycleButtonMarkup('meetings', m.id, 'priority', 'priority', m.priority)}</td>
+    <td><input value="${esc(m.next_action||"")}" onchange='mut("meetings","${esc(m.id)}","next_action",this.value)'></td>
+    <td><textarea onchange='mut("meetings","${esc(m.id)}","summary",this.value)'>${esc(m.summary||"")}</textarea></td>
+    <td><button class="btn small" onclick='saveMeetingRow("${esc(m.id)}")'>Salvar</button></td>
+  </tr>`);
+
+  document.getElementById('tblActivities').innerHTML = composeRows(renderActivityDraftRow(), ws.activities, 7, a=>`<tr>
+    <td><input value="${esc(a.title)}" onchange='mut("activities","${esc(a.id)}","title",this.value)'></td>
+    <td>${cycleButtonMarkup('activities', a.id, 'activity_type', 'activity_type', a.activity_type)}</td>
+    <td>${cycleButtonMarkup('activities', a.id, 'status', 'activity_status', a.status)}</td>
+    <td>${cycleButtonMarkup('activities', a.id, 'priority', 'priority', a.priority)}</td>
+    <td><input type="date" value="${esc(dateOnly(a.planned_for))}" onchange='mut("activities","${esc(a.id)}","planned_for",this.value)'></td>
+    <td><input type="date" value="${esc(dateOnly(a.due_date))}" onchange='mut("activities","${esc(a.id)}","due_date",this.value)'></td>
+    <td><button class="btn small" onclick='saveActivityRow("${esc(a.id)}")'>Salvar</button></td>
+  </tr>`);
+
+  document.getElementById('tblDocuments').innerHTML = composeRows(renderDocumentDraftRow(), ws.documents, 6, d=>`<tr>
+    <td><input value="${esc(d.title)}" onchange='mut("documents","${esc(d.id)}","title",this.value)'></td>
+    <td>${cycleButtonMarkup('documents', d.id, 'document_type', 'document_type', d.document_type)}</td>
+    <td>${cycleButtonMarkup('documents', d.id, 'status', 'document_status', d.status)}</td>
+    <td><input value="${esc(d.drive_url||"")}" onchange='mut("documents","${esc(d.id)}","drive_url",this.value)'></td>
+    <td><input type="date" value="${esc(dateOnly(d.due_date))}" onchange='mut("documents","${esc(d.id)}","due_date",this.value)'></td>
+    <td><button class="btn small" onclick='saveDocumentRow("${esc(d.id)}")'>Salvar</button></td>
+  </tr>`);
+
+  const removedRows = (ws.pipeline || []).filter(p => ['rejected','withdrawn','archived'].includes(String(p.match_status || '').toLowerCase()) || ['rejected'].includes(String(p.stage || '').toLowerCase()));
+  document.getElementById('tblRemoved').innerHTML = rowsHtml(removedRows, 5, p=>`<tr>
+    <td>${esc(p.candidate_id)}</td>
+    <td>${esc(p.opening_title || '—')}</td>
+    <td><span class="badge ${badgeClass(p.match_status || p.stage)}">${esc(prettyEnum(p.match_status || p.stage || 'rejected'))}</span></td>
+    <td>${esc(prettyEnum(p.stage || '—'))}</td>
+    <td>${esc(shortText(p.next_action || 'Sem observacao registrada', 90))}</td>
+  </tr>`);
+
+  document.getElementById('tblBaseCandidates').innerHTML = rowsHtml(ws.pipeline, 7, p=>`<tr>
+    <td>${esc(p.candidate_id)}</td>
+    <td>${esc(p.opening_title || '—')}</td>
+    <td>${esc(prettyEnum(p.stage || '—'))}</td>
+    <td>${esc(prettyEnum(p.pipeline_status || '—'))}</td>
+    <td>${esc(prettyEnum(p.match_status || '—'))}</td>
+    <td>${esc(shortText(p.next_action || 'Sem proxima acao', 82))}</td>
+    <td>${esc(dateOnly(p.due_date) || '—')}</td>
+  </tr>`);
+
+  const historyRows = [
+    ...ws.notes.map(n=>({kind:'nota', date:n.created_at, body:n.body})),
+    ...ws.activities.map(a=>({kind:'atividade', date:a.created_at, body:`${a.title} · ${a.activity_type} · ${a.status}`})),
+    ...ws.meetings.map(m=>({kind:'reuniao', date:m.created_at, body:`${m.title} · ${m.status}`})),
+    ...ws.documents.map(d=>({kind:'documento', date:d.created_at, body:`${d.title} · ${d.status}`}))
+  ].sort((a,b)=> new Date(b.date) - new Date(a.date));
+  document.getElementById('tblHistory').innerHTML = composeRows(renderNoteDraftRow(), historyRows, 3, h=>`<tr><td>${esc(h.kind)}</td><td>${esc(humanDate(h.date))}</td><td>${esc(h.body)}</td></tr>`);
+  setWorkspaceTab(State.wsTab || 'panel');
 }
 function legacyPromptField(){
   return '';
@@ -2270,6 +3072,7 @@ document.querySelectorAll('.ws-tab').forEach(btn=>{ btn.onclick = ()=>setWorkspa
 async function init(){
   try{
     clearAlert();
+    setView(State.view || 'planner');
     await requireSession();
     await loadEmployers();
     await loadHome();
@@ -2283,7 +3086,7 @@ async function init(){
     renderEmployerPickers();
     renderPlanner();
     renderCalendar();
-    showAlert('Home operacional P0 carregada com CRUD real nas entidades novas do schema. Employer base continua dependendo da tabela public.employers existente.', 'ok');
+    showAlert('Modulo de planejamento e dossie do employer carregados. A base de employers continua dependendo da tabela public.employers existente.', 'ok');
   }catch(err){
     console.error(err);
     const msg = String(err?.message || 'Falha ao carregar.');
