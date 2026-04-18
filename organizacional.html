@@ -356,6 +356,15 @@ tbody tr:hover .row-actions.hover{opacity:1}
 .compact-item-sub{font-size:11px;color:var(--text2);margin-top:4px;line-height:1.4}
 @media(max-width:900px){.opening-row{grid-template-columns:1fr}.ifield-grid-3,.ifield-grid-2{grid-template-columns:1fr}}
 
+
+.resumo-toolbar-advanced{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.resumo-scroll-panel{max-height:420px;overflow:auto;padding-right:6px}
+.resumo-weekly-wrap{max-height:420px;overflow:auto}
+.resumo-history-wrap{max-height:560px;overflow:auto}
+.resumo-priority-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:8px}
+.resumo-priority-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.resumo-priority-meta{font-size:11px;color:var(--text2);margin-top:4px;white-space:pre-wrap}
+
 </style>
 </head>
 <body>
@@ -557,38 +566,60 @@ tbody tr:hover .row-actions.hover{opacity:1}
 <!-- PAGE: RESUMO -->
 <div class="page" id="page-resumo">
   <div class="ph">
-    <div class="ph-left"><h1>Resumo Geral</h1><p>Leitura consolidada da operação — Abril a Dezembro 2026</p></div>
-    <div class="ph-right">
+    <div class="ph-left"><h1>Resumo Geral</h1><p>Leitura consolidada da operação, prioridades e histórico completo</p></div>
+    <div class="ph-right" style="display:flex;gap:8px;flex-wrap:wrap">
       <select class="fi" style="width:auto;padding:6px 10px" id="resumo-month-filter" onchange="renderResumo()"><option value="">Todos os meses</option></select>
-      <button class="btn btn-primary" onclick="openWeeklyModal()">Nova linha semanal</button>
+      <button class="btn btn-primary" onclick="openWeeklyModal()">Nova linha de resumo</button>
     </div>
+  </div>
+  <div class="toolbar resumo-toolbar-advanced">
+    <div class="search" style="min-width:220px">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="resumo-search" type="text" placeholder="Buscar atividade, reunião, projeto..." oninput="renderResumo()">
+    </div>
+    <select class="fi" style="width:auto;padding:6px 10px" id="resumo-employer-filter" onchange="renderResumo()"><option value="">Todos os empregadores / escopos</option></select>
+    <select class="fi" style="width:auto;padding:6px 10px" id="resumo-status-filter" onchange="renderResumo()"><option value="">Todos os status</option></select>
+    <select class="fi" style="width:auto;padding:6px 10px" id="resumo-source-filter" onchange="renderResumo()">
+      <option value="">Todas as origens</option>
+      <option value="plan">Planejamento</option>
+      <option value="meeting">Reuniões</option>
+      <option value="weekly">Resumo semanal</option>
+      <option value="task">Tarefas e projetos</option>
+    </select>
+    <select class="fi" style="width:auto;padding:6px 10px" id="resumo-sort-filter" onchange="renderResumo()">
+      <option value="priority">Ordenar por prioridade</option>
+      <option value="date_desc">Data mais recente</option>
+      <option value="date_asc">Data mais antiga</option>
+      <option value="alpha">Ordem alfabética</option>
+      <option value="status">Status</option>
+    </select>
   </div>
   <div class="pb">
     <div class="stats" id="resumo-stats"></div>
     <div class="card" style="margin-bottom:16px">
-      <div class="card-hd"><h3>🗂 Resumo semanal manual</h3><span style="font-size:11px;color:var(--text3)">Campos que existiam na planilha mensal</span></div>
-      <div class="tbl-wrap">
+      <div class="card-hd"><h3>🗂 Atividades consolidadas da semana</h3><span style="font-size:11px;color:var(--text3)">Inclui automações de reuniões e linhas manuais</span></div>
+      <div class="tbl-wrap resumo-weekly-wrap">
         <table class="weekly-table">
-          <thead><tr><th>Mês</th><th>Semana</th><th>Período</th><th>Empregador</th><th>O que foi feito</th><th>Resultado</th><th>Próxima ação</th><th>Responsável</th><th>Status</th><th>Observações</th><th style="width:80px"></th></tr></thead>
+          <thead><tr><th>Mês</th><th>Semana</th><th>Período</th><th>Empregador / escopo</th><th>O que foi feito</th><th>Resultado</th><th>Próxima ação</th><th>Responsável</th><th>Status</th><th>Observações</th><th style="width:80px"></th></tr></thead>
           <tbody id="weekly-tbody"></tbody>
         </table>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="card">
-        <div class="card-hd"><h3>🔴 Prioridades em aberto</h3></div>
-        <div class="card-bd" id="resumo-priorities"></div>
+        <div class="card-hd"><h3>🔴 Dashboard de prioridades</h3><span style="font-size:11px;color:var(--text3)">Tudo que exige ação, inclusive tarefas de reunião e projetos</span></div>
+        <div class="card-bd resumo-scroll-panel" id="resumo-priorities"></div>
       </div>
       <div class="card">
-        <div class="card-hd"><h3>📊 Status por Empregador</h3></div>
-        <div class="card-bd" id="resumo-by-employer"></div>
+        <div class="card-hd"><h3>📊 Status por empregador / escopo</h3></div>
+        <div class="card-bd resumo-scroll-panel" id="resumo-by-employer"></div>
       </div>
     </div>
     <div class="card" style="margin-top:16px">
-      <div class="card-hd"><h3>📋 Histórico completo de atividades</h3></div>
-      <div class="tbl-wrap">
+      <div class="card-hd"><h3>📋 Histórico completo de atividades</h3><span style="font-size:11px;color:var(--text3)">Mostra todas as atividades, independente do status</span></div>
+      <div class="tbl-wrap resumo-history-wrap">
         <table>
-          <thead><tr><th>Mês</th><th>Empregador</th><th>Atividade</th><th>Responsável</th><th>Status</th><th>Observação</th><th>Data Início</th><th style="width:80px"></th></tr></thead>
+          <thead><tr><th>Origem</th><th>Mês</th><th>Empregador / escopo</th><th>Atividade</th><th>Responsável</th><th>Status</th><th>Prioridade</th><th>Observação</th><th>Data</th><th style="width:80px"></th></tr></thead>
           <tbody id="resumo-history"></tbody>
         </table>
       </div>
@@ -3187,59 +3218,180 @@ function computeWeeklyRows(monthKey){
     return String(a.employer).localeCompare(String(b.employer));
   });
 }
+
+function resumoEmployerLabel(v){
+  const txt = String(v||'').trim();
+  return txt || INTERNAL_LABEL;
+}
+function resumoStatusRank(v){
+  const map = {'Bloqueado':1,'A fazer':2,'Em andamento':3,'Aguardando resposta':4,'Concluído':5,'Pronto':5,'Cancelado':6};
+  return map[String(v||'').trim()] || 99;
+}
+function resumoPriorityRank(v){
+  const map = {'Alta':1,'Média':2,'Baixa':3};
+  return map[String(v||'').trim()] || 9;
+}
+function resumoDateValue(v){
+  const txt = String(v||'').trim();
+  if(!txt) return 0;
+  const d = new Date(txt);
+  if(!Number.isNaN(d.getTime())) return d.getTime();
+  if(/^\d{4}-\d{2}$/.test(txt)) return new Date(txt+'-01').getTime();
+  return 0;
+}
+function buildResumoActivityRows(){
+  const rows = [];
+  (S.planEntries||[]).forEach(e=>{
+    rows.push({
+      id:e.id, source:'plan', sourceLabel:'Planejamento',
+      month:e.month||'', employer:resumoEmployerLabel(e.employer), title:e.activity||'Atividade',
+      owner:e.responsavel||'', status:e.status||'A fazer', priority:'Média',
+      obs:e.obs||'', date:e.inicio||e.fim||'', edit:`openPlanModal('${escapeJsString(e.id)}')`
+    });
+  });
+  (S.meetings||[]).forEach(m=>{
+    rows.push({
+      id:m.id, source:'meeting', sourceLabel:'Reunião',
+      month:m.mes||'', employer:resumoEmployerLabel(m.employer), title:`Reunião: ${m.tema||'Sem tema'}`,
+      owner:m.responsavel||'', status:m.status||'A fazer', priority:'Alta',
+      obs:[m.decidido,m.pendencias,m.proxacao].filter(Boolean).join(' | '), date:m.data||'', edit:`openMeetModal('${escapeJsString(m.id)}')`
+    });
+  });
+  (S.operationalTasks||[]).filter(t=>!t.deleted_at).forEach(t=>{
+    rows.push({
+      id:t.id, source:'task', sourceLabel:(String(t.context_type||'').trim()==='employer' ? 'Projeto' : 'Tarefa'),
+      month:t.month||'', employer:resumoEmployerLabel(t.employer || (t.team_scope==='team' ? INTERNAL_LABEL : '')),
+      title:t.title||'Tarefa', owner:t.owner||'', status:t.status||'A fazer',
+      priority:t.priority||'Média', obs:t.notes||'', date:t.due_date||t.start_date||'', edit:`nav('operacional');renderOperationalPage()`
+    });
+  });
+  return rows;
+}
+function applyResumoFilters(rows){
+  const monF=document.getElementById('resumo-month-filter')?.value||'';
+  const empF=document.getElementById('resumo-employer-filter')?.value||'';
+  const stF=document.getElementById('resumo-status-filter')?.value||'';
+  const srcF=document.getElementById('resumo-source-filter')?.value||'';
+  const sortF=document.getElementById('resumo-sort-filter')?.value||'priority';
+  const q=(document.getElementById('resumo-search')?.value||'').toLowerCase().trim();
+  let out = (rows||[]).filter(r=>(!monF||r.month===monF) && (!empF||r.employer===empF) && (!stF||r.status===stF) && (!srcF||r.source===srcF));
+  if(q){
+    out = out.filter(r => [r.employer,r.title,r.owner,r.obs,r.status,r.sourceLabel].join(' | ').toLowerCase().includes(q));
+  }
+  out.sort((a,b)=>{
+    if(sortF==='alpha') return String(a.title).localeCompare(String(b.title),'pt-BR');
+    if(sortF==='status') return resumoStatusRank(a.status)-resumoStatusRank(b.status) || String(a.title).localeCompare(String(b.title),'pt-BR');
+    if(sortF==='date_asc') return resumoDateValue(a.date)-resumoDateValue(b.date) || String(a.title).localeCompare(String(b.title),'pt-BR');
+    if(sortF==='date_desc') return resumoDateValue(b.date)-resumoDateValue(a.date) || String(a.title).localeCompare(String(b.title),'pt-BR');
+    return resumoPriorityRank(a.priority)-resumoPriorityRank(b.priority)
+      || resumoStatusRank(a.status)-resumoStatusRank(b.status)
+      || resumoDateValue(b.date)-resumoDateValue(a.date)
+      || String(a.title).localeCompare(String(b.title),'pt-BR');
+  });
+  return out;
+}
+
+
 // ─── RESUMO ───
 function renderResumo(){
   ensureWeeklySummaries();
-  const monF=document.getElementById('resumo-month-filter')?.value||'';
-  let entries=S.planEntries.filter(e=>!monF||e.month===monF);
-  const total=entries.length;
-  const done=entries.filter(e=>e.status==='Concluído').length;
-  const pct=total?Math.round(done/total*100):0;
-  const afazer=entries.filter(e=>e.status==='A fazer').length;
-  const cands=Object.values(S.dossiers).reduce((a,d)=>a+(d.candidatos||[]).length,0);
+  const monthSel = document.getElementById('resumo-month-filter');
+  if(monthSel && !monthSel.dataset.bound){
+    monthSel.dataset.bound='1';
+    monthSel.innerHTML = '<option value="">Todos os meses</option>' + MONTHS.map(m=>`<option value="${escapeAttr(m.k)}">${escapeHTML(m.l)}</option>`).join('');
+  }
+  const allRows = buildResumoActivityRows();
+  const employerSel = document.getElementById('resumo-employer-filter');
+  if(employerSel){
+    const cur = employerSel.value || '';
+    const opts = [...new Set(allRows.map(r=>r.employer).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    employerSel.innerHTML = '<option value="">Todos os empregadores / escopos</option>' + opts.map(v=>`<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
+    employerSel.value = opts.includes(cur) ? cur : '';
+  }
+  const statusSel = document.getElementById('resumo-status-filter');
+  if(statusSel){
+    const cur = statusSel.value || '';
+    const opts = [...new Set(allRows.map(r=>r.status).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    statusSel.innerHTML = '<option value="">Todos os status</option>' + opts.map(v=>`<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
+    statusSel.value = opts.includes(cur) ? cur : '';
+  }
+
+  const filtered = applyResumoFilters(allRows);
+  const total = filtered.length;
+  const done = filtered.filter(r=>['Concluído','Pronto'].includes(r.status)).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const abertos = filtered.filter(r=>!['Concluído','Pronto','Cancelado'].includes(r.status)).length;
+  const cands=Object.values(S.dossiers||{}).reduce((a,d)=>a+(d.candidatos||[]).length,0);
+
   document.getElementById('resumo-stats').innerHTML=`
-    <div class="stat"><div class="stat-l">Total de Atividades</div><div class="stat-v">${total}</div><div class="stat-s">no período selecionado</div></div>
-    <div class="stat"><div class="stat-l">Concluídas</div><div class="stat-v" style="color:var(--green)">${done}</div><div class="stat-s">${pct}% do total</div></div>
-    <div class="stat"><div class="stat-l">A Fazer</div><div class="stat-v" style="color:var(--amber)">${afazer}</div><div class="stat-s">em aberto</div></div>
+    <div class="stat"><div class="stat-l">Atividades filtradas</div><div class="stat-v">${total}</div><div class="stat-s">todas as origens</div></div>
+    <div class="stat"><div class="stat-l">Concluídas / prontas</div><div class="stat-v" style="color:var(--green)">${done}</div><div class="stat-s">${pct}% do total filtrado</div></div>
+    <div class="stat"><div class="stat-l">Em aberto</div><div class="stat-v" style="color:var(--amber)">${abertos}</div><div class="stat-s">pendentes, em andamento ou bloqueadas</div></div>
     <div class="stat"><div class="stat-l">Candidatos</div><div class="stat-v" style="color:var(--blue)">${cands}</div><div class="stat-s">em todos os pipelines</div></div>
   `;
-  const open=entries.filter(e=>e.status==='A fazer'||e.status==='Bloqueado').slice(0,8);
-  document.getElementById('resumo-priorities').innerHTML=open.length?open.map(e=>`
-    <div class="pri-item linkish" onclick="goToPlanEntry('${escapeJsString(e.id)}')">
-      <span style="width:8px;height:8px;border-radius:50%;background:${getEmpColor(e.employer)};flex-shrink:0;margin-top:3px"></span>
-      <div class="pri-content">
-        <div class="pri-title">${escapeHTML(e.employer)} · ${escapeHTML(e.activity)}</div>
-        <div class="pri-meta">${e.obs?escapeHTML(e.obs):''}${e.responsavel?` · ${escapeHTML(e.responsavel)}`:''}</div>
-      </div>
-      ${badge(e.status)}
-    </div>`).join(''):'<p style="color:var(--text3);font-size:12px">Nenhuma prioridade em aberto 🎉</p>';
-  document.getElementById('resumo-by-employer').innerHTML=S.employers.map(emp=>{
-    const e2=entries.filter(e=>e.employer===emp.name);
-    const done2=e2.filter(e=>e.status==='Concluído').length;
-    const pct2=e2.length?Math.round(done2/e2.length*100):0;
-    const cands2=(S.dossiers[emp.name]?.candidatos||[]).length;
-    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <span style="width:9px;height:9px;border-radius:50%;background:${emp.color};flex-shrink:0"></span>
+
+  const priorityRows = filtered.filter(r=>!['Concluído','Pronto','Cancelado'].includes(r.status)).slice(0,40);
+  document.getElementById('resumo-priorities').innerHTML = priorityRows.length ? priorityRows.map(r=>`
+    <div class="resumo-priority-item linkish" onclick="${r.edit}">
+      <span class="dot" style="background:${getEmpColor(r.employer)}"></span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600">${escapeHTML(emp.name)}</div>
+        <div style="font-size:12px;font-weight:700;line-height:1.35">${escapeHTML(r.employer)} · ${escapeHTML(r.title)}</div>
+        <div class="resumo-priority-meta">${escapeHTML(r.sourceLabel)}${r.owner?` · ${escapeHTML(r.owner)}`:''}${r.date?` · ${escapeHTML(r.date)}`:''}${r.priority?` · prioridade ${escapeHTML(r.priority)}`:''}</div>
+        <div class="resumo-priority-meta">${escapeHTML(r.obs||'')}</div>
+      </div>
+      ${badge(r.status)}
+    </div>
+  `).join('') : '<p style="color:var(--text3);font-size:12px">Nenhuma prioridade em aberto para os filtros atuais.</p>';
+
+  const byEmployerMap = {};
+  filtered.forEach(r=>{
+    const key = r.employer || INTERNAL_LABEL;
+    byEmployerMap[key] = byEmployerMap[key] || { total:0, done:0, open:0, color:getEmpColor(key) };
+    byEmployerMap[key].total++;
+    if(['Concluído','Pronto'].includes(r.status)) byEmployerMap[key].done++;
+    else if(!['Cancelado'].includes(r.status)) byEmployerMap[key].open++;
+  });
+  document.getElementById('resumo-by-employer').innerHTML = Object.keys(byEmployerMap).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(name=>{
+    const row = byEmployerMap[name];
+    const pct2 = row.total ? Math.round(row.done/row.total*100) : 0;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="width:9px;height:9px;border-radius:50%;background:${row.color};flex-shrink:0"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:600">${escapeHTML(name)}</div>
         <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
           <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-            <div style="width:${pct2}%;height:100%;background:${emp.color};border-radius:3px;transition:width .3s"></div>
+            <div style="width:${pct2}%;height:100%;background:${row.color};border-radius:3px;transition:width .3s"></div>
           </div>
-          <span style="font-size:10px;color:var(--text2);white-space:nowrap">${done2}/${e2.length} · ${cands2} cand.</span>
+          <span style="font-size:10px;color:var(--text2);white-space:nowrap">${row.done}/${row.total} · ${row.open} abertas</span>
         </div>
       </div>
     </div>`;
-  }).join('');
+  }).join('') || '<p style="color:var(--text3);font-size:12px">Nenhum dado para os filtros atuais.</p>';
 
-  const displayRows = monF ? computeWeeklyRows(monF) : MONTHS.flatMap(m=>computeWeeklyRows(m.k));
-  document.getElementById('weekly-tbody').innerHTML=displayRows.length?displayRows.map(w=>{
-    const presetEncoded=encodeURIComponent(JSON.stringify({month:w.month,week:w.week,period:w.period,employer:w.employer,done:w.done,result:w.result,next:w.next,owner:w.owner,status:w.status,notes:w.notes}));
+  const monF=document.getElementById('resumo-month-filter')?.value||'';
+  const weeklyRaw = monF ? computeWeeklyRows(monF) : MONTHS.flatMap(m=>computeWeeklyRows(m.k));
+  const weeklyFiltered = weeklyRaw.filter(w=>{
+    const empF=document.getElementById('resumo-employer-filter')?.value||'';
+    const stF=document.getElementById('resumo-status-filter')?.value||'';
+    const srcF=document.getElementById('resumo-source-filter')?.value||'';
+    const q=(document.getElementById('resumo-search')?.value||'').toLowerCase().trim();
+    const employer = resumoEmployerLabel(w.employer);
+    const source = w.source==='manual' ? 'weekly' : 'meeting';
+    const hay = [w.week,w.period,employer,w.done,w.result,w.next,w.owner,w.status,w.notes].join(' | ').toLowerCase();
+    return (!empF || employer===empF)
+      && (!stF || (w.status||'')===stF)
+      && (!srcF || srcF===source)
+      && (!q || hay.includes(q));
+  });
+
+  document.getElementById('weekly-tbody').innerHTML=weeklyFiltered.length?weeklyFiltered.map(w=>{
+    const employerLabel = resumoEmployerLabel(w.employer);
+    const presetEncoded=encodeURIComponent(JSON.stringify({month:w.month,week:w.week,period:w.period,employer:employerLabel===INTERNAL_LABEL?'':w.employer,done:w.done,result:w.result,next:w.next,owner:w.owner,status:w.status,notes:w.notes}));
     return `<tr class="${w.source==='manual'?'manual-row':'auto-row'}">
       <td>${escapeHTML(MONTHS.find(m=>m.k===w.month)?.l||w.month||'—')}</td>
       <td>${escapeHTML(w.week||'—')}<div style="margin-top:4px">${w.source==='manual'?'<span class="summary-source manual">Manual</span>':'<span class="summary-source">Auto</span>'}</div></td>
       <td>${escapeHTML(w.period||'—')}</td>
-      <td>${escapeHTML(w.employer||'—')}</td>
+      <td>${escapeHTML(employerLabel||'—')}</td>
       <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.done||'—')}</td>
       <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.result||'—')}</td>
       <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w.next||'—')}</td>
@@ -3251,19 +3403,22 @@ function renderResumo(){
         : `<button class="icon-btn" onclick="openWeeklyModalFromPreset('${escapeJsString(presetEncoded)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
       </div></td>
     </tr>`;
-  }).join(''):`<tr><td colspan="11"><div class="empty"><p>Nenhuma linha semanal disponível.</p><small>O quadro semanal mostra automaticamente o que foi registrado em planejamento e reuniões, além das linhas manuais.</small></div></td></tr>`;
+  }).join(''):`<tr><td colspan="11"><div class="empty"><p>Nenhuma linha consolidada disponível.</p><small>Use os filtros acima ou registre novas atividades.</small></div></td></tr>`;
 
-  document.getElementById('resumo-history').innerHTML=entries.length?entries.map(e=>`<tr>
-    <td style="font-size:11px;color:var(--text2)">${escapeHTML(MONTHS.find(m=>m.k===e.month)?.l||e.month)}</td>
-    <td style="font-size:12px;font-weight:600"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(e.employer)};margin-right:5px;vertical-align:middle"></span>${escapeHTML(e.employer)}</td>
-    <td style="font-size:11px">${escapeHTML(e.activity)}</td>
-    <td style="font-size:11px">${safeText(e.responsavel,'—')}</td>
-    <td>${badge(e.status)}</td>
-    <td style="font-size:11px;max-width:200px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(e.obs,'—')}</span></td>
-    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(e.inicio||'—')}</td>
-    <td><div class="row-actions"><button class="icon-btn" onclick="openPlanModal('${escapeJsString(e.id)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></td>
-  </tr>`).join(''):`<tr><td colspan="8"><div class="empty"><p>Nenhuma atividade registrada.</p></div></td></tr>`;
+  document.getElementById('resumo-history').innerHTML = filtered.length ? filtered.map(r=>`<tr>
+    <td style="font-size:11px">${escapeHTML(r.sourceLabel)}</td>
+    <td style="font-size:11px;color:var(--text2)">${escapeHTML(MONTHS.find(m=>m.k===r.month)?.l||r.month||'—')}</td>
+    <td style="font-size:12px;font-weight:600"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(r.employer)};margin-right:5px;vertical-align:middle"></span>${escapeHTML(r.employer)}</td>
+    <td style="font-size:11px">${escapeHTML(r.title)}</td>
+    <td style="font-size:11px">${safeText(r.owner,'—')}</td>
+    <td>${badge(r.status)}</td>
+    <td style="font-size:11px">${escapeHTML(r.priority||'—')}</td>
+    <td style="font-size:11px;max-width:260px;white-space:pre-wrap">${escapeHTML(r.obs||'—')}</td>
+    <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(r.date||'—')}</td>
+    <td><div class="row-actions"><button class="icon-btn" onclick="${r.edit}"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></td>
+  </tr>`).join('') : `<tr><td colspan="10"><div class="empty"><p>Nenhuma atividade encontrada.</p></div></td></tr>`;
 }
+
 function renderDossieActions(){
   const el=document.getElementById('dossie-actions');
   if(!el) return;
@@ -4481,7 +4636,19 @@ document.querySelectorAll('.modal-ov').forEach(ov=>{
   }
 
   async function syncMeetingOperationalItems(meeting){
-    const desired = (meeting.tasks||[]).map(taskDefault);
+    const explicit = (meeting.tasks||[]).map(taskDefault);
+    const fallback = (!explicit.length && (String(meeting.proxacao||'').trim() || String(meeting.tema||'').trim())) ? [taskDefault({
+      id: relUuid(`fallback_${meeting.id}`),
+      title: String(meeting.proxacao||meeting.tema||'Reunião interna Talents4').trim(),
+      owner: meeting.responsavel || '',
+      status: meeting.status || 'A fazer',
+      due: meeting.data || '',
+      comments: [meeting.decidido, meeting.pendencias].filter(Boolean).join(' | '),
+      target: '',
+      actual: '',
+      priority: 'Alta'
+    })] : [];
+    const desired = (explicit.length ? explicit : fallback).map(taskDefault);
     const existing = (S.operationalTasks||[]).filter(t=>String(t.context_type||'')==='meeting' && String(t.resource_link||'')===MEETING_TASK_MARKER && String(t.meeting_id||'')===String(meeting.id));
     const desiredIds = desired.map(t=>String(t.id));
     for(const stale of existing.filter(t=>!desiredIds.includes(String(t.id)))){
@@ -4499,7 +4666,7 @@ document.querySelectorAll('.modal-ov').forEach(ov=>{
         priority: task.priority || 'Média',
         owner: task.owner,
         team_scope: 'team',
-        employer: meeting.employer || '',
+        employer: meeting.employer || INTERNAL_LABEL,
         employer_id_text: meeting.employer ? relEmpIdByName(meeting.employer) : null,
         month: meeting.mes || MONTHS[S.currentMonthIdx]?.k || '',
         start_date: meeting.data || '',
@@ -4528,7 +4695,7 @@ document.querySelectorAll('.modal-ov').forEach(ov=>{
     }
   }
 
-  async function softDeleteMeetingOperationalItems(meetingId){
+async function softDeleteMeetingOperationalItems(meetingId){
     const existing = (S.operationalTasks||[]).filter(t=>String(t.context_type||'')==='meeting' && String(t.resource_link||'')===MEETING_TASK_MARKER && String(t.meeting_id||'')===String(meetingId));
     for(const stale of existing){
       try{ await orgHybridSoftDeleteOperationalTask(stale.id); }catch(err){ console.warn('[T4 Organizacional] soft delete task meeting cascade:', err?.message || err); }
