@@ -2156,8 +2156,7 @@ function renderInfoOpeningsList(openings){
 function statusPillText(v){ return badge(v||'—'); }
 
 function parseOpeningsText(txt){
-  return String(txt||'').split('
-').map(s=>s.trim()).filter(Boolean).map(t=>({id:relUuid(),title:t,qty:1,status:'Aberta'}));
+  return String(txt||'').split('\n').map(s=>s.trim()).filter(Boolean).map(t=>({id:relUuid(),title:t,qty:1,status:'Aberta'}));
 }
 function normalizeOpenings(arr){
   if(Array.isArray(arr)&&arr.length){
