@@ -320,6 +320,30 @@ tbody tr:hover .row-actions.hover{opacity:1}
 .info-summary-box{padding:12px 14px;border:1px solid #D9E4F2;border-radius:9px;background:#F8FAFC}
 .info-summary-title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px}
 .info-summary-text{font-size:12px;color:var(--text);line-height:1.55}
+
+.emp-top-stats .small-stat{min-height:92px}
+.emp-kpi-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.emp-signal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.emp-signal-item{padding:10px 12px;border:1px solid #D9E4F2;border-radius:8px;background:#fff}
+.emp-signal-item .lbl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:5px}
+.emp-signal-item .val{font-size:12px;color:var(--text);line-height:1.45}
+.emp-signal-item .val strong{font-size:16px;line-height:1}
+.emp-card-summary.resumo-tight{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.info-dual-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:12px;margin-top:10px}
+.info-feed-list{display:grid;gap:8px}
+.info-feed-item{padding:10px 12px;border:1px solid #E3ECF6;border-radius:8px;background:#fff}
+.info-feed-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.info-feed-kind{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.info-feed-date{font-size:11px;color:var(--text3);white-space:nowrap}
+.info-feed-title{font-size:12px;font-weight:700;color:var(--text);margin-top:2px;line-height:1.35}
+.info-feed-sub{font-size:11px;color:var(--text2);line-height:1.45;margin-top:4px}
+.info-alert-list{display:grid;gap:8px}
+.info-alert-item{display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border:1px solid #E3ECF6;border-radius:8px;background:#fff}
+.info-alert-dot{width:8px;height:8px;border-radius:999px;background:var(--amber);margin-top:5px;flex-shrink:0}
+.info-alert-item.risk .info-alert-dot{background:var(--red)}
+.info-alert-item.good .info-alert-dot{background:var(--green)}
+@media(max-width:900px){.emp-signal-grid,.info-dual-grid{grid-template-columns:1fr}}
+
 @media(max-width:900px){.emp-cards-grid{grid-template-columns:1fr}.emp-links,.info-meta-grid{grid-template-columns:1fr}}
 
 /* IMPROVEMENTS V3 */
@@ -348,6 +372,12 @@ tbody tr:hover .row-actions.hover{opacity:1}
 .small-stat .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:5px}
 .small-stat .val{font-size:24px;font-weight:800;line-height:1}
 .small-stat .sub{font-size:11px;color:var(--text3);margin-top:3px}
+.cell-title{font-weight:700;line-height:1.35}
+.cell-sub{font-size:11px;color:var(--text3);line-height:1.4;margin-top:3px}
+.clamp-2{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.progress-track{height:6px;background:#E8EEF5;border-radius:999px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;background:var(--blue);border-radius:999px}
+.table-note{font-size:11px;color:var(--text3)}
 .ifield-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .ifield-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .compact-list{display:grid;gap:8px}
@@ -607,6 +637,7 @@ tbody tr:hover .row-actions.hover{opacity:1}
       <option value="alpha">Ordem alfabética</option>
       <option value="status">Status</option>
     </select>
+    <button class="btn btn-ghost btn-sm" onclick="clearResumoFilters()">Limpar filtros</button>
   </div>
   <div class="pb">
     <div class="stats" id="resumo-stats"></div>
@@ -672,25 +703,27 @@ tbody tr:hover .row-actions.hover{opacity:1}
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="op-search" type="text" placeholder="Buscar tarefa..." oninput="renderOperationalPage()">
     </div>
+    <button class="btn btn-ghost btn-sm" onclick="clearOperationalFilters()">Limpar filtros</button>
   </div>
   <div class="pb">
+    <div class="stats" id="op-stats"></div>
     <div class="card" style="margin-bottom:16px">
-      <div class="card-hd"><h3>📈 Métricas do mês</h3><span style="font-size:11px;color:var(--text3)">Leitura e ajuste manual das metas</span></div>
+      <div class="card-hd"><h3>📈 Métricas do mês</h3><span style="font-size:11px;color:var(--text3)">Somente o que ajuda a equipe a decidir, sem ruído de coluna desnecessária</span></div>
       <div class="tbl-wrap">
         <table>
           <thead>
-            <tr><th>Mês</th><th>Chave</th><th>Métrica</th><th>Meta</th><th>Realizado</th><th>Escopo</th><th>Responsável</th><th style="width:80px"></th></tr>
+            <tr><th>Métrica</th><th>Mês</th><th>Meta</th><th>Realizado</th><th>Leitura</th><th>Escopo / responsável</th><th style="width:80px"></th></tr>
           </thead>
           <tbody id="op-metrics-tbody"></tbody>
         </table>
       </div>
     </div>
     <div class="card">
-      <div class="card-hd"><h3>🧩 Tarefas operacionais</h3><span style="font-size:11px;color:var(--text3)">Soft delete relacional com deleted_at</span></div>
+      <div class="card-hd"><h3>🧩 Tarefas operacionais</h3><span style="font-size:11px;color:var(--text3)">Tabela mais densa e orientada a ação, não a cadastro</span></div>
       <div class="tbl-wrap">
         <table>
           <thead>
-            <tr><th>Título</th><th>Mês</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th>Escopo</th><th>Responsável</th><th>Empregador</th><th style="width:80px"></th></tr>
+            <tr><th>Tarefa</th><th>Prazo</th><th>Prioridade</th><th>Status</th><th>Escopo</th><th>Responsável</th><th>Contexto</th><th style="width:80px"></th></tr>
           </thead>
           <tbody id="op-tasks-tbody"></tbody>
         </table>
@@ -703,7 +736,7 @@ tbody tr:hover .row-actions.hover{opacity:1}
 <!-- PAGE: EMPREGADORES -->
 <div class="page" id="page-employers">
   <div class="ph">
-    <div class="ph-left"><h1>Gerenciar Empregadores</h1><p>Adicione, edite e configure todos os empregadores do sistema</p></div>
+    <div class="ph-left"><h1>Gerenciar Empregadores</h1><p>Cadastro limpo, contexto operacional e acesso rápido ao dossiê real de cada employer</p></div>
     <div class="ph-right">
       <button class="btn btn-primary" onclick="openEmpModal()">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -714,10 +747,26 @@ tbody tr:hover .row-actions.hover{opacity:1}
   <div class="toolbar">
     <div class="search">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="emp-search" type="text" placeholder="Buscar empregador..." oninput="renderEmployers()">
+      <input id="emp-search" type="text" placeholder="Buscar nome, contato, foco ou observação..." oninput="renderEmployers()">
     </div>
+    <select class="fs" id="emp-health-filter" style="width:auto;min-width:170px" onchange="renderEmployers()">
+      <option value="">Toda a saúde do processo</option>
+      <option>Em risco</option>
+      <option>Prioridade</option>
+      <option>Em andamento</option>
+      <option>Estável</option>
+      <option>Pausado</option>
+    </select>
+    <select class="fs" id="emp-sort" style="width:auto;min-width:170px" onchange="renderEmployers()">
+      <option value="risk">Ordenar por ação</option>
+      <option value="pipeline">Mais candidatos</option>
+      <option value="openings">Mais vagas abertas</option>
+      <option value="name">Nome A-Z</option>
+    </select>
+    <button class="btn btn-ghost btn-sm" onclick="clearEmployerFilters()">Limpar filtros</button>
   </div>
   <div class="pb">
+    <div class="stats" id="emp-stats" style="margin-bottom:14px"></div>
     <div class="emp-cards-grid" id="emp-cards-grid"></div>
   </div>
 </div>
@@ -758,33 +807,33 @@ tbody tr:hover .row-actions.hover{opacity:1}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="search">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input id="pipe-search" type="text" placeholder="Buscar candidato..." oninput="renderPipeline()">
+          <input id="pipe-search" type="text" placeholder="Buscar nome, área, encaixe, ação..." oninput="renderPipeline()">
         </div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
           <select class="fi" style="width:auto;padding:6px 10px" id="pipe-etapa-filter" onchange="renderPipeline()">
             <option value="">Todas as etapas</option>
             <option>Aguardando envio</option><option>Aguardando resposta</option><option>Gostou</option><option>Não gostou</option><option>Reunião marcada</option><option>Em processo</option><option>Contratado</option>
           </select>
+          <button class="btn btn-ghost btn-sm" onclick="clearPipelineFilters()">Limpar filtros</button>
           <button class="btn btn-primary" onclick="openCandModal()">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Adicionar Candidato
           </button>
         </div>
       </div>
+      <div class="stats" id="pipe-stats" style="margin-bottom:14px"></div>
       <div class="card">
+        <div class="card-hd"><h3>Pipeline ativo</h3><span style="font-size:11px;color:var(--text3)">Mais compacto: candidato + perfil + próxima ação sem espalhar metadado em excesso</span></div>
         <div class="tbl-wrap">
           <table>
             <thead><tr>
               <th style="width:35px">#</th>
-              <th style="min-width:150px">Nome</th>
-              <th style="min-width:160px">Área / Posição</th>
-              <th style="min-width:140px">Encaixe Principal</th>
-              <th style="min-width:55px">Idade</th>
-              <th style="min-width:90px">Alemão</th>
-              <th style="min-width:100px">Data Envio</th>
-              <th style="min-width:130px">Etapa Atual</th>
-              <th style="min-width:160px">Próxima Ação</th>
-              <th style="min-width:90px">Responsável</th>
+              <th style="min-width:180px">Candidato</th>
+              <th style="min-width:220px">Perfil / encaixe</th>
+              <th style="min-width:105px">Envio</th>
+              <th style="min-width:130px">Etapa</th>
+              <th style="min-width:220px">Próxima ação</th>
+              <th style="min-width:110px">Responsável</th>
               <th style="width:80px"></th>
             </tr></thead>
             <tbody id="pipe-tbody"></tbody>
@@ -2583,38 +2632,115 @@ function deleteEmpDirect(name){
 }
 
 // ─── RENDER EMPLOYERS PAGE ───
+
 function renderEmployers(){
-  const search=(document.getElementById('emp-search')?.value||'').toLowerCase();
-  const list=S.employers.filter(e=>!search||String(e.name||'').toLowerCase().includes(search));
+  const search=(document.getElementById('emp-search')?.value||'').toLowerCase().trim();
+  const health=(document.getElementById('emp-health-filter')?.value||'').trim();
+  const sort=(document.getElementById('emp-sort')?.value||'risk').trim();
   const grid=document.getElementById('emp-cards-grid');
+  const stats=document.getElementById('emp-stats');
+  const today=(new Date()).toISOString().slice(0,10);
+
+  const enriched=(S.employers||[]).map(e=>{
+    const dossier=S.dossiers[e.name]||{candidatos:[],removidos:[],reposicao:[]};
+    const candidatos=(dossier.candidatos||[]).length;
+    const removidos=(dossier.removidos||[]).length;
+    const reposicao=(dossier.reposicao||[]).length;
+    const openings=normalizeOpenings(e.openings||[]);
+    const vagasAbertas=openings.filter(o=>String(o.status||'Aberta')!=='Fechada').length;
+    const pendencias=(S.planEntries||[]).filter(p=>p.employer===e.name && ['A fazer','Em andamento','Bloqueado'].includes(p.status||'')).length;
+    const nextMeeting=(S.meetings||[])
+      .filter(m=>m.employer===e.name && (m.data||m.scheduledAt))
+      .sort((a,b)=>String(a.data||a.scheduledAt||'').localeCompare(String(b.data||b.scheduledAt||'')))[0]||null;
+    const resumo=String(e.descricao||'').trim();
+    const focus=splitFocusAreas(e.focusAreas||'');
+    const searchable=[
+      e.name,e.contato,e.descricao,e.focusAreas,e.crm,e.pasta,e.link,e.saude,
+      openings.map(o=>o.title).join(' '),
+      (dossier.candidatos||[]).map(c=>[c.nome,c.area,c.encaixe,c.proxacao].join(' ')).join(' ')
+    ].join(' ').toLowerCase();
+    const saude=e.saude||'Estável';
+    let riskRank=1;
+    if(saude==='Em risco') riskRank=5;
+    else if(saude==='Prioridade') riskRank=4;
+    else if(pendencias>0 || reposicao>0) riskRank=3;
+    else if(vagasAbertas>0 || candidatos>0) riskRank=2;
+    return {
+      ...e,
+      dossier,
+      candidatos,
+      removidos,
+      reposicao,
+      openings,
+      vagasAbertas,
+      pendencias,
+      nextMeeting,
+      resumo,
+      focus,
+      searchable,
+      saude,
+      riskRank
+    };
+  });
+
+  let list=enriched.filter(e=>{
+    if(health && e.saude!==health) return false;
+    if(search && !e.searchable.includes(search)) return false;
+    return true;
+  });
+
+  list.sort((a,b)=>{
+    if(sort==='name') return String(a.name||'').localeCompare(String(b.name||''));
+    if(sort==='pipeline') return (b.candidatos-a.candidatos) || String(a.name||'').localeCompare(String(b.name||''));
+    if(sort==='openings') return (b.vagasAbertas-a.vagasAbertas) || (b.candidatos-a.candidatos) || String(a.name||'').localeCompare(String(b.name||''));
+    return (b.riskRank-a.riskRank) || (b.pendencias-a.pendencias) || (b.vagasAbertas-a.vagasAbertas) || String(a.name||'').localeCompare(String(b.name||''));
+  });
+
+  const totalOpenings=list.reduce((acc,e)=>acc+e.vagasAbertas,0);
+  const totalCandidates=list.reduce((acc,e)=>acc+e.candidatos,0);
+  const totalAction=list.filter(e=>['Em risco','Prioridade'].includes(e.saude) || e.pendencias>0 || e.reposicao>0).length;
+  if(stats){
+    stats.classList.add('emp-top-stats');
+    stats.innerHTML=`
+      <div class="small-stat accent-blue"><div class="lbl">Empregadores</div><div class="val" style="color:var(--blue)">${list.length}</div><div class="sub">no recorte atual</div></div>
+      <div class="small-stat"><div class="lbl">Vagas abertas</div><div class="val">${totalOpenings}</div><div class="sub">estruturadas no sistema</div></div>
+      <div class="small-stat accent-green"><div class="lbl">Candidatos em pipeline</div><div class="val" style="color:var(--green)">${totalCandidates}</div><div class="sub">somados nos dossiês</div></div>
+      <div class="small-stat accent-red"><div class="lbl">Exigem ação</div><div class="val" style="color:var(--red)">${totalAction}</div><div class="sub">risco, prioridade ou pendência aberta</div></div>`;
+  }
+
   if(!list.length){
-    grid.innerHTML=`<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/></svg><p>Nenhum empregador encontrado</p><small>Clique em "Novo Empregador" para adicionar</small></div>`;
+    grid.innerHTML=`<div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/></svg><p>Nenhum empregador encontrado</p><small>Revise busca/filtros ou clique em “Novo Empregador”.</small></div>`;
     return;
   }
+
   grid.innerHTML=list.map(e=>{
-    const dossier=S.dossiers[e.name]||{candidatos:[],removidos:[],reposicao:[]};
-    const cands=(dossier.candidatos||[]).length;
-    const saude=e.saude||'Estável';
-    const resumo=String(e.descricao||'').trim();
-    const resumoSafe=resumo?`${escapeHTML(resumo.substring(0,180))}${resumo.length>180?'...':''}`:'<span class="muted">Sem resumo do empregador.</span>';
-    const focus=splitFocusAreas(e.focusAreas||'');
+    const resumoSafe=e.resumo?escapeHTML(e.resumo):'<span class="muted">Sem resumo do empregador.</span>';
     const contatoSafe=safeText(e.contato,'—');
     const pastaUrl=safeUrl(e.pasta);
     const crmUrl=safeUrl(e.crm||e.link);
     const nameJs=escapeJsString(e.name);
+    const nextMeetingText=e.nextMeeting ? safeText(e.nextMeeting.data||e.nextMeeting.scheduledAt,'—') : 'Sem reunião agendada';
+    const nextMeetingMeta=e.nextMeeting ? safeText(e.nextMeeting.tema||e.nextMeeting.topic||e.nextMeeting.title,'Sem tema') : '';
+    const statusTone = ['Em risco','Prioridade'].includes(e.saude) ? 'accent-red' : (e.pendencias>0 || e.reposicao>0 ? 'accent-amber' : 'accent-green');
     return `<div class="emp-card" style="--emp:${e.color};border-left:6px solid ${e.color}">
       <div class="emp-color-bar" style="background:${e.color}"></div>
       <div class="emp-card-body">
         <div class="emp-card-head">
           <div>
             <div class="emp-card-name">${safeText(e.name,'—')}</div>
-            <div class="emp-card-meta">${cands} candidato${cands!==1?'s':''} no pipeline &nbsp;·&nbsp; ${badge(saude)}</div>
+            <div class="emp-card-meta">${badge(e.saude)} · ${e.candidatos} candidato${e.candidatos!==1?'s':''} · ${e.vagasAbertas} vaga${e.vagasAbertas!==1?'s':''} aberta${e.vagasAbertas!==1?'s':''}</div>
+            <div class="emp-kpi-row">
+              <span class="opening-pill">Pipeline ${e.candidatos}</span>
+              <span class="opening-pill">Pendências ${e.pendencias}</span>
+              <span class="opening-pill">Reposição ${e.reposicao}</span>
+              <span class="opening-pill">Removidos ${e.removidos}</span>
+            </div>
           </div>
           <div class="emp-card-actions">
             <button class="icon-btn" onclick="openEmpModal('${nameJs}')" title="Editar">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
-            <button class="icon-btn" onclick="goToDossie('${nameJs}')" title="Ver Pipeline">
+            <button class="icon-btn" onclick="goToDossie('${nameJs}')" title="Abrir dossiê">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             </button>
             <button class="icon-btn danger" onclick="deleteEmpDirect('${nameJs}')" title="Excluir">
@@ -2623,26 +2749,38 @@ function renderEmployers(){
           </div>
         </div>
 
-        <div class="emp-card-summary" style="background:${alpha(e.color,.07)};border:1px solid ${alpha(e.color,.18)};padding:10px 12px;border-radius:8px">${resumoSafe}</div>
+        <div class="emp-card-summary resumo-tight" style="background:${alpha(e.color,.07)};border:1px solid ${alpha(e.color,.18)};padding:10px 12px;border-radius:8px">${resumoSafe}</div>
 
-        <div class="emp-section" style="background:${alpha(e.color,.06)};border-color:${alpha(e.color,.18)}">
-          <div class="emp-section-label">Vagas abertas</div>
-          ${renderEmployerOpeningsList(e.openings||[])}
+        ${e.focus.length?`<div class="emp-section" style="background:${alpha(e.color,.05)};border-color:${alpha(e.color,.16)}">
+          <div class="emp-section-label">Áreas-foco</div>
+          <div class="emp-focus-list">${e.focus.map(f=>`<span class="emp-focus-chip">${escapeHTML(f)}</span>`).join('')}</div>
+        </div>`:''}
+
+        <div class="emp-signal-grid">
+          <div class="emp-signal-item ${statusTone}">
+            <div class="lbl">Próxima reunião</div>
+            <div class="val"><strong>${nextMeetingText}</strong>${nextMeetingMeta?`<br>${escapeHTML(nextMeetingMeta)}`:''}</div>
+          </div>
+          <div class="emp-signal-item">
+            <div class="lbl">Ação operacional</div>
+            <div class="val"><strong>${e.pendencias}</strong> pendência(s) aberta(s)${e.reposicao?`<br>${e.reposicao} reposição(ões) aguardando busca`:''}</div>
+          </div>
         </div>
 
-        ${focus.length?`<div class="emp-section" style="background:${alpha(e.color,.05)};border-color:${alpha(e.color,.16)}">
-          <div class="emp-section-label">Áreas-foco</div>
-          <div class="emp-focus-list">${focus.map(f=>`<span class="emp-focus-chip">${escapeHTML(f)}</span>`).join('')}</div>
-        </div>`:''}
+        <div class="emp-section" style="background:${alpha(e.color,.06)};border-color:${alpha(e.color,.18)}">
+          <div class="emp-section-label">Vagas estruturadas</div>
+          ${renderEmployerOpeningsList(e.openings||[],3)}
+        </div>
 
         ${(e.contato||e.pasta||e.crm||e.link)?`<div class="emp-links">
           <div class="emp-linkbox"><div class="lbl">Contato</div><div class="val">${contatoSafe}</div></div>
-          <div class="emp-linkbox"><div class="lbl">Pasta / CRM</div><div class="val">${pastaUrl?`<a href="${pastaUrl}" target="_blank" rel="noopener noreferrer">Pasta</a>`:''}${pastaUrl&&crmUrl?' · ':''}${crmUrl?`<a href="${crmUrl}" target="_blank" rel="noopener noreferrer">CRM</a>`:''}${!pastaUrl&&!crmUrl?'—':''}</div></div>
+          <div class="emp-linkbox"><div class="lbl">Atalhos</div><div class="val">${pastaUrl?`<a href="${pastaUrl}" target="_blank" rel="noopener noreferrer">Pasta</a>`:''}${pastaUrl&&crmUrl?' · ':''}${crmUrl?`<a href="${crmUrl}" target="_blank" rel="noopener noreferrer">CRM</a>`:''}${!pastaUrl&&!crmUrl?'—':''}</div></div>
         </div>`:''}
       </div>
     </div>`;
   }).join('');
 }
+
 function goToDossie(name){S.currentDossieEmp=name;nav('dossie');}
 function occursOnDate(entry,dateStr){
   const target=String(dateStr||'').slice(0,10);
@@ -3784,7 +3922,7 @@ function renderDossieActions(){
   if(!el) return;
   const e=getEmpObj(S.currentDossieEmp);
   const crmUrl=safeUrl(e.crm);
-  el.innerHTML=`<button class="btn btn-primary" onclick="openCandModal()">Novo candidato</button><button class="btn btn-ghost" onclick="openReplaceModal()">Nova reposição</button>${crmUrl?`<a class="btn btn-ghost" href="${crmUrl}" target="_blank" rel="noopener noreferrer">Abrir CRM</a>`:''}`;
+  el.innerHTML=`<button class="btn btn-primary" onclick="openCandModal()">Novo candidato</button><button class="btn btn-ghost" onclick="openReplaceModal()">Nova reposição</button><button class="btn btn-ghost" onclick="openEmpModal(S.currentDossieEmp)">Editar employer</button>${crmUrl?`<a class="btn btn-ghost" href="${crmUrl}" target="_blank" rel="noopener noreferrer">Abrir CRM</a>`:''}`;
 }
 function renderEmpTabs(){
   const el=document.getElementById('emp-tabs');
@@ -3806,6 +3944,7 @@ function selectEmp(name){
 
 function switchDossieTab(tab){
   S.currentDossieTab=tab;
+  save?.();
   document.querySelectorAll('.sub-tab').forEach((t,i)=>t.classList.toggle('active',['info','pipeline','removidos','reposicao'][i]===tab));
   document.querySelectorAll('.sub-page').forEach(p=>p.classList.remove('active'));
   document.getElementById('dossie-'+tab).classList.add('active');
@@ -3823,6 +3962,7 @@ function renderDossie(){
   if(S.currentDossieTab==='reposicao')renderReposicao();
 }
 
+
 function renderInfo(){
   const emp=S.currentDossieEmp;
   const e=getEmpObj(emp);
@@ -3837,21 +3977,51 @@ function renderInfo(){
   const removidos=(d.removidos||[]).length;
   const reposicao=(d.reposicao||[]).length;
   const abertas=(e.openings||[]).filter(o=>o.status!=='Fechada').length;
-  const nextMeeting=S.meetings.filter(m=>m.employer===emp && m.data).sort((a,b)=>String(a.data).localeCompare(String(b.data)))[0];
-  const nextActions=S.planEntries.filter(p=>p.employer===emp && ['A fazer','Em andamento','Bloqueado'].includes(p.status||'')).slice(0,4);
-  const resumoText = `${cands.length} candidato(s) no pipeline, ${aguardando} aguardando resposta, ${gostou} com feedback positivo, ${naoGostou} recusados e ${reposicao} demanda(s) de reposição abertas.`;
+  const nextMeeting=(S.meetings||[]).filter(m=>m.employer===emp && (m.data||m.scheduledAt)).sort((a,b)=>String(a.data||a.scheduledAt||'').localeCompare(String(b.data||b.scheduledAt||'')))[0];
+  const nextActions=(S.planEntries||[]).filter(p=>p.employer===emp && ['A fazer','Em andamento','Bloqueado'].includes(p.status||'')).slice(0,5);
+  const resumoText = `${cands.length} candidato(s) no pipeline, ${aguardando} aguardando resposta, ${contratados} contratado(s), ${reposicao} demanda(s) de reposição e ${nextActions.length} pendência(s) abertas no planejamento.`;
   const focus=splitFocusAreas(e.focusAreas||'');
   const pastaUrl=safeUrl(e.pasta);
   const crmUrl=safeUrl(e.crm);
+  const alertas=[];
+  if(['Em risco','Prioridade'].includes(e.saude||'')) alertas.push({tone:'risk', title:`Saúde do processo: ${e.saude}`, text:'Esse employer precisa de leitura rápida e follow-up disciplinado.'});
+  if(aguardando>0) alertas.push({tone:'warn', title:`${aguardando} aguardando resposta`, text:'Há candidatos esperando retorno do employer.'});
+  if(nextActions.length>0) alertas.push({tone:'warn', title:`${nextActions.length} pendência(s) abertas`, text:'Planejamento mensal ainda exige ação operacional.'});
+  if(reposicao>0) alertas.push({tone:'warn', title:`${reposicao} reposição(ões) abertas`, text:'Há demanda de substituição ainda não concluída.'});
+  if(!alertas.length) alertas.push({tone:'good', title:'Sem alertas críticos no momento', text:'O employer está operacionalmente estável neste recorte.'});
+
+  const feed=[
+    ...(S.planEntries||[]).filter(p=>p.employer===emp).map(p=>({
+      kind:'Planejamento',
+      date:p.fim||p.inicio||'',
+      title:p.activity||'Atividade',
+      sub:`${p.status||'—'}${p.responsavel?` · ${p.responsavel}`:''}${p.obs?` · ${p.obs}`:''}`,
+      clickable:p.id?`goToPlanEntry('${escapeJsString(p.id)}')`:null
+    })),
+    ...(S.meetings||[]).filter(m=>m.employer===emp).map(m=>({
+      kind:'Reunião',
+      date:m.data||m.scheduledAt||'',
+      title:m.tema||m.topic||m.title||'Reunião',
+      sub:`${m.responsavel||m.owner||'—'}${m.status?` · ${m.status}`:''}${m.proxacao?` · ${m.proxacao}`:''}`,
+      clickable:m.id?`goToMeeting('${escapeJsString(m.id)}')`:null
+    })),
+    ...(d.reposicao||[]).map(r=>({
+      kind:'Reposição',
+      date:r.date||'',
+      title:r.perfil||'Reposição',
+      sub:`${r.status||'—'}${r.priority?` · ${r.priority}`:''}${r.obs?` · ${r.obs}`:''}`,
+      clickable:`switchDossieTab('reposicao')`
+    }))
+  ].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,6);
 
   document.getElementById('info-content').innerHTML=`
     <div class="ifield">
       <div class="ifield-label">Descrição</div>
-      <div class="ifield-value">${e.descricao?nl2brSafe(e.descricao):'<em style="color:var(--text3)">Sem descrição. Clique em “Editar” para adicionar.</em>'}</div>
+      <div class="ifield-value">${e.descricao?nl2brSafe(e.descricao):'<em style="color:var(--text3)">Sem descrição. Clique em “Editar employer” para adicionar contexto operacional.</em>'}</div>
     </div>
 
     <div class="info-summary-box" style="margin-bottom:10px">
-      <div class="info-summary-title">Resumo operacional</div>
+      <div class="info-summary-title">Resumo executivo</div>
       <div class="info-summary-text">${escapeHTML(resumoText)}</div>
     </div>
 
@@ -3866,7 +4036,18 @@ function renderInfo(){
       </div>
     </div>
 
-    <div class="ifield">
+    <div class="info-dual-grid">
+      <div class="ifield">
+        <div class="ifield-label">Alertas e prioridades</div>
+        <div class="ifield-value"><div class="info-alert-list">${alertas.map(a=>`<div class="info-alert-item ${a.tone==='risk'?'risk':a.tone==='good'?'good':''}"><span class="info-alert-dot"></span><div><div style="font-size:12px;font-weight:700;color:var(--text)">${escapeHTML(a.title)}</div><div style="font-size:11px;color:var(--text2);line-height:1.45;margin-top:3px">${escapeHTML(a.text)}</div></div></div>`).join('')}</div></div>
+      </div>
+      <div class="ifield">
+        <div class="ifield-label">Últimas movimentações</div>
+        <div class="ifield-value">${feed.length?`<div class="info-feed-list">${feed.map(item=>`<div class="info-feed-item ${item.clickable?'clickable':''}" ${item.clickable?`onclick="${item.clickable}"`:''}><div class="info-feed-top"><div class="info-feed-kind">${escapeHTML(item.kind)}</div><div class="info-feed-date">${escapeHTML(item.date||'—')}</div></div><div class="info-feed-title">${escapeHTML(item.title||'—')}</div><div class="info-feed-sub">${escapeHTML(item.sub||'—')}</div></div>`).join('')}</div>`:'<em style="color:var(--text3)">Nenhuma movimentação registrada.</em>'}</div>
+      </div>
+    </div>
+
+    <div class="ifield" style="margin-top:10px">
       <div class="ifield-label">Vagas abertas</div>
       <div class="ifield-value">${renderInfoOpeningsList(e.openings||[])}</div>
     </div>
@@ -3880,29 +4061,29 @@ function renderInfo(){
     <div class="ifield-grid-2" style="margin-top:10px">
       <div class="ifield linkish" ${nextMeeting?`onclick="goToMeeting('${escapeJsString(nextMeeting.id)}')"`:''}>
         <div class="ifield-label">Próxima reunião</div>
-        <div class="ifield-value">${nextMeeting?`<strong>${escapeHTML(nextMeeting.data)}</strong><br>${safeText(nextMeeting.tema,'Sem tema')}${nextMeeting.proxacao?`<br><span style="color:var(--text2)">${escapeHTML(nextMeeting.proxacao)}</span>`:''}`:'Nenhuma reunião agendada'}</div>
+        <div class="ifield-value">${nextMeeting?`<strong>${escapeHTML(nextMeeting.data||nextMeeting.scheduledAt||'—')}</strong><br>${safeText(nextMeeting.tema||nextMeeting.topic||nextMeeting.title,'Sem tema')}${nextMeeting.proxacao?`<br><span style="color:var(--text2)">${escapeHTML(nextMeeting.proxacao)}</span>`:''}`:'Nenhuma reunião agendada'}</div>
       </div>
       <div class="ifield">
-        <div class="ifield-label">Próximas ações abertas</div>
+        <div class="ifield-label">Pendências abertas do planejamento</div>
         <div class="ifield-value">${nextActions.length?`<div class="compact-list">${nextActions.map(a=>`<div class="compact-item clickable" onclick="goToPlanEntry('${escapeJsString(a.id)}')"><div class="compact-item-title">${escapeHTML(a.activity)}</div><div class="compact-item-sub">${a.obs?escapeHTML(a.obs):'Sem observação'}${a.responsavel?` · ${escapeHTML(a.responsavel)}`:''}</div></div>`).join('')}</div>`:'<em style="color:var(--text3)">Nenhuma pendência aberta no planejamento mensal.</em>'}</div>
       </div>
     </div>
   `;
+
   document.getElementById('info-stats').innerHTML=`
     <div class="small-card-grid">
-      <div class="small-stat clickable accent-blue" onclick="goToPipelineFilter('')"><div class="lbl">Candidatos</div><div class="val">${cands.length}</div><div class="sub">no pipeline</div></div>
-      <div class="small-stat clickable accent-amber" onclick="goToPipelineFilter('Aguardando resposta')"><div class="lbl">Aguardando resposta</div><div class="val" style="color:var(--amber)">${aguardando}</div><div class="sub">retorno do employer</div></div>
-      <div class="small-stat clickable accent-green" onclick="goToPipelineFilter('Gostou')"><div class="lbl">Gostou</div><div class="val" style="color:var(--green)">${gostou}</div><div class="sub">feedback positivo</div></div>
-      <div class="small-stat clickable accent-red" onclick="goToPipelineFilter('Não gostou')"><div class="lbl">Não gostou</div><div class="val" style="color:var(--red)">${naoGostou}</div><div class="sub">feedback negativo</div></div>
-      <div class="small-stat clickable accent-blue" onclick="${nextMeeting?`goToMeeting('${escapeJsString(nextMeeting.id)}')`:`nav('reunioes')`}"><div class="lbl">Reuniões</div><div class="val" style="color:var(--blue)">${reuniao}</div><div class="sub">agendadas</div></div>
-      <div class="small-stat clickable accent-blue" onclick="goToPipelineFilter('Em processo')"><div class="lbl">Em processo</div><div class="val" style="color:var(--blue)">${emProcesso}</div><div class="sub">follow-up ativo</div></div>
+      <div class="small-stat clickable accent-blue" onclick="goToPipelineFilter('')"><div class="lbl">Pipeline</div><div class="val">${cands.length}</div><div class="sub">candidato(s) ativos</div></div>
+      <div class="small-stat clickable accent-amber" onclick="goToPipelineFilter('Aguardando resposta')"><div class="lbl">Aguardando retorno</div><div class="val" style="color:var(--amber)">${aguardando}</div><div class="sub">retorno do employer</div></div>
       <div class="small-stat clickable" onclick="openEmpModal(S.currentDossieEmp)"><div class="lbl">Vagas abertas</div><div class="val">${abertas}</div><div class="sub">estruturadas</div></div>
+      <div class="small-stat clickable accent-red" onclick="nav('planejamento')"><div class="lbl">Pendências abertas</div><div class="val" style="color:var(--red)">${nextActions.length}</div><div class="sub">itens do planejamento</div></div>
+      <div class="small-stat clickable accent-blue" onclick="${nextMeeting?`goToMeeting('${escapeJsString(nextMeeting.id)}')`:`nav('reunioes')`}"><div class="lbl">Reuniões</div><div class="val" style="color:var(--blue)">${reuniao}</div><div class="sub">marcadas no pipeline</div></div>
       <div class="small-stat clickable accent-amber" onclick="goToReposicao()"><div class="lbl">Reposição</div><div class="val" style="color:var(--amber)">${reposicao}</div><div class="sub">demanda aberta</div></div>
-      <div class="small-stat clickable accent-green" onclick="goToPipelineFilter('Contratado')"><div class="lbl">Contratados</div><div class="val" style="color:var(--green)">${contratados}</div><div class="sub">no employer</div></div>
-      <div class="small-stat clickable" onclick="goToRemovidos()"><div class="lbl">Removidos</div><div class="val" style="color:var(--gray)">${removidos}</div><div class="sub">candidatos</div></div>
+      <div class="small-stat clickable accent-green" onclick="goToPipelineFilter('Contratado')"><div class="lbl">Contratados</div><div class="val" style="color:var(--green)">${contratados}</div><div class="sub">pipeline concluído</div></div>
+      <div class="small-stat clickable" onclick="goToRemovidos()"><div class="lbl">Removidos</div><div class="val" style="color:var(--gray)">${removidos}</div><div class="sub">histórico de saída</div></div>
     </div>
   `;
 }
+
 // ─── PIPELINE ───
 function openCandModal(id){
   const isEdit=!!id;
@@ -4012,26 +4193,46 @@ function renderPipeline(){
   const search=(document.getElementById('pipe-search')?.value||'').toLowerCase();
   const etapaF=document.getElementById('pipe-etapa-filter')?.value||'';
   let list=(S.dossiers[emp]?.candidatos||[])
-    .filter(c=>(!search||String(c.nome||'').toLowerCase().includes(search)||String(c.area||'').toLowerCase().includes(search))&&(!etapaF||c.etapa===etapaF))
+    .filter(c=>{
+      const hay=[c.nome,c.area,c.encaixe,c.proxacao,c.responsavel,c.alemao].map(v=>String(v||'')).join(' ').toLowerCase();
+      return (!search || hay.includes(search)) && (!etapaF || c.etapa===etapaF);
+    })
     .sort((a,b)=>(a.seq||99)-(b.seq||99));
+
+  const pipeStats=document.getElementById('pipe-stats');
+  if(pipeStats){
+    const aguardando=list.filter(c=>c.etapa==='Aguardando resposta').length;
+    const gostou=list.filter(c=>c.etapa==='Gostou').length;
+    const emProcesso=list.filter(c=>c.etapa==='Em processo').length;
+    const contratados=list.filter(c=>c.etapa==='Contratado').length;
+    const respostaRapida=list.filter(c=>['Gostou','Não gostou','Reunião marcada'].includes(String(c.etapa||''))).length;
+    pipeStats.innerHTML=`
+      <div class="small-stat accent-blue"><div class="lbl">Total filtrado</div><div class="val" style="color:var(--blue)">${list.length}</div><div class="sub">recorte atual</div></div>
+      <div class="small-stat accent-amber"><div class="lbl">Aguardando resposta</div><div class="val" style="color:var(--amber)">${aguardando}</div><div class="sub">retorno do employer</div></div>
+      <div class="small-stat accent-green"><div class="lbl">Gostou / reunião</div><div class="val" style="color:var(--green)">${gostou}</div><div class="sub">${respostaRapida} com avanço de retorno</div></div>
+      <div class="small-stat"><div class="lbl">Em processo</div><div class="val">${emProcesso}</div><div class="sub">follow-up ativo</div></div>
+      <div class="small-stat accent-green"><div class="lbl">Contratados</div><div class="val" style="color:var(--green)">${contratados}</div><div class="sub">pipeline finalizado</div></div>`;
+  }
+
   const tbody=document.getElementById('pipe-tbody');
   if(!list.length){
-    tbody.innerHTML=`<tr><td colspan="11"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Nenhum candidato no pipeline.</p><small>Clique em "Adicionar Candidato" para começar</small></div></td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="8"><div class="empty"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Nenhum candidato no pipeline.</p><small>Clique em "Adicionar Candidato" para começar</small></div></td></tr>`;
     return;
   }
   tbody.innerHTML=list.map(c=>{
     const candId=escapeJsString(c.id);
+    const perfil = [safeText(c.area,'—'), c.encaixe ? `<div class="cell-sub clamp-2">${safeText(c.encaixe,'—')}</div>` : ''].join('');
     return `<tr onclick="openCandModal('${candId}')">
       <td style="font-size:11px;color:var(--text3);font-weight:700">${c.seq||'—'}</td>
-      <td><div style="font-weight:600;font-size:12px">${safeText(c.nome,'—')}</div><div style="font-size:10px;color:var(--text3)">${c.idade?escapeHTML(`${c.idade} anos`):''}</div></td>
-      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${safeAttrValue(c.area||'')}">${safeText(c.area,'—')}</span></td>
-      <td style="font-size:11px;color:var(--blue);font-weight:500;max-width:120px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(c.encaixe,'—')}</span></td>
-      <td style="font-size:11px;text-align:center">${c.idade||'—'}</td>
-      <td><span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg);padding:2px 6px;border-radius:4px">${safeText(c.alemao,'—')}</span></td>
+      <td>
+        <div class="cell-title">${safeText(c.nome,'—')}</div>
+        <div class="cell-sub">${c.idade?escapeHTML(`${c.idade} anos`):'idade —'} · Alemão ${safeText(c.alemao,'—')}</div>
+      </td>
+      <td><div class="cell-title">${safeText(c.area,'—')}</div><div class="cell-sub clamp-2">${safeText(c.encaixe,'—')}</div></td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2)">${escapeHTML(c.dataEnvio||'—')}</td>
       <td style="position:relative"><button class="badge ${STATUS_COLORS[c.etapa]||'b-gray'}" onclick="event.stopPropagation();showStatusPicker(this.parentElement,'${candId}','cand',['Aguardando envio','Aguardando resposta','Gostou','Não gostou','Reunião marcada','Em processo','Contratado','Removido'])">${escapeHTML(c.etapa||'—')}</button></td>
-      <td style="font-size:11px;max-width:140px"><span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${safeText(c.proxacao,'—')}</span></td>
-      <td style="font-size:11px">${safeText(c.responsavel,'—')}</td>
+      <td><div class="clamp-2">${safeText(c.proxacao,'—')}</div></td>
+      <td>${safeText(c.responsavel,'—')}</td>
       <td onclick="event.stopPropagation()">
         <div class="row-actions">
           <button class="icon-btn" onclick="openCandModal('${candId}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
@@ -4306,52 +4507,79 @@ function renderOperationalPage(){
   const scopeF=document.getElementById('op-scope-filter')?.value || '';
   const statusF=document.getElementById('op-status-filter')?.value || '';
   const search=(document.getElementById('op-search')?.value || '').trim().toLowerCase();
+  const todayStr = new Date().toISOString().slice(0,10);
+  const soonStr = new Date(Date.now()+7*86400000).toISOString().slice(0,10);
 
   const metrics=(S.operationalMetrics||[])
     .filter(m=>(!monthF || m.month===monthF) && (!scopeF || m.team_scope===scopeF))
-    .sort((a,b)=>(String(a.month).localeCompare(String(b.month)) || String(a.metric_label).localeCompare(String(b.metric_label))));
+    .sort((a,b)=>(String(a.month).localeCompare(String(b.month)) || String(a.metric_label).localeCompare(String(b.metric_label),'pt-BR')));
+
+  const tasks=(S.operationalTasks||[])
+    .filter(t=>(!monthF || t.month===monthF) && (!scopeF || t.team_scope===scopeF) && (!statusF || t.status===statusF))
+    .filter(t=>!search || [t.title,t.description,t.notes,t.owner,t.employer,t.context_type].map(v=>String(v||'')).join(' ').toLowerCase().includes(search))
+    .sort((a,b)=> (String(a.due_date||'9999-99-99').localeCompare(String(b.due_date||'9999-99-99')) || String(a.priority||'').localeCompare(String(b.priority||'')) || String(a.title||'').localeCompare(String(b.title||''),'pt-BR')));
+
+  const openTasks = tasks.filter(t=>!['Pronto','Cancelado'].includes(String(t.status||'')));
+  const highPriority = openTasks.filter(t=>String(t.priority||'')==='Alta').length;
+  const overdue = openTasks.filter(t=>t.due_date && t.due_date < todayStr).length;
+  const dueSoon = openTasks.filter(t=>t.due_date && t.due_date >= todayStr && t.due_date <= soonStr).length;
+  const doneTasks = tasks.filter(t=>String(t.status||'')==='Pronto').length;
+  const opStats=document.getElementById('op-stats');
+  if(opStats){
+    opStats.innerHTML=`
+      <div class="small-stat accent-blue"><div class="lbl">Tarefas filtradas</div><div class="val" style="color:var(--blue)">${tasks.length}</div><div class="sub">recorte atual do PO</div></div>
+      <div class="small-stat accent-red"><div class="lbl">Alta prioridade</div><div class="val" style="color:var(--red)">${highPriority}</div><div class="sub">itens abertos</div></div>
+      <div class="small-stat accent-amber"><div class="lbl">Prazo crítico</div><div class="val" style="color:var(--amber)">${overdue}</div><div class="sub">${dueSoon} vencem em até 7 dias</div></div>
+      <div class="small-stat accent-green"><div class="lbl">Concluídas / métricas</div><div class="val" style="color:var(--green)">${doneTasks}</div><div class="sub">${metrics.length} métrica(s) no recorte</div></div>`;
+  }
+
   const mtbody=document.getElementById('op-metrics-tbody');
   if(mtbody){
-    mtbody.innerHTML = metrics.length ? metrics.map(m=>`
+    mtbody.innerHTML = metrics.length ? metrics.map(m=>{
+      const target = Number(m.target_value||0);
+      const actual = Number(m.actual_value||0);
+      const ratio = target>0 ? Math.max(0, Math.min(100, Math.round((actual/target)*100))) : 0;
+      return `
       <tr>
+        <td><div class="cell-title">${safeText(m.metric_label,'—')}</div><div class="cell-sub">${safeText(m.metric_key,'—')}</div></td>
         <td>${safeText(m.month,'—')}</td>
-        <td style="font-size:11px">${safeText(m.metric_key,'—')}</td>
-        <td>${safeText(m.metric_label,'—')}</td>
-        <td>${Number(m.target_value||0).toLocaleString('pt-BR')}</td>
-        <td>${Number(m.actual_value||0).toLocaleString('pt-BR')}</td>
-        <td>${m.team_scope==='personal'?'Pessoal':'Equipe'}</td>
-        <td>${safeText(m.owner,'—')}</td>
+        <td>${target.toLocaleString('pt-BR')}</td>
+        <td>${actual.toLocaleString('pt-BR')}</td>
+        <td>
+          <div class="table-note">${target>0 ? `${ratio}% da meta` : 'sem meta definida'}</div>
+          <div class="progress-track"><div class="progress-fill" style="width:${ratio}%"></div></div>
+        </td>
+        <td><div>${m.team_scope==='personal'?'Pessoal':'Equipe'}</div><div class="cell-sub">${safeText(m.owner,'—')}</div></td>
         <td><div style="display:flex;gap:6px">
           <button class="icon-btn" onclick="openMetricModal('${escapeJsString(m.id)}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="icon-btn danger" onclick="deleteOperationalMetricDirect('${escapeJsString(m.id)}')" title="Excluir"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
         </div></td>
-      </tr>`).join('') : `<tr><td colspan="8"><div class="empty"><p>Nenhuma métrica neste filtro.</p></div></td></tr>`;
+      </tr>`}).join('') : `<tr><td colspan="7"><div class="empty"><p>Nenhuma métrica neste filtro.</p></div></td></tr>`;
   }
 
-  const tasks=(S.operationalTasks||[])
-    .filter(t=>(!monthF || t.month===monthF) && (!scopeF || t.team_scope===scopeF) && (!statusF || t.status===statusF))
-    .filter(t=>!search || [t.title,t.description,t.notes,t.owner,t.employer].join(' ').toLowerCase().includes(search))
-    .sort((a,b)=> (String(a.due_date||'').localeCompare(String(b.due_date||'')) || String(a.title||'').localeCompare(String(b.title||''))));
   const tbody=document.getElementById('op-tasks-tbody');
   if(tbody){
-    tbody.innerHTML = tasks.length ? tasks.map(t=>`
+    tbody.innerHTML = tasks.length ? tasks.map(t=>{
+      const prClass = t.priority==='Alta' ? 'b-red' : (t.priority==='Média' ? 'b-amber' : 'b-blue');
+      const contextBits = [t.employer, t.context_type].filter(Boolean);
+      return `
       <tr>
         <td>
-          <div style="font-weight:700">${safeText(t.title,'—')}</div>
-          <div style="font-size:11px;color:var(--text3)">${safeText(t.description||t.notes||'','')}</div>
+          <div class="cell-title">${safeText(t.title,'—')}</div>
+          <div class="cell-sub clamp-2">${safeText(t.description||t.notes||'','Sem detalhe adicional')}</div>
+          <div class="cell-sub">${safeText(t.month,'—')}</div>
         </td>
-        <td>${safeText(t.month,'—')}</td>
-        <td>${safeText(t.due_date,'—')}</td>
-        <td>${safeText(t.priority,'—')}</td>
+        <td><div>${safeText(t.due_date,'—')}</div><div class="cell-sub">${safeText(t.start_date ? `início ${t.start_date}` : '', '')}</div></td>
+        <td><span class="badge ${prClass}">${safeText(t.priority,'—')}</span></td>
         <td style="position:relative"><button class="badge ${STATUS_COLORS[t.status]||'b-gray'}" onclick="showStatusPicker(this.parentElement,'${escapeJsString(t.id)}','optask',['A fazer','Em andamento','Pronto','Bloqueado','Cancelado'])">${escapeHTML(t.status||'—')}</button></td>
         <td>${t.team_scope==='personal'?'Pessoal':'Equipe'}</td>
         <td>${safeText(t.owner,'—')}</td>
-        <td>${safeText(t.employer,'—')}</td>
+        <td><div class="clamp-2">${safeText(contextBits.join(' · ')||'Geral','Geral')}</div></td>
         <td><div style="display:flex;gap:6px">
           <button class="icon-btn" onclick="openTaskModal('${escapeJsString(t.id)}')" title="Editar"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <button class="icon-btn danger" onclick="deleteOperationalTaskDirect('${escapeJsString(t.id)}')" title="Excluir"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
         </div></td>
-      </tr>`).join('') : `<tr><td colspan="9"><div class="empty"><p>Nenhuma tarefa operacional neste filtro.</p></div></td></tr>`;
+      </tr>`}).join('') : `<tr><td colspan="8"><div class="empty"><p>Nenhuma tarefa operacional neste filtro.</p></div></td></tr>`;
   }
 }
 function openTaskModal(id=''){
@@ -5465,14 +5693,69 @@ async function softDeleteMeetingOperationalItems(meetingId){
     st.textContent = `
       #meet-task-editor .opening-row, #emp-projects-editor .opening-row{margin-bottom:8px}
       #meet-task-editor .ft, #emp-projects-editor .ft{padding:10px 12px}
+      .btn.btn-sm{padding:6px 10px;font-size:11px}
+      .toolbar{gap:8px}
+      .toolbar .btn{align-self:center}
+      body.page-compact .card-hd{padding:12px 16px}
+      body.page-compact .card-bd{padding:12px 16px}
+      body.page-compact .pb{padding:16px 20px}
+      body.page-compact thead th{padding:8px 10px}
+      body.page-compact tbody td{padding:8px 10px}
+      body.page-compact .stats{gap:12px;margin-bottom:16px}
+      body.page-compact .stat{padding:14px 16px}
     `;
     document.head.appendChild(st);
   }
 
+  const UI_PREF_KEY = 't4crm_ui_v6';
+  function readUiPrefs(){ try{return JSON.parse(localStorage.getItem(UI_PREF_KEY)||'{}')||{};}catch(_){return {};}}
+  function writeUiPrefs(prefs){ try{ localStorage.setItem(UI_PREF_KEY, JSON.stringify(prefs||{})); }catch(_){} }
+  function updateUiPrefs(mutator){ const prefs=readUiPrefs(); mutator(prefs); writeUiPrefs(prefs); }
+  function getEl(id){ return document.getElementById(id); }
+  function captureFilters(){
+    const ids=['resumo-month-filter','resumo-search','resumo-employer-filter','resumo-status-filter','resumo-source-filter','resumo-sort-filter','op-month-filter','op-scope-filter','op-status-filter','op-search','emp-search','emp-health-filter','emp-sort','pipe-search','pipe-etapa-filter'];
+    updateUiPrefs(p=>{ p.filters = p.filters || {}; ids.forEach(id=>{ const el=getEl(id); if(el) p.filters[id]=el.value; }); p.compact = document.body.classList.contains('page-compact'); });
+  }
+  function restoreFilters(){
+    const prefs=readUiPrefs(); const filters=prefs.filters||{};
+    Object.entries(filters).forEach(([id,val])=>{ const el=getEl(id); if(!el) return; if(el.tagName==='INPUT'){ el.value = val ?? ''; return; } if(Array.from(el.options||[]).some(o=>String(o.value)===String(val))) el.value = val ?? ''; });
+    document.body.classList.toggle('page-compact', !!prefs.compact);
+    const denseBtn=getEl('global-density-toggle'); if(denseBtn) denseBtn.textContent = document.body.classList.contains('page-compact') ? 'Modo normal' : 'Modo denso';
+  }
+  function bindFilterPersistence(){
+    const ids=['resumo-month-filter','resumo-search','resumo-employer-filter','resumo-status-filter','resumo-source-filter','resumo-sort-filter','op-month-filter','op-scope-filter','op-status-filter','op-search','emp-search','emp-health-filter','emp-sort','pipe-search','pipe-etapa-filter'];
+    ids.forEach(id=>{ const el=getEl(id); if(!el || el.dataset.uiBound==='1') return; const ev=el.tagName==='INPUT'?'input':'change'; el.addEventListener(ev, captureFilters); el.dataset.uiBound='1'; });
+  }
+  function injectGlobalUtility(){
+    if(getEl('global-density-toggle')) return;
+    const targets = document.querySelectorAll('.ph-right');
+    targets.forEach(target=>{ if(target.querySelector('#global-density-toggle')) return; });
+    const first=targets[0]; if(!first) return;
+    const btn = document.createElement('button');
+    btn.id='global-density-toggle';
+    btn.className='btn btn-ghost';
+    btn.type='button';
+    btn.onclick=()=>{ document.body.classList.toggle('page-compact'); captureFilters(); restoreFilters(); };
+    btn.textContent = document.body.classList.contains('page-compact') ? 'Modo normal' : 'Modo denso';
+    first.prepend(btn);
+  }
+  window.clearResumoFilters = function(){ [['resumo-month-filter',''],['resumo-search',''],['resumo-employer-filter',''],['resumo-status-filter',''],['resumo-source-filter',''],['resumo-sort-filter','priority']].forEach(([id,val])=>{ const el=getEl(id); if(el) el.value=val; }); captureFilters(); renderResumo?.(); };
+  window.clearOperationalFilters = function(){ [['op-month-filter', getEl('op-month-filter')?.options?.[0]?.value || ''],['op-scope-filter',''],['op-status-filter',''],['op-search','']].forEach(([id,val])=>{ const el=getEl(id); if(el) el.value=val; }); captureFilters(); renderOperationalPage?.(); };
+  window.clearEmployerFilters = function(){ [['emp-search',''],['emp-health-filter',''],['emp-sort','risk']].forEach(([id,val])=>{ const el=getEl(id); if(el) el.value=val; }); captureFilters(); renderEmployers?.(); };
+  window.clearPipelineFilters = function(){ [['pipe-search',''],['pipe-etapa-filter','']].forEach(([id,val])=>{ const el=getEl(id); if(el) el.value=val; }); captureFilters(); renderPipeline?.(); };
+
   function initPatch(){
     injectStyle();
     ensurePatchedUi();
+    injectGlobalUtility();
+    if(typeof populateAllSelects==='function' && !populateAllSelects.__uiWrapped){
+      const originalPopulate = populateAllSelects;
+      window.populateAllSelects = function(...args){ const out = originalPopulate.apply(this,args); restoreFilters(); bindFilterPersistence(); return out; };
+      window.populateAllSelects.__uiWrapped = true;
+    }
     if(typeof populateAllSelects==='function') populateAllSelects();
+    restoreFilters();
+    bindFilterPersistence();
   }
 
   if(document.readyState==='loading'){
