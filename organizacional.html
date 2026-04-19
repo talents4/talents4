@@ -361,8 +361,22 @@ tbody tr:hover .row-actions.hover{opacity:1}
 .resumo-scroll-panel{max-height:420px;overflow:auto;padding-right:6px}
 .resumo-weekly-wrap{max-height:420px;overflow:auto}
 .resumo-history-wrap{max-height:560px;overflow:auto}
+
 .resumo-priority-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:8px}
 .resumo-priority-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:6px}
+.resumo-priority-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.resumo-priority-title{font-size:12px;font-weight:700;line-height:1.35}
+.resumo-priority-meta{font-size:11px;color:var(--text2);line-height:1.45}
+.resumo-priority-count{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:#EEF2FF;color:#3730A3;font-size:10px;font-weight:800;white-space:nowrap}
+.resumo-chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.resumo-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;border:1px solid var(--border);background:#fff;color:var(--text2)}
+.resumo-chip.todo{background:#FEF3C7;color:#B45309;border-color:#FDE68A}
+.resumo-chip.doing{background:#DBEAFE;color:#1D4ED8;border-color:#BFDBFE}
+.resumo-chip.blocked{background:#FEE2E2;color:#B91C1C;border-color:#FECACA}
+.resumo-chip.done{background:#DCFCE7;color:#166534;border-color:#BBF7D0}
+.resumo-truncate{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+.resumo-origin-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;font-size:10px;font-weight:800;background:#EFF6FF;color:#1D4ED8}
+
 .resumo-priority-meta{font-size:11px;color:var(--text2);margin-top:4px;white-space:pre-wrap}
 
 </style>
@@ -569,13 +583,13 @@ tbody tr:hover .row-actions.hover{opacity:1}
     <div class="ph-left"><h1>Resumo Geral</h1><p>Leitura consolidada da operação, prioridades e histórico completo</p></div>
     <div class="ph-right" style="display:flex;gap:8px;flex-wrap:wrap">
       <select class="fi" style="width:auto;padding:6px 10px" id="resumo-month-filter" onchange="renderResumo()"><option value="">Todos os meses</option></select>
-      <button class="btn btn-primary" onclick="openWeeklyModal()">Nova linha de resumo</button>
+      <button class="btn btn-primary" onclick="openWeeklyModal()">Adicionar item manual</button>
     </div>
   </div>
   <div class="toolbar resumo-toolbar-advanced">
     <div class="search" style="min-width:220px">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input id="resumo-search" type="text" placeholder="Buscar atividade, reunião, projeto..." oninput="renderResumo()">
+      <input id="resumo-search" type="text" placeholder="Buscar atividade, reunião ou tarefa..." oninput="renderResumo()">
     </div>
     <select class="fi" style="width:auto;padding:6px 10px" id="resumo-employer-filter" onchange="renderResumo()"><option value="">Todos os empregadores / escopos</option></select>
     <select class="fi" style="width:auto;padding:6px 10px" id="resumo-status-filter" onchange="renderResumo()"><option value="">Todos os status</option></select>
@@ -607,16 +621,16 @@ tbody tr:hover .row-actions.hover{opacity:1}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="card">
-        <div class="card-hd"><h3>🔴 Dashboard de prioridades</h3><span style="font-size:11px;color:var(--text3)">Tudo que exige ação, inclusive tarefas de reunião e projetos</span></div>
+        <div class="card-hd"><h3>🔴 Dashboard de prioridades</h3><span style="font-size:11px;color:var(--text3)">Agrupado por escopo para reduzir repetição e destacar o que exige ação</span></div>
         <div class="card-bd resumo-scroll-panel" id="resumo-priorities"></div>
       </div>
       <div class="card">
-        <div class="card-hd"><h3>📊 Status por empregador / escopo</h3></div>
+        <div class="card-hd"><h3>📊 Carga por empregador / escopo</h3></div>
         <div class="card-bd resumo-scroll-panel" id="resumo-by-employer"></div>
       </div>
     </div>
     <div class="card" style="margin-top:16px">
-      <div class="card-hd"><h3>📋 Histórico completo de atividades</h3><span style="font-size:11px;color:var(--text3)">Mostra todas as atividades, independente do status</span></div>
+      <div class="card-hd"><h3>📋 Histórico completo de atividades</h3><span style="font-size:11px;color:var(--text3)">Leitura densa e consolidada de todas as origens</span></div>
       <div class="tbl-wrap resumo-history-wrap">
         <table>
           <thead><tr><th>Origem</th><th>Mês</th><th>Empregador / escopo</th><th>Atividade</th><th>Responsável</th><th>Status</th><th>Prioridade</th><th>Observação</th><th>Data</th><th style="width:80px"></th></tr></thead>
@@ -3418,6 +3432,212 @@ function applyResumoFilters(rows){
 
 
 // ─── RESUMO ───
+
+function resumoIsDone(status){
+  return ['Concluído','Pronto'].includes(String(status||'').trim());
+}
+function resumoIsOpen(status){
+  return !['Concluído','Pronto','Cancelado'].includes(String(status||'').trim());
+}
+function resumoGroupPriorityRows(rows){
+  const grouped = {};
+  (Array.isArray(rows)?rows:[]).forEach(r=>{
+    const key = [r.employer,r.source,r.title,r.owner].join('||');
+    if(!grouped[key]){
+      grouped[key] = {
+        employer:r.employer,
+        source:r.source,
+        sourceLabel:r.sourceLabel,
+        title:r.title,
+        owner:r.owner,
+        status:r.status,
+        priority:r.priority,
+        date:r.date,
+        edit:r.edit,
+        notes:[],
+        count:0
+      };
+    }
+    const g=grouped[key];
+    g.count++;
+    if(r.obs) g.notes.push(String(r.obs));
+    if(resumoPriorityRank(r.priority) < resumoPriorityRank(g.priority)) g.priority = r.priority;
+    if(resumoStatusRank(r.status) < resumoStatusRank(g.status)) g.status = r.status;
+    if(resumoDateValue(r.date) > resumoDateValue(g.date)) g.date = r.date;
+  });
+  return Object.values(grouped).map(g=>({
+    ...g,
+    notes:[...new Set(g.notes)].filter(Boolean)
+  })).sort((a,b)=>
+    resumoPriorityRank(a.priority)-resumoPriorityRank(b.priority)
+    || resumoStatusRank(a.status)-resumoStatusRank(b.status)
+    || resumoDateValue(b.date)-resumoDateValue(a.date)
+    || String(a.title||'').localeCompare(String(b.title||''),'pt-BR')
+  );
+}
+
+function renderResumo(){
+  ensureWeeklySummaries();
+  const statsEl = document.getElementById('resumo-stats');
+  const prioritiesEl = document.getElementById('resumo-priorities');
+  const byEmployerEl = document.getElementById('resumo-by-employer');
+  const weeklyTbody = document.getElementById('weekly-tbody');
+  const historyEl = document.getElementById('resumo-history');
+  if(!statsEl || !prioritiesEl || !byEmployerEl || !weeklyTbody || !historyEl) return;
+
+  const monthSel = document.getElementById('resumo-month-filter');
+  if(monthSel && !monthSel.dataset.bound){
+    monthSel.dataset.bound='1';
+    monthSel.innerHTML = '<option value="">Todos os meses</option>' + MONTHS.map(m=>`<option value="${escapeAttr(m.k)}">${escapeHTML(m.l)}</option>`).join('');
+  }
+
+  const allRows = buildResumoActivityRows();
+
+  const employerSel = document.getElementById('resumo-employer-filter');
+  if(employerSel){
+    const cur = employerSel.value || '';
+    const opts = [...new Set(allRows.map(r=>String(r.employer||'')).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    employerSel.innerHTML = '<option value="">Todos os empregadores / escopos</option>' + opts.map(v=>`<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
+    employerSel.value = opts.includes(cur) ? cur : '';
+  }
+
+  const statusSel = document.getElementById('resumo-status-filter');
+  if(statusSel){
+    const cur = statusSel.value || '';
+    const opts = [...new Set(allRows.map(r=>String(r.status||'')).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    statusSel.innerHTML = '<option value="">Todos os status</option>' + opts.map(v=>`<option value="${escapeAttr(v)}">${escapeHTML(v)}</option>`).join('');
+    statusSel.value = opts.includes(cur) ? cur : '';
+  }
+
+  const filtered = applyResumoFilters(allRows);
+  const total = filtered.length;
+  const done = filtered.filter(r=>resumoIsDone(r.status)).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const abertos = filtered.filter(r=>resumoIsOpen(r.status)).length;
+  const alta = filtered.filter(r=>resumoIsOpen(r.status) && String(r.priority||'')==='Alta').length;
+
+  statsEl.innerHTML=`
+    <div class="stat"><div class="stat-l">Itens acompanhados</div><div class="stat-v">${total}</div><div class="stat-s">planejamento, reuniões, tarefas e linhas manuais</div></div>
+    <div class="stat"><div class="stat-l">Concluídos / prontos</div><div class="stat-v" style="color:var(--green)">${done}</div><div class="stat-s">${pct}% do total filtrado</div></div>
+    <div class="stat"><div class="stat-l">Em aberto</div><div class="stat-v" style="color:var(--amber)">${abertos}</div><div class="stat-s">pendentes, em andamento ou bloqueadas</div></div>
+    <div class="stat"><div class="stat-l">Alta prioridade</div><div class="stat-v" style="color:var(--red)">${alta}</div><div class="stat-s">exigem ação mais imediata</div></div>
+  `;
+
+  const priorityRows = resumoGroupPriorityRows(filtered.filter(r=>resumoIsOpen(r.status))).slice(0,40);
+  prioritiesEl.innerHTML = priorityRows.length ? priorityRows.map(r=>{
+    const preview = r.notes.slice(0,2).join(' • ') || 'Sem observação';
+    return `
+    <div class="resumo-priority-item linkish" onclick="${r.edit}">
+      <span class="dot" style="background:${getEmpColor(r.employer)}"></span>
+      <div style="flex:1;min-width:0">
+        <div class="resumo-priority-head">
+          <div class="resumo-priority-title">${escapeHTML(r.employer)} · ${escapeHTML(r.title)}</div>
+          ${r.count>1?`<span class="resumo-priority-count">${r.count} itens</span>`:''}
+        </div>
+        <div class="resumo-priority-meta">${escapeHTML(r.sourceLabel)}${r.owner?` · ${escapeHTML(r.owner)}`:''}${r.date?` · ${escapeHTML(r.date)}`:''}${r.priority?` · prioridade ${escapeHTML(r.priority)}`:''}</div>
+        <div class="resumo-priority-meta resumo-truncate" title="${escapeAttr(preview)}">${escapeHTML(preview)}</div>
+      </div>
+      ${badge(r.status)}
+    </div>`;
+  }).join('') : '<p style="color:var(--text3);font-size:12px">Nenhuma prioridade em aberto para os filtros atuais.</p>';
+
+  const byEmployerMap = {};
+  filtered.forEach(r=>{
+    const key = resumoEmployerLabel(r.employer || INTERNAL_LABEL);
+    if(!byEmployerMap[key]) byEmployerMap[key]={ total:0, done:0, todo:0, doing:0, blocked:0, color:getEmpColor(key) };
+    byEmployerMap[key].total++;
+    if(resumoIsDone(r.status)) byEmployerMap[key].done++;
+    else if(String(r.status||'')==='Bloqueado') byEmployerMap[key].blocked++;
+    else if(String(r.status||'')==='Em andamento' || String(r.status||'')==='Aguardando resposta') byEmployerMap[key].doing++;
+    else if(String(r.status||'')!=='Cancelado') byEmployerMap[key].todo++;
+  });
+
+  byEmployerEl.innerHTML = Object.keys(byEmployerMap).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')).map(name=>{
+    const row = byEmployerMap[name];
+    return `<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px">
+      <span style="width:9px;height:9px;border-radius:50%;background:${row.color};flex-shrink:0;margin-top:8px"></span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700">${escapeHTML(name)}</div>
+        <div class="resumo-priority-meta">${row.total} item(ns) acompanhados</div>
+        <div class="resumo-chip-row">
+          <span class="resumo-chip todo">A fazer ${row.todo}</span>
+          <span class="resumo-chip doing">Em andamento ${row.doing}</span>
+          <span class="resumo-chip blocked">Bloqueado ${row.blocked}</span>
+          <span class="resumo-chip done">Concluído ${row.done}</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('') || '<p style="color:var(--text3);font-size:12px">Nenhum dado para os filtros atuais.</p>';
+
+  const monF=document.getElementById('resumo-month-filter')?.value||'';
+  const empF=document.getElementById('resumo-employer-filter')?.value||'';
+  const stF=document.getElementById('resumo-status-filter')?.value||'';
+  const srcF=document.getElementById('resumo-source-filter')?.value||'';
+  const sortF=document.getElementById('resumo-sort-filter')?.value||'priority';
+  const q=(document.getElementById('resumo-search')?.value||'').toLowerCase().trim();
+  let out = (Array.isArray(rows)?rows:[]).filter(r=>(!monF||r.month===monF) && (!empF||r.employer===empF) && (!stF||r.status===stF) && (!srcF||r.source===srcF));
+  if(q){
+    out = out.filter(r => [r.employer,r.title,r.owner,r.obs,r.status,r.sourceLabel].map(v=>String(v||'')).join(' | ').toLowerCase().includes(q));
+  }
+  out.sort((a,b)=>{
+    if(sortF==='alpha') return String(a.title||'').localeCompare(String(b.title||''),'pt-BR');
+    if(sortF==='status') return resumoStatusRank(a.status)-resumoStatusRank(b.status) || String(a.title||'').localeCompare(String(b.title||''),'pt-BR');
+    if(sortF==='date_asc') return resumoDateValue(a.date)-resumoDateValue(b.date) || String(a.title||'').localeCompare(String(b.title||''),'pt-BR');
+    if(sortF==='date_desc') return resumoDateValue(b.date)-resumoDateValue(a.date) || String(a.title||'').localeCompare(String(b.title||''),'pt-BR');
+    return resumoPriorityRank(a.priority)-resumoPriorityRank(b.priority)
+      || resumoStatusRank(a.status)-resumoStatusRank(b.status)
+      || resumoDateValue(b.date)-resumoDateValue(a.date)
+      || String(a.title||'').localeCompare(String(b.title||''),'pt-BR');
+  });
+  return out;
+}
+
+
+// ─── RESUMO ───
+
+function resumoIsDone(status){
+  return ['Concluído','Pronto'].includes(String(status||'').trim());
+}
+function resumoIsOpen(status){
+  return !['Concluído','Pronto','Cancelado'].includes(String(status||'').trim());
+}
+function resumoGroupPriorityRows(rows){
+  const grouped = {};
+  (Array.isArray(rows)?rows:[]).forEach(r=>{
+    const key = [r.employer,r.source,r.title,r.owner].join('||');
+    if(!grouped[key]){
+      grouped[key] = {
+        employer:r.employer,
+        source:r.source,
+        sourceLabel:r.sourceLabel,
+        title:r.title,
+        owner:r.owner,
+        status:r.status,
+        priority:r.priority,
+        date:r.date,
+        edit:r.edit,
+        notes:[],
+        count:0
+      };
+    }
+    const g=grouped[key];
+    g.count++;
+    if(r.obs) g.notes.push(String(r.obs));
+    if(resumoPriorityRank(r.priority) < resumoPriorityRank(g.priority)) g.priority = r.priority;
+    if(resumoStatusRank(r.status) < resumoStatusRank(g.status)) g.status = r.status;
+    if(resumoDateValue(r.date) > resumoDateValue(g.date)) g.date = r.date;
+  });
+  return Object.values(grouped).map(g=>({
+    ...g,
+    notes:[...new Set(g.notes)].filter(Boolean)
+  })).sort((a,b)=>
+    resumoPriorityRank(a.priority)-resumoPriorityRank(b.priority)
+    || resumoStatusRank(a.status)-resumoStatusRank(b.status)
+    || resumoDateValue(b.date)-resumoDateValue(a.date)
+    || String(a.title||'').localeCompare(String(b.title||''),'pt-BR')
+  );
+}
+
 function renderResumo(){
   ensureWeeklySummaries();
   const statsEl = document.getElementById('resumo-stats');
@@ -3532,12 +3752,12 @@ function renderResumo(){
       <td>${escapeHTML(w?.week||'—')}<div style="margin-top:4px">${w?.source==='manual'?'<span class="summary-source manual">Manual</span>':'<span class="summary-source">Auto</span>'}</div></td>
       <td>${escapeHTML(w?.period||'—')}</td>
       <td>${escapeHTML(employerLabel||'—')}</td>
-      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w?.done||'—')}</td>
-      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w?.result||'—')}</td>
-      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w?.next||'—')}</td>
+      <td style="font-size:11px;max-width:180px"><div class="resumo-truncate" title="${escapeAttr(w?.done||'—')}">${escapeHTML(w?.done||'—')}</div></td>
+      <td style="font-size:11px;max-width:180px"><div class="resumo-truncate" title="${escapeAttr(w?.result||'—')}">${escapeHTML(w?.result||'—')}</div></td>
+      <td style="font-size:11px;max-width:180px"><div class="resumo-truncate" title="${escapeAttr(w?.next||'—')}">${escapeHTML(w?.next||'—')}</div></td>
       <td>${escapeHTML(w?.owner||'—')}</td>
       <td>${badge(w?.status||'—')}</td>
-      <td style="font-size:11px;max-width:180px;white-space:pre-wrap">${escapeHTML(w?.notes||'—')}</td>
+      <td style="font-size:11px;max-width:180px"><div class="resumo-truncate" title="${escapeAttr(w?.notes||'—')}">${escapeHTML(w?.notes||'—')}</div></td>
       <td><div class="row-actions">${w?.source==='manual'
         ? `<button class="icon-btn" onclick="openWeeklyModal('${escapeJsString(w?.id||'')}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`
         : `<button class="icon-btn" onclick="openWeeklyModalFromPreset('${escapeJsString(presetEncoded)}')"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`}
@@ -3546,14 +3766,14 @@ function renderResumo(){
   }).join('') : `<tr><td colspan="11"><div class="empty"><p>Nenhuma linha consolidada disponível.</p><small>Use os filtros acima ou registre novas atividades.</small></div></td></tr>`;
 
   historyEl.innerHTML = filtered.length ? filtered.map(r=>`<tr>
-    <td style="font-size:11px">${escapeHTML(r.sourceLabel)}</td>
+    <td style="font-size:11px"><span class="resumo-origin-chip">${escapeHTML(r.sourceLabel)}</span></td>
     <td style="font-size:11px;color:var(--text2)">${escapeHTML(MONTHS.find(m=>m.k===r.month)?.l||r.month||'—')}</td>
     <td style="font-size:12px;font-weight:600"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getEmpColor(r.employer)};margin-right:5px;vertical-align:middle"></span>${escapeHTML(r.employer)}</td>
-    <td style="font-size:11px">${escapeHTML(r.title)}</td>
+    <td style="font-size:11px;max-width:220px"><div class="resumo-truncate" title="${escapeAttr(r.title||'—')}">${escapeHTML(r.title)}</div></td>
     <td style="font-size:11px">${safeText(r.owner,'—')}</td>
     <td>${badge(r.status)}</td>
     <td style="font-size:11px">${escapeHTML(r.priority||'—')}</td>
-    <td style="font-size:11px;max-width:260px;white-space:pre-wrap">${escapeHTML(r.obs||'—')}</td>
+    <td style="font-size:11px;max-width:260px"><div class="resumo-truncate" title="${escapeAttr(r.obs||'—')}">${escapeHTML(r.obs||'—')}</div></td>
     <td style="font-family:'IBM Plex Mono',monospace;font-size:11px">${escapeHTML(r.date||'—')}</td>
     <td><div class="row-actions"><button class="icon-btn" onclick="${r.edit}"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></div></td>
   </tr>`).join('') : `<tr><td colspan="10"><div class="empty"><p>Nenhuma atividade encontrada.</p></div></td></tr>`;
