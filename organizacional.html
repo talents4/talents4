@@ -3211,28 +3211,68 @@ function computeWeeklyRows(monthKey){
   ensureWeeklySummaries();
   const manual=(S.weeklySummaries||[]).filter(w=>w.month===monthKey).map(w=>({...w,source:'manual'}));
   const autoMap={};
+  const ensureAutoRow=(month, week, employer, period='')=>{
+    const employerLabel=resumoEmployerLabel(employer);
+    const key=`${month}__${week}__${employerLabel}`;
+    if(!autoMap[key]) autoMap[key]={
+      id:key,
+      month,
+      week,
+      period:period || getWeekMeta(month, week).period,
+      employer:employerLabel,
+      done:[],
+      result:[],
+      next:[],
+      owner:new Set(),
+      status:new Set(),
+      notes:[],
+      source:'auto'
+    };
+    return autoMap[key];
+  };
+
   (S.planEntries||[]).filter(e=>e.month===monthKey).forEach(e=>{
     const info=weekInfoFromDate(e.inicio||e.fim||`${monthKey}-01`);
-    const key=`${monthKey}__${info.week}__${e.employer}`;
-    if(!autoMap[key]) autoMap[key]={id:key,month:monthKey,week:info.week,period:info.period,employer:e.employer,done:[],result:[],next:[],owner:new Set(),status:new Set(),notes:[],source:'auto'};
-    autoMap[key].done.push(e.activity);
-    if(e.obs) autoMap[key].result.push(e.obs);
-    if(e.obs) autoMap[key].next.push(e.obs);
-    if(e.responsavel) autoMap[key].owner.add(e.responsavel);
-    if(e.status) autoMap[key].status.add(e.status);
+    const row=ensureAutoRow(monthKey, info.week, e.employer, info.period);
+    if(e.activity) row.done.push(e.activity);
+    if(e.obs) row.result.push(e.obs);
+    if(!['Concluído','Pronto','Cancelado'].includes(String(e.status||'')) && e.activity) row.next.push(e.activity);
+    if(e.responsavel) row.owner.add(e.responsavel);
+    if(e.status) row.status.add(e.status);
+    if(e.obs) row.notes.push(e.obs);
   });
+
   (S.meetings||[]).filter(m=>m.mes===monthKey).forEach(m=>{
-    const week=m.semana||weekInfoFromDate(m.data).week;
-    const info=getWeekMeta(monthKey,week);
-    const key=`${monthKey}__${week}__${m.employer}`;
-    if(!autoMap[key]) autoMap[key]={id:key,month:monthKey,week,period:info.period,employer:m.employer,done:[],result:[],next:[],owner:new Set(),status:new Set(),notes:[],source:'auto'};
-    if(m.tema) autoMap[key].done.push(`Reunião: ${m.tema}`);
-    if(m.decidido) autoMap[key].result.push(m.decidido);
-    if(m.proxacao) autoMap[key].next.push(m.proxacao);
-    if(m.responsavel) autoMap[key].owner.add(m.responsavel);
-    if(m.status) autoMap[key].status.add(m.status);
-    if(m.pendencias) autoMap[key].notes.push(m.pendencias);
+    const info=weekInfoFromDate(m.data||`${monthKey}-01`);
+    const week=m.semana||info.week;
+    const meta=getWeekMeta(monthKey,week);
+    const row=ensureAutoRow(monthKey, week, m.employer, meta.period);
+    if(m.tema) row.done.push(`Reunião: ${m.tema}`);
+    if(m.decidido) row.result.push(m.decidido);
+    if(m.proxacao) row.next.push(m.proxacao);
+    if(m.responsavel) row.owner.add(m.responsavel);
+    if(m.status) row.status.add(m.status);
+    if(m.pendencias) row.notes.push(m.pendencias);
   });
+
+  (S.operationalTasks||[])
+    .filter(t=>!t?.deleted_at)
+    .forEach(t=>{
+      const taskMonth=String(t?.month || t?.due_date || t?.start_date || '').slice(0,7);
+      if(taskMonth!==monthKey) return;
+      const refDate=t?.due_date || t?.start_date || `${monthKey}-01`;
+      const info=weekInfoFromDate(refDate);
+      const employer = t?.employer || (String(t?.team_scope||'')==='team' ? INTERNAL_LABEL : '');
+      const row=ensureAutoRow(monthKey, info.week, employer, info.period);
+      const taskLabel = `Tarefa: ${String(t?.title || 'Sem título')}`;
+      if(['Concluído','Pronto'].includes(String(t?.status||''))) row.done.push(taskLabel);
+      else row.next.push(taskLabel);
+      if(t?.description) row.result.push(t.description);
+      if(t?.owner) row.owner.add(t.owner);
+      if(t?.status) row.status.add(t.status);
+      if(t?.notes) row.notes.push(t.notes);
+    });
+
   const auto=Object.values(autoMap).map(w=>({
     ...w,
     done:[...new Set(w.done)].join('\n'),
@@ -3246,10 +3286,11 @@ function computeWeeklyRows(monthKey){
   return [...auto, ...manual].sort((a,b)=>{
     if(a.month!==b.month) return String(a.month).localeCompare(String(b.month));
     if((weekOrder[a.week]||99)!==(weekOrder[b.week]||99)) return (weekOrder[a.week]||99)-(weekOrder[b.week]||99);
-    return String(a.employer).localeCompare(String(b.employer));
+    return String(a.employer).localeCompare(String(b.employer),'pt-BR');
   });
 }
 
+var INTERNAL_LABEL = 'Talents4 (interna)';
 function resumoEmployerLabel(v){
   const txt = String(v||'').trim();
   return txt || INTERNAL_LABEL;
@@ -3304,18 +3345,35 @@ function buildResumoActivityRows(){
       edit:`openMeetModal('${escapeJsString(m?.id||'')}')`
     });
   });
+  (Array.isArray(S.weeklySummaries)?S.weeklySummaries:[]).forEach(w=>{
+    rows.push({
+      id:w?.id||relUuid(),
+      source:'weekly',
+      sourceLabel:'Resumo semanal',
+      month:String(w?.month||''),
+      employer:resumoEmployerLabel(w?.employer),
+      title:`${String(w?.week||'Semana')} · Consolidação semanal`,
+      owner:String(w?.owner||''),
+      status:String(w?.status||'Em andamento'),
+      priority:'Média',
+      obs:[w?.done,w?.result,w?.next,w?.notes].filter(Boolean).join(' | '),
+      date:String(w?.period||''),
+      edit:`openWeeklyModal('${escapeJsString(w?.id||'')}')`
+    });
+  });
   (Array.isArray(S.operationalTasks)?S.operationalTasks:[]).filter(t=>!t?.deleted_at).forEach(t=>{
+    const context=String(t?.context_type||'').trim();
     rows.push({
       id:t?.id||relUuid(),
       source:'task',
-      sourceLabel:(String(t?.context_type||'').trim()==='employer' ? 'Projeto' : 'Tarefa'),
+      sourceLabel:(context==='employer' ? 'Projeto' : context==='meeting' ? 'Tarefa de reunião' : 'Tarefa'),
       month:String(t?.month||''),
       employer:resumoEmployerLabel(t?.employer || (t?.team_scope==='team' ? INTERNAL_LABEL : '')),
       title:String(t?.title||'Tarefa'),
       owner:String(t?.owner||''),
       status:String(t?.status||'A fazer'),
       priority:String(t?.priority||'Média'),
-      obs:String(t?.notes||''),
+      obs:[t?.description,t?.notes].filter(Boolean).join(' | '),
       date:String(t?.due_date||t?.start_date||''),
       edit:`nav('operacional');renderOperationalPage()`
     });
