@@ -1678,7 +1678,7 @@ function meetingStateToRel(item){
   const internal=!employer;
   return {
     id,
-    meeting_scope: internal ? 'group' : 'employer',
+    meeting_scope: internal ? 'internal' : 'employer',
     group_name: internal ? 'Talents 4' : null,
     employer_id:null,
     employer_name_snapshot: employer || null,
@@ -4545,7 +4545,7 @@ document.querySelectorAll('.modal-ov').forEach(ov=>{
     const noteMeta = { scope: internal ? 'interna_talents' : 'employer' };
     return {
       id: relUuid(item?.id),
-      meeting_scope: internal ? 'group' : 'employer',
+      meeting_scope: internal ? 'internal' : 'employer',
       group_name: internal ? 'Talents 4' : null,
       employer_id: null,
       employer_name_snapshot: internal ? null : (item?.employer || null),
@@ -4568,7 +4568,7 @@ document.querySelectorAll('.modal-ov').forEach(ov=>{
   };
   window.meetingRelToState = function(row){
     const meta = tryJson(row?.notes, {});
-    const scope = meta?.scope || (row?.meeting_scope==='group' ? 'interna_talents' : 'employer');
+    const scope = meta?.scope || (row?.meeting_scope==='internal' ? 'interna_talents' : 'employer');
     const id = row.id;
     return {
       id,
