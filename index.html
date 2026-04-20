@@ -2676,12 +2676,39 @@ const SYNC_INTERVAL = 300000;
 
 // ── Supabase client ──
 let _supa = null;
+let _supaPromise = null;
 async function getSupa() {
   if (_supa) return _supa;
-  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-  _supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  return _supa;
+  if (_supaPromise) return _supaPromise;
+  _supaPromise = (async () => {
+    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storageKey: 'sb-t4ops-auth',
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      }
+    });
+    _supa = client;
+    return client;
+  })();
+  try {
+    return await _supaPromise;
+  } finally {
+    _supaPromise = null;
+  }
 }
+
+function timeoutPromise(ms, label='Operação') {
+  return new Promise((_, reject) => {
+    setTimeout(() => reject(new Error(label + ' demorou demais. Tente novamente.')), ms);
+  });
+}
+async function withTimeout(promise, ms, label='Operação') {
+  return Promise.race([promise, timeoutPromise(ms, label)]);
+}
+
 
 async function invokeAdminUserLifecycle(action, payload) {
   const supa = await getSupa();
@@ -3219,71 +3246,96 @@ async function fetchUsersForAuth() {
 
 async function doLogin() {
   const username = document.getElementById('li-user').value.trim().toLowerCase();
-  const pass     = document.getElementById('li-pass').value;
-  const err  = document.getElementById('li-err');
-  const btn  = document.getElementById('li-btn');
+  const pass = document.getElementById('li-pass').value;
+  const err = document.getElementById('li-err');
+  const btn = document.getElementById('li-btn');
+
   err.style.display = 'none';
-  btn.textContent = '⏳ Verificando...'; btn.disabled = true;
+  if (!username || !pass) {
+    err.textContent = 'Preencha usuário e senha.';
+    err.style.display = 'block';
+    return;
+  }
+
+  btn.textContent = '⏳ Verificando...';
+  btn.disabled = true;
 
   try {
-    const supa = await getSupa();
+    const supa = await withTimeout(getSupa(), 6000, 'Inicialização de autenticação');
 
-    // ── Supabase Auth — senha NUNCA comparada no nosso código ──
-    // Email sintético interno: username@t4ops.crm
-    const { data: authData, error: authError } = await supa.auth.signInWithPassword({
-      email: `${username}@t4ops.crm`,
-      password: pass,
-    });
+    const authResp = await withTimeout(
+      supa.auth.signInWithPassword({
+        email: `${username}@t4ops.crm`,
+        password: pass,
+      }),
+      12000,
+      'Login'
+    );
+    const authError = authResp?.error || null;
 
     if (authError) {
       err.textContent = 'Usuário ou senha incorretos.';
       err.style.display = 'block';
-      btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
+      btn.textContent = 'Entrar no Sistema';
+      btn.disabled = false;
       return;
     }
 
-    // ── Busca perfil (sem senha) — role, nome, cor ──────────
-    const { data: profile, error: profError } = await supa
-      .from(DB.USUARIOS)
-      .select('username, nome, role, color, ativo')
-      .eq('username', username)
-      .single();
+    const profResp = await withTimeout(
+      supa
+        .from(DB.USUARIOS)
+        .select('username, nome, role, color, ativo')
+        .eq('username', username)
+        .single(),
+      10000,
+      'Leitura do perfil'
+    );
+
+    const profile = profResp?.data || null;
+    const profError = profResp?.error || null;
 
     if (profError || !profile) {
-      await supa.auth.signOut();
+      try { await supa.auth.signOut(); } catch(_) {}
       err.textContent = 'Perfil de acesso não encontrado. Contate o administrador.';
       err.style.display = 'block';
-      btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
+      btn.textContent = 'Entrar no Sistema';
+      btn.disabled = false;
       return;
     }
 
     if (String(profile.ativo || 'SIM').toUpperCase() === 'NÃO') {
-      await supa.auth.signOut();
+      try { await supa.auth.signOut(); } catch(_) {}
       err.textContent = 'Usuário inativo. Contate o administrador.';
       err.style.display = 'block';
-      btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
+      btn.textContent = 'Entrar no Sistema';
+      btn.disabled = false;
       return;
     }
 
-    // ── Sessão: apenas dados de perfil, sem credenciais ─────
     const sess = {
-      user:  username,
-      nome:  profile.nome  || username,
-      role:  profile.role  || 'viewer',
-      color: profile.color || '#c41e3a',
+      user: username,
+      nome: profile.nome || username,
+      role: profile.role || 'viewer',
+      color: profile.color || '#2563eb',
     };
+
     setSession(sess);
     applySession(sess);
-    await initApp();
 
-  } catch(e) {
+    btn.textContent = 'Abrindo CRM...';
+    await withTimeout(initApp(), 20000, 'Carregamento inicial do CRM');
+
+  } catch (e) {
     err.textContent = 'Erro no login: ' + (e?.message || String(e));
     err.style.display = 'block';
-    btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    btn.textContent = 'Entrar no Sistema';
+    btn.disabled = false;
   }
 }
 
-function applySession(sess) {
+function applySessionfunction applySession(sess) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-av').textContent = (sess.nome || sess.user || '?')[0].toUpperCase();
@@ -3292,6 +3344,12 @@ function applySession(sess) {
   document.getElementById('user-role').textContent =
     sess.role === 'admin' ? 'Administrador' :
     sess.role === 'recrutador' ? 'Recrutador' : 'Visualizador';
+
+  const btn = document.getElementById('li-btn');
+  if (btn) {
+    btn.textContent = 'Entrar no Sistema';
+    btn.disabled = false;
+  }
 }
 
 async function doLogout() {
@@ -20527,7 +20585,7 @@ html,body,#app,.app-shell,.main,.content{background:var(--bg) !important;color:v
 
 
 <script>
-console.log('[T4 institucional v5] login imediato + boot progressivo real + tema claro antecipado.');
+console.log('[T4 institucional v6] cliente Supabase singleton real + timeouts de login + boot protegido.');
 </script>
 </body>
 </html>
