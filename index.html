@@ -3335,7 +3335,7 @@ async function doLogin() {
   }
 }
 
-function applySessionfunction applySession(sess) {
+function applySession(sess) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-av').textContent = (sess.nome || sess.user || '?')[0].toUpperCase();
