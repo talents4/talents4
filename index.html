@@ -3320,12 +3320,23 @@ async function doLogin() {
     };
 
     setSession(sess);
-    applySession(sess);
 
     btn.textContent = 'Abrindo CRM...';
-    await withTimeout(initApp(), 20000, 'Carregamento inicial do CRM');
+
+    // Garante que não há Promise travada de tentativa anterior
+    S.initAppPromise = null;
+    S.loadAllPromise = null;
+
+    await withTimeout(initApp(), 25000, 'Carregamento inicial do CRM');
+
+    // Só exibe o app após initApp() concluir com sucesso
+    applySession(sess);
 
   } catch (e) {
+    // Limpa Promises presas para que a próxima tentativa comece do zero
+    S.initAppPromise = null;
+    S.loadAllPromise = null;
+
     err.textContent = 'Erro no login: ' + (e?.message || String(e));
     err.style.display = 'block';
     document.getElementById('app').style.display = 'none';
