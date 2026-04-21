@@ -2305,59 +2305,11 @@ details.bi-secondary {
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.12.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
-<style id="t4-early-light-theme">
-:root{
-  --bg:#f4f7fb; --bg2:#ffffff; --bg3:#f7f9fc; --bg4:#eef3f8;
-  --card:#ffffff; --card2:#f7f9fc; --surface:#ffffff; --surface2:#f7f9fc;
-  --txt:#122033; --txt2:#42546b; --txt3:#71839a;
-  --border:#d9e2ec; --border2:#cbd6e2; --border3:#b8c6d6; --line:#d9e2ec;
-  --shadow:0 10px 28px rgba(15,23,42,.08); --sh:0 16px 42px rgba(15,23,42,.14); --sh2:0 8px 24px rgba(15,23,42,.10);
-  --accent:#2563eb; --accent2:#1d4ed8; --accent-bg:#eaf1ff;
-  --gold:#eab308; --gold-bg:#fff6d8; --red:#dc2626; --red-bg:#feecec; --green:#16a34a; --green-bg:#e9f8ee;
-  --blue:#2563eb; --blue-bg:#eaf1ff; --purple:#7c3aed; --purple-bg:#f1ebff; --yellow:#ca8a04; --yellow-bg:#fff7db;
-  --orange:#ea580c; --orange-bg:#fff0e7; --teal:#0f766e; --teal-bg:#e8fbf8;
-}
-html,body{background:var(--bg)!important;color:var(--txt)!important}
-#login-screen{
-  display:flex!important;
-  background:
-    radial-gradient(900px 420px at 10% -10%, rgba(37,99,235,.08), transparent 60%),
-    radial-gradient(900px 420px at 90% 110%, rgba(234,179,8,.08), transparent 60%),
-    var(--bg)!important;
-}
-#app{display:none}
-</style>
-
 </head>
-
 <body>
-<script>
-(function(){
-  try{
-    document.documentElement.style.background = '#f4f7fb';
-    document.body.style.background = '#f4f7fb';
-  }catch(_){}
-  document.addEventListener('DOMContentLoaded', function(){
-    try{
-      var login = document.getElementById('login-screen');
-      var app = document.getElementById('app');
-      if (login && app && login.style.display === 'none' && app.style.display === 'none') {
-        login.style.display = 'flex';
-      }
-      setTimeout(function(){
-        if (login && app && login.style.display === 'none' && app.style.display === 'none') {
-          login.style.display = 'flex';
-        }
-      }, 1200);
-    }catch(_){}
-  });
-})();
-</script>
-
 
 <!-- ════════════════════ LOGIN ════════════════════ -->
-<div id="login-screen" style="display:flex">
+<div id="login-screen" style="display:none">
   <div class="login-card">
     <div class="login-flag-strip"></div>
     <div class="login-body">
@@ -2676,39 +2628,12 @@ const SYNC_INTERVAL = 300000;
 
 // ── Supabase client ──
 let _supa = null;
-let _supaPromise = null;
 async function getSupa() {
   if (_supa) return _supa;
-  if (_supaPromise) return _supaPromise;
-  _supaPromise = (async () => {
-    const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
-    const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: {
-        storageKey: 'sb-t4ops-auth',
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: false,
-      }
-    });
-    _supa = client;
-    return client;
-  })();
-  try {
-    return await _supaPromise;
-  } finally {
-    _supaPromise = null;
-  }
+  const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+  _supa = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return _supa;
 }
-
-function timeoutPromise(ms, label='Operação') {
-  return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(label + ' demorou demais. Tente novamente.')), ms);
-  });
-}
-async function withTimeout(promise, ms, label='Operação') {
-  return Promise.race([promise, timeoutPromise(ms, label)]);
-}
-
 
 async function invokeAdminUserLifecycle(action, payload) {
   const supa = await getSupa();
@@ -3246,96 +3171,71 @@ async function fetchUsersForAuth() {
 
 async function doLogin() {
   const username = document.getElementById('li-user').value.trim().toLowerCase();
-  const pass = document.getElementById('li-pass').value;
-  const err = document.getElementById('li-err');
-  const btn = document.getElementById('li-btn');
-
+  const pass     = document.getElementById('li-pass').value;
+  const err  = document.getElementById('li-err');
+  const btn  = document.getElementById('li-btn');
   err.style.display = 'none';
-  if (!username || !pass) {
-    err.textContent = 'Preencha usuário e senha.';
-    err.style.display = 'block';
-    return;
-  }
-
-  btn.textContent = '⏳ Verificando...';
-  btn.disabled = true;
+  btn.textContent = '⏳ Verificando...'; btn.disabled = true;
 
   try {
-    const supa = await withTimeout(getSupa(), 6000, 'Inicialização de autenticação');
+    const supa = await getSupa();
 
-    const authResp = await withTimeout(
-      supa.auth.signInWithPassword({
-        email: `${username}@t4ops.crm`,
-        password: pass,
-      }),
-      12000,
-      'Login'
-    );
-    const authError = authResp?.error || null;
+    // ── Supabase Auth — senha NUNCA comparada no nosso código ──
+    // Email sintético interno: username@t4ops.crm
+    const { data: authData, error: authError } = await supa.auth.signInWithPassword({
+      email: `${username}@t4ops.crm`,
+      password: pass,
+    });
 
     if (authError) {
       err.textContent = 'Usuário ou senha incorretos.';
       err.style.display = 'block';
-      btn.textContent = 'Entrar no Sistema';
-      btn.disabled = false;
+      btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
       return;
     }
 
-    const profResp = await withTimeout(
-      supa
-        .from(DB.USUARIOS)
-        .select('username, nome, role, color, ativo')
-        .eq('username', username)
-        .single(),
-      10000,
-      'Leitura do perfil'
-    );
-
-    const profile = profResp?.data || null;
-    const profError = profResp?.error || null;
+    // ── Busca perfil (sem senha) — role, nome, cor ──────────
+    const { data: profile, error: profError } = await supa
+      .from(DB.USUARIOS)
+      .select('username, nome, role, color, ativo')
+      .eq('username', username)
+      .single();
 
     if (profError || !profile) {
-      try { await supa.auth.signOut(); } catch(_) {}
+      await supa.auth.signOut();
       err.textContent = 'Perfil de acesso não encontrado. Contate o administrador.';
       err.style.display = 'block';
-      btn.textContent = 'Entrar no Sistema';
-      btn.disabled = false;
+      btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
       return;
     }
 
     if (String(profile.ativo || 'SIM').toUpperCase() === 'NÃO') {
-      try { await supa.auth.signOut(); } catch(_) {}
+      await supa.auth.signOut();
       err.textContent = 'Usuário inativo. Contate o administrador.';
       err.style.display = 'block';
-      btn.textContent = 'Entrar no Sistema';
-      btn.disabled = false;
+      btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
       return;
     }
 
+    // ── Sessão: apenas dados de perfil, sem credenciais ─────
     const sess = {
-      user: username,
-      nome: profile.nome || username,
-      role: profile.role || 'viewer',
-      color: profile.color || '#2563eb',
+      user:  username,
+      nome:  profile.nome  || username,
+      role:  profile.role  || 'viewer',
+      color: profile.color || '#c41e3a',
     };
-
     setSession(sess);
     applySession(sess);
+    await initApp();
 
-    btn.textContent = 'Abrindo CRM...';
-    await withTimeout(initApp(), 20000, 'Carregamento inicial do CRM');
-
-  } catch (e) {
+  } catch(e) {
     err.textContent = 'Erro no login: ' + (e?.message || String(e));
     err.style.display = 'block';
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('login-screen').style.display = 'flex';
-    btn.textContent = 'Entrar no Sistema';
-    btn.disabled = false;
+    btn.textContent = 'Entrar no Sistema'; btn.disabled = false;
   }
 }
 
-function applySessionfunction applySession(sess) {
+function applySession(sess) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('user-av').textContent = (sess.nome || sess.user || '?')[0].toUpperCase();
@@ -3344,12 +3244,6 @@ function applySessionfunction applySession(sess) {
   document.getElementById('user-role').textContent =
     sess.role === 'admin' ? 'Administrador' :
     sess.role === 'recrutador' ? 'Recrutador' : 'Visualizador';
-
-  const btn = document.getElementById('li-btn');
-  if (btn) {
-    btn.textContent = 'Entrar no Sistema';
-    btn.disabled = false;
-  }
 }
 
 async function doLogout() {
@@ -4539,72 +4433,35 @@ async function startRealtime() {
 // ══════════════════════════════════════════════════════════════
 // INIT & LOAD
 // ══════════════════════════════════════════════════════════════
-
 async function initApp() {
-  if (S.initAppPromise) return S.initAppPromise;
-  const run = (async () => {
-    const initialView = (typeof readUiState === 'function' ? readUiState(VIEW_KEY, 'dashboard') : 'dashboard') || 'dashboard';
-
-    const paintShell = () => {
-      try {
-        _navSetupUI(initialView);
-        clearSort();
-        syncTopbarSearchInputs();
-        if (!Array.isArray(S.candidates)) S.candidates = [];
-        if (!Array.isArray(S.employers)) S.employers = [];
-        renderView();
-      } catch (e) {
-        console.warn('[T4 quick boot] shell paint', e?.message || e);
-      }
-    };
-
-    setSyncStatus('loading');
+  setSyncStatus('loading');
+  populateNewForm();
+  initGermanGreeting();
+  try {
+    await loadAll();
     populateNewForm();
-    initGermanGreeting();
-    paintShell();
-
-    try {
-      await loadAll({ pageSize: 90, includeDashboardAux: false });
-      populateNewForm();
-      _navSetupUI(initialView);
-      clearSort();
-      syncTopbarSearchInputs();
-      renderView();
-      setSyncStatus('ok');
-
-      refreshAdminMfaState().catch(e => console.warn('[MFA state]', e?.message || e));
-      agLoad().then(() => { if (S.view === 'agenda') renderView(); }).catch(e => console.warn('[Agenda quick]', e?.message || e));
-      startRealtime().catch(e => console.warn('[Realtime]', e));
-      startAutoSync();
-      applyViewerRestrictions();
-
-      const schedule = ('requestIdleCallback' in window)
-        ? (fn => requestIdleCallback(fn, { timeout: 900 }))
-        : (fn => setTimeout(fn, 900));
-
-      schedule(async () => {
-        try {
-          await loadAll({ force: true, pageSize: 220, includeDashboardAux: true });
-          if (['dashboard','candidatos','kanban','tickets','employer'].includes(S.view)) renderView();
-        } catch (e) {
-          console.warn('[T4 quick boot] warmup', e?.message || e);
-        }
-      });
-
-      const sess = getSession();
-      const mfa = getMfaState();
-      if (sess?.role === 'admin' && mfa?.currentLevel !== 'aal2') {
-        setTimeout(() => openAdminMfaFlow().catch(e => console.warn('[MFA]', e?.message || e)), 180);
-      }
-    } catch (e) {
-      setSyncStatus('err');
-      toast('⚠ Erro ao carregar dados: ' + (e?.message || e), 'err');
-      paintShell();
+    await refreshAdminMfaState();
+    agLoad().catch(e => console.warn('[Agenda] Load falhou na init:', e.message));
+    startRealtime().catch(e => console.warn('[Realtime]', e));
+    _navSetupUI(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
+    clearSort();
+    syncTopbarSearchInputs();
+    renderView();
+    startAutoSync();
+    applyViewerRestrictions();
+    const sess = getSession();
+    const mfa = getMfaState();
+    if (sess?.role === 'admin' && mfa.currentLevel !== 'aal2') {
+      setTimeout(() => openAdminMfaFlow().catch(e => console.warn('[MFA]', e?.message || e)), 150);
     }
-  })();
-
-  S.initAppPromise = run.finally(() => { S.initAppPromise = null; });
-  return S.initAppPromise;
+  } catch(e) {
+    setSyncStatus('err');
+    toast('⚠ Erro ao carregar dados: ' + e.message, 'err');
+    _navSetupUI(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
+    clearSort();
+    syncTopbarSearchInputs();
+    renderView();
+  }
 }
 
 async function loadEmployersIndex(force = false) {
@@ -4698,7 +4555,7 @@ async function loadAll(options = {}) {
         ? !!options.includeDashboardAux
         : S.view === 'dashboard';
       const supa = await getSupa();
-      const candResp = await apiGet({ route:'candidates', includeHidden:'true', pageSize: Math.max(50, Number(options.pageSize || 500)) });
+      const candResp = await apiGet({ route:'candidates', includeHidden:'true', pageSize:500 });
       S.candidates = candResp.items || candResp.candidates || [];
       S.dashboard = buildDashboardPayload(S.candidates || []);
 
@@ -20392,203 +20249,7 @@ body.dense-mode .inst-action-card{padding:10px 12px}
 </script>
 
 
-<style>
-/* ===== Institucional v4: tema claro forçado + boot rápido ===== */
-:root{
-  --bg:#f4f7fb !important;
-  --bg2:#ffffff !important;
-  --bg3:#f7f9fc !important;
-  --bg4:#eef3f8 !important;
-  --card:#ffffff !important;
-  --card2:#f7f9fc !important;
-  --surface:#ffffff !important;
-  --surface2:#f7f9fc !important;
-  --txt:#122033 !important;
-  --txt2:#42546b !important;
-  --txt3:#71839a !important;
-  --border:#d9e2ec !important;
-  --border2:#cbd6e2 !important;
-  --border3:#b8c6d6 !important;
-  --line:#d9e2ec !important;
-  --shadow:0 10px 28px rgba(15,23,42,.08) !important;
-  --sh:0 16px 42px rgba(15,23,42,.14) !important;
-  --sh2:0 8px 24px rgba(15,23,42,.10) !important;
-  --accent:#2563eb !important;
-  --accent2:#1d4ed8 !important;
-  --accent-bg:#eaf1ff !important;
-  --gold:#eab308 !important;
-  --gold-bg:#fff6d8 !important;
-  --red:#dc2626 !important;
-  --red-bg:#feecec !important;
-  --green:#16a34a !important;
-  --green-bg:#e9f8ee !important;
-  --blue:#2563eb !important;
-  --blue-bg:#eaf1ff !important;
-  --purple:#7c3aed !important;
-  --purple-bg:#f1ebff !important;
-  --yellow:#ca8a04 !important;
-  --yellow-bg:#fff7db !important;
-  --orange:#ea580c !important;
-  --orange-bg:#fff0e7 !important;
-  --teal:#0f766e !important;
-  --teal-bg:#e8fbf8 !important;
-}
-html,body,#app,.app-shell,.main,.content{background:var(--bg) !important;color:var(--txt) !important}
-.sidebar,.topbar,.tbl-wrap,.modal,.chart-card,.quality-card,.aging-card,.settings-card,.login-card,
-.ticket-composer,.ticket-board-toolbar,.ticket-card,.ticket-collapsible-card,.ag-toolbar,.ag-sidebar,
-.k-col,.bi-premium,.bi-card,.bi-glass,.bento-kpi,.mc,.small-stat,.card,.detail-tabs,.tabs,.tab,.detail-tab{
-  background:var(--bg2) !important;
-  color:var(--txt) !important;
-  border-color:var(--border) !important;
-  box-shadow:var(--shadow) !important;
-}
-.topbar,.sidebar,.modal-footer,.modal-header,.k-hdr,.ticket-board-toolbar,.ticket-composer,.ag-toolbar{
-  backdrop-filter:none !important;
-}
-.nav-item,.search-wrap,.field-input,.field-select,.field-textarea,.btn-ghost,.filter-chip,.filter-select,
-.user-pill,.modal-close,.pg-btn,.inst-mini-kpi,.inst-agenda-mini,.inst-quick-chip,.inst-chip,.inst-agenda-btn{
-  background:var(--bg3) !important;
-  color:var(--txt2) !important;
-  border-color:var(--border) !important;
-}
-.nav-item:hover,.data-tbl tr:hover td,.k-card:hover,.ticket-card:hover,.filter-chip:hover,.inst-quick-chip:hover,.inst-chip:hover,.inst-agenda-btn:hover{
-  background:var(--bg4) !important;
-}
-.nav-item.active{
-  background:var(--accent-bg) !important;
-  color:var(--accent2) !important;
-  border-left-color:var(--accent) !important;
-}
-.nav-badge,.k-cnt,.ticket-badge,.badge,.tag,.active-filter-chip,.bi-chip-inline,.bi-pill,.bi-kpi-chip{
-  border-color:var(--border2) !important;
-}
-.filters-bar{
-  background:linear-gradient(180deg,rgba(244,247,251,.98),rgba(244,247,251,.94) 78%,rgba(244,247,251,0)) !important;
-}
-.data-tbl thead th,.data-tbl tbody td,.data-tbl tbody tr:nth-child(2n) td{
-  background:transparent !important;
-  color:var(--txt) !important;
-  border-color:var(--border) !important;
-}
-.data-tbl tbody tr:nth-child(2n) td{background:#fbfcfe !important}
-.data-tbl tbody tr:hover td{background:#f1f5f9 !important}
-.overlay{
-  background:rgba(15,23,42,.36) !important;
-}
-.login-screen{
-  background:
-    radial-gradient(900px 420px at 10% -10%, rgba(37,99,235,.08), transparent 60%),
-    radial-gradient(900px 420px at 90% 110%, rgba(234,179,8,.08), transparent 60%),
-    var(--bg) !important;
-}
-.ticket-badge.status-open{background:var(--blue-bg) !important;color:var(--blue) !important;border-color:rgba(37,99,235,.18) !important}
-.ticket-badge.status-wait{background:var(--yellow-bg) !important;color:var(--yellow) !important;border-color:rgba(202,138,4,.18) !important}
-.ticket-badge.status-done{background:var(--green-bg) !important;color:var(--green) !important;border-color:rgba(22,163,74,.18) !important}
-.ticket-badge.status-closed{background:#eef2f7 !important;color:#64748b !important;border-color:#d7dee8 !important}
-.ticket-badge.priority-high{background:var(--red-bg) !important;color:var(--red) !important;border-color:rgba(220,38,38,.18) !important}
-.ticket-badge.priority-medium{background:var(--yellow-bg) !important;color:var(--yellow) !important;border-color:rgba(202,138,4,.18) !important}
-.ticket-badge.priority-low{background:var(--green-bg) !important;color:var(--green) !important;border-color:rgba(22,163,74,.18) !important}
-.sb-ok,.bi-tag.good{background:var(--green-bg) !important;color:var(--green) !important}
-.sb-warn,.bi-tag.warn{background:var(--yellow-bg) !important;color:var(--yellow) !important}
-.sb-risk,.bi-tag.risk{background:var(--red-bg) !important;color:var(--red) !important}
-.sb-blue,.bi-tag.info{background:var(--blue-bg) !important;color:var(--blue) !important}
-.inst-ticket-action,.inst-action-card,.inst-agenda-card{
-  background:linear-gradient(180deg,#ffffff,#f8fbff) !important;
-  border-color:var(--border) !important;
-}
-.score-bar-mini,.score-track,.bar-bg,.funnel-bg{background:#e7edf5 !important}
-.bi-empty-soft,.inst-kanban-empty,.empty{background:#fafcff !important;border-color:var(--border2) !important;color:var(--txt3) !important}
-#loading-splash,.loading-screen{background:var(--bg) !important;color:var(--txt) !important}
-</style>
-
-<script>
-(function(){
-  const QUICK_BOOT_KEY = 't4_inst_quickboot_v4';
-  const FIRST_PAINT_LIMIT = 90;
-  const FULL_WARM_LIMIT = 220;
-  let __bootStarted = false;
-  let __fullWarmStarted = false;
-
-  function idleRun(fn, timeout=450){
-    if('requestIdleCallback' in window){
-      return requestIdleCallback(fn, { timeout });
-    }
-    return setTimeout(fn, timeout);
-  }
-
-  function setupShellFirstPaint(){
-    try{
-      const initialView = (typeof readUiState === 'function' ? readUiState(VIEW_KEY, 'dashboard') : 'dashboard') || 'dashboard';
-      if (typeof _navSetupUI === 'function') _navSetupUI(initialView);
-      if (typeof clearSort === 'function') clearSort();
-      if (typeof syncTopbarSearchInputs === 'function') syncTopbarSearchInputs();
-      if (!Array.isArray(S.candidates)) S.candidates = [];
-      if (!Array.isArray(S.employers)) S.employers = [];
-      if (typeof renderView === 'function') renderView();
-    } catch (e) {
-      console.warn('[T4 institucional v4] shell first paint', e?.message || e);
-    }
-  }
-
-  async function runQuickBoot(){
-    if (__bootStarted) return;
-    __bootStarted = true;
-    setSyncStatus('loading');
-    populateNewForm?.();
-    initGermanGreeting?.();
-    setupShellFirstPaint();
-
-    try{
-      await loadAll({ pageSize: FIRST_PAINT_LIMIT, includeDashboardAux: false });
-      populateNewForm?.();
-      _navSetupUI?.(readUiState(VIEW_KEY, 'dashboard') || 'dashboard');
-      syncTopbarSearchInputs?.();
-      renderView?.();
-      setSyncStatus('ok');
-
-      refreshAdminMfaState?.().catch(e => console.warn('[MFA state]', e?.message || e));
-      agLoad?.().then(() => { if (S.view === 'agenda') renderView?.(); }).catch(e => console.warn('[Agenda quick]', e?.message || e));
-      startRealtime?.().catch(e => console.warn('[Realtime quick]', e?.message || e));
-      startAutoSync?.();
-      applyViewerRestrictions?.();
-
-      idleRun(async () => {
-        if (__fullWarmStarted) return;
-        __fullWarmStarted = true;
-        try{
-          await loadAll({ force: true, pageSize: FULL_WARM_LIMIT, includeDashboardAux: true });
-          if (S.view === 'dashboard' || S.view === 'candidatos' || S.view === 'kanban' || S.view === 'tickets' || S.view === 'employer') {
-            renderView?.();
-          }
-          try{ localStorage.setItem(QUICK_BOOT_KEY, String(Date.now())); }catch(_){}
-        }catch(e){
-          console.warn('[T4 institucional v4] full warm', e?.message || e);
-        }
-      }, 900);
-
-      const sess = getSession?.();
-      const mfa = getMfaState?.();
-      if (sess?.role === 'admin' && mfa?.currentLevel !== 'aal2') {
-        setTimeout(() => openAdminMfaFlow?.().catch(e => console.warn('[MFA]', e?.message || e)), 220);
-      }
-    }catch(e){
-      setSyncStatus('err');
-      toast?.('⚠ Erro ao carregar dados: ' + (e?.message || e), 'err');
-      setupShellFirstPaint();
-    }
-  }
-
-  window.initApp = runQuickBoot;
-  console.log('[T4 institucional v4] tema claro aplicado e boot inicial progressivo ativado.');
-})();
-</script>
-
-
-<script>
-console.log('[T4 institucional v6] cliente Supabase singleton real + timeouts de login + boot protegido.');
-</script>
-
-<style id="t4-light-theme-override">
+<style id="t4-final-light-theme">
 :root{
   --bg:#f3f6fb !important;
   --bg2:#ffffff !important;
@@ -20684,7 +20345,7 @@ html,body,#app,#main,#content{background:var(--bg)!important;color:var(--txt)!im
 </style>
 <script>
 document.documentElement.setAttribute('data-theme','light');
-console.log('[T4 institucional claro] tema claro aplicado sobre a versão funcional atual.');
+console.log('[T4 institucional final] base funcional restaurada com tema claro seguro.');
 </script>
 
 </body>
