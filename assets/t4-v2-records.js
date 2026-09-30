@@ -107,7 +107,7 @@
     return W.table({ id, rows, columns: [
       { key: 'title', label: 'Atividade', required: true, render: (r) => `<button type="button" class="t4-row-link" data-action="edit-activity" data-id="${a(r.id)}">${e(r.title)}</button><span class="t4-cell-secondary">${e(r.activity_type)}${r.contact_followup_id ? ' · Contatos' : ''}</span>` },
       { key: 'due_at', label: 'Prazo', render: (r) => `${e(U.formatDate(r.due_at, true))}${M.overdue(r.due_at, r.status) ? U.badge('Vencida', 'danger') : ''}` },
-      { key: 'talent_id', label: 'Vínculos', render: (r) => `<div class="t4-chip-row">${r.talent_id ? W.link(talentName(state, r.talent_id), `./index.html?talent=${encodeURIComponent(r.talent_id)}`) : ''}${r.employer_id ? W.link(employerName(state, r.employer_id), `./organizacional.html?employer=${encodeURIComponent(r.employer_id)}`) : ''}${r.contact_id ? W.link('Contato', `./contatos.html?contact=${encodeURIComponent(r.contact_id)}`) : ''}</div>` },
+      { key: 'talent_id', label: 'Vínculos', render: (r) => `<div class="t4-chip-row">${r.talent_id ? W.link(talentName(state, r.talent_id), `./index.html?talent=${encodeURIComponent(r.talent_id)}`) + talentStageHtml(state, W.find(state.talents,r.talent_id)) : ''}${r.employer_id ? W.link(employerName(state, r.employer_id), `./organizacional.html?employer=${encodeURIComponent(r.employer_id)}`) : ''}${r.contact_id ? W.link('Contato', `./contatos.html?contact=${encodeURIComponent(r.contact_id)}`) : ''}</div>` },
       { key: 'owner_username', label: 'Responsável' }, { key: 'status', label: 'Situação', render: (r) => W.status(r.status) },
       { key: 'actions', label: '', ariaLabel: 'Ações', sort: false, render: (r) => D.canEdit() && M.isOpen(r.status) ? W.button('Concluir', 'finish-activity', r.id, { className: 'sm', icon: 'check' }) : '' }
     ] });
@@ -140,8 +140,6 @@
         { name: 'next_action', label: 'Próxima ação', wide: true },
         { name: 'next_action_at', label: 'Prazo da próxima ação', type: 'datetime-local' },
         { name: 'viability', label: 'Viabilidade avaliada', type: 'select', options: ['A validar', 'Baixa', 'Média', 'Alta'], required: true, placeholder: null },
-        { section: 'Avaliação humana · opcional' },
-        ...['overall', 'professional', 'language', 'mobility', 'document'].map((key, i) => ({ name: `${key}_score`, label: ['Compatibilidade geral (%)', 'Profissional (%)', 'Idioma (%)', 'Mobilidade (%)', 'Documentação (%)'][i], type: 'number', min: 0, max: 100, step: 0.1 })),
         { name: 'reasons', label: 'Por que este talento se encaixa?', type: 'textarea', wide: true },
         { name: 'barriers', label: 'Barreiras / ressalvas', type: 'textarea', wide: true },
         { name: 'sent_at', label: 'Apresentação ao empregador', type: 'datetime-local' },
@@ -159,7 +157,9 @@
     return W.table({ id, rows, columns: [
       { key: 'talent_id', label: 'Talento', required: true, value: (r) => talentName(state, r.talent_id), render: (r) => { const talent = W.find(state.talents, r.talent_id); const meta = [talent?.profissao_principal || talent?.area_profissional, talent && !M.activeRecord(talent) ? 'Arquivado' : ''].filter(Boolean).join(' · '); return W.person(talentName(state, r.talent_id), meta, '', 'selection-detail', r.key); } },
       { key: 'employer_id', label: 'Empregador / vaga', value: (r) => employerName(state, r.employer_id), render: (r) => { const employer = W.find(state.employers, r.employer_id); const name = window.T4Modern?.employer ? window.T4Modern.employer(employer || { nome: employerName(state, r.employer_id), id: r.employer_id }) : e(employerName(state, r.employer_id)); return W.stackHtml(name, r.opening_id ? W.find(state.openings, r.opening_id)?.title || 'Vaga não encontrada' : 'Vínculo geral · anterior à V2'); } },
-      { key: 'stage', label: 'Etapa', render: (r) => W.status(r.stage) },
+      { key: 'stage', label: 'Etapa', required: true, render: (r) => W.status(r.stage) },
+      { key: 'languages', label: 'Idiomas', required:true, value: r => W.find(state.talents,r.talent_id)?.nivel_alemao || '', render: r => { const t=W.find(state.talents,r.talent_id); return W.stack(`Alemão: ${t?.nivel_alemao || 'Não informado'}`, [t?.lingua_estrangeira,t?.nivel_lingua_estrangeira].filter(Boolean).join(' · ')); } },
+      { key: 'cv', label: 'Currículo', required:true, sort:false, render:r => cvLink(W.find(state.talents,r.talent_id)) },
       { key: 'next_action', label: 'Próxima ação', render: (r) => W.stack(r.next_action, M.dateOnly(r.next_action_at) ? U.formatDate(r.next_action_at) : '') },
       { key: 'owner_username', label: 'Responsável' },
       { key: 'actions', label: '', ariaLabel: 'Ações', sort: false, render: (r) => W.button('Abrir', 'selection-detail', r.key, { className: 'sm', icon: 'chevron' }) }
@@ -195,9 +195,9 @@
     const opening = W.find(state.openings, row.opening_id);
     const talent = W.find(state.talents, row.talent_id), archived = talent && !M.activeRecord(talent);
     return U.openDrawer({ title: talentName(state, row.talent_id), subtitle: `${archived ? 'Arquivado · ' : ''}${employerName(state, row.employer_id)} · ${opening?.title || 'Vínculo geral'}`,
-      actions: `${D.canEdit() ? W.button('Editar seleção', 'edit-selection', row.key, { className: 'primary', icon: 'edit' }) : ''}${W.link('Ficha do talento', `./index.html?talent=${encodeURIComponent(row.talent_id)}`, 'user')}${W.link('Empregador', `./organizacional.html?employer=${encodeURIComponent(row.employer_id)}`, 'building')}`,
+      actions: `${cvLink(talent)}${D.canEdit() ? W.button('Editar seleção', 'edit-selection', row.key, { className: 'primary', icon: 'edit' }) : ''}${W.link('Ficha do talento', `./index.html?talent=${encodeURIComponent(row.talent_id)}`, 'user')}${W.link('Empregador', `./organizacional.html?employer=${encodeURIComponent(row.employer_id)}`, 'building')}`,
       body: `${archived ? W.note('Este Talento está arquivado, mas a seleção continua em andamento. Revise o vínculo antes de avançar.', 'warning') : ''}${row.sourceConflict ? W.note('Há etapas diferentes nas duas fontes antigas. O registro principal do CRM é exibido; ambos os originais permanecem abaixo para conferência.', 'warning') : ''}
-        <div class="t4-detail-grid">${U.field('Etapa', row.stage)}${U.field('Situação', row.status)}${U.field('Responsável', row.owner_username)}${U.field('Prazo', U.formatDate(row.next_action_at))}${U.field('Enviado em', U.formatDate(row.sent_at))}${U.field('Retorno em', U.formatDate(row.responded_at))}</div>
+        <div class="t4-detail-grid">${U.field('Etapa', row.stage)}${U.field('Alemão', talent?.nivel_alemao)}${U.field('Situação', row.status)}${U.field('Responsável', row.owner_username)}${U.field('Prazo', U.formatDate(row.next_action_at))}${U.field('Enviado em', U.formatDate(row.sent_at))}${U.field('Retorno em', U.formatDate(row.responded_at))}</div>
         ${W.section('Próxima ação', `<p class="t4-preserve">${e(row.next_action || 'Defina o próximo passo desta seleção.')}</p>`)}
         ${W.section('Avaliação e contexto', `<div class="t4-detail-grid">${U.field('Viabilidade', row.viability)}${U.field('Compatibilidade geral', M.finite(row.overall_score) ? `${row.overall_score}%` : 'Não avaliada')}</div><h3>Motivos</h3><p class="t4-preserve">${e(row.reasons || 'Não informado')}</p><h3>Barreiras</h3><p class="t4-preserve">${e(row.barriers || 'Não informadas')}</p><p class="t4-preserve">${e(row.notes || '')}</p>`)}
         <details class="t4-disclosure"><summary>Origem e histórico preservados (${row.sources.length})</summary>${row.sources.map((s) => `<h3>${e(s.table)}</h3><pre class="t4-raw">${e(JSON.stringify(s.row, null, 2))}</pre>`).join('')}</details>` });
@@ -207,9 +207,34 @@
       const items = rows.filter((r) => M.selectionBucket(r) === col.id);
       return `<section class="t4-board-column ${a(col.tone)}"><header><h2>${e(col.name)}</h2><span>${items.length}</span></header><div class="t4-board-cards">${items.length ? items.map((r) => {
         const talent = W.find(state.talents, r.talent_id);
-        return `<article class="t4-selection-card"><div class="t4-card-eyebrow">${e(employerName(state, r.employer_id))}</div><button class="t4-card-title" data-action="selection-detail" data-id="${a(r.key)}">${e(talentName(state, r.talent_id))}</button><p>${e(talent?.profissao_principal || talent?.area_profissional || 'Área não informada')}</p><div class="t4-chip-row">${U.badge(r.stage, col.tone)}${talent?.nivel_alemao ? U.badge(talent.nivel_alemao) : ''}</div><div class="t4-card-next"><span>${U.icon('arrow')}${e(r.next_action || 'Definir próxima ação')}</span>${r.next_action_at ? `<small class="${M.overdue(r.next_action_at, r.status) ? 't4-text-danger' : ''}">${e(U.formatDate(r.next_action_at))}</small>` : ''}</div><footer><span>${e(r.owner_username || 'Sem responsável')}</span>${D.canEdit() ? W.button('Etapa', 'edit-selection', r.key, { className: 'ghost sm', icon: 'edit' }) : ''}</footer>${!r.modern ? '<small class="t4-source-caption">Vínculo geral anterior</small>' : ''}</article>`;
+        return `<article class="t4-selection-card"><div class="t4-card-eyebrow">${e(employerName(state, r.employer_id))}</div><button class="t4-card-title" data-action="selection-detail" data-id="${a(r.key)}">${e(talentName(state, r.talent_id))}</button><p>${e(talent?.profissao_principal || talent?.area_profissional || 'Área não informada')}</p><div class="t4-chip-row">${U.badge(r.stage, col.tone)}${talent?.nivel_alemao ? U.badge(`Alemão: ${talent.nivel_alemao}`) : U.badge('Alemão não informado')}${cvLink(talent,'CV')}</div><div class="t4-card-next"><span>${U.icon('arrow')}${e(r.next_action || 'Definir próxima ação')}</span>${r.next_action_at ? `<small class="${M.overdue(r.next_action_at, r.status) ? 't4-text-danger' : ''}">${e(U.formatDate(r.next_action_at))}</small>` : ''}</div><footer><span>${e(r.owner_username || 'Sem responsável')}</span>${D.canEdit() ? W.button('Etapa', 'edit-selection', r.key, { className: 'ghost sm', icon: 'edit' }) : ''}</footer>${!r.modern ? '<small class="t4-source-caption">Vínculo geral anterior</small>' : ''}</article>`;
       }).join('') : '<div class="t4-column-empty">Nenhuma seleção nesta etapa.</div>'}</div></section>`;
     }).join('')}</div>`;
+  }
+  function talentStageHtml(state, row) {
+    return `<div class="t4-chip-row t4-talent-stages" aria-label="Etapas do candidato">${M.talentStages(state, row).map(item => U.badge(`${item.source}: ${item.label}`, item.tone)).join('')}</div>`;
+  }
+  function cvLink(talent, label = 'Ver / baixar CV') { return M.safeUrl(talent?.cv_drive_web_link) ? W.external(label, talent.cv_drive_web_link) : '<span class="t4-muted">CV não informado</span>'; }
+  function editPostHire(state, row, selection, after) {
+    if (!D.canEdit()) return;
+    if (!row && !selection) throw new Error('Selecione uma contratação para iniciar o acompanhamento.');
+    return W.recordForm({ title: row ? 'Editar pós-contratação' : 'Iniciar pós-contratação', subtitle: talentName(state, row?.talent_id || selection.talent_id), table: D.TABLES.postHires,
+      row: row || {talent_id: selection.talent_id, employer_id: selection.employer_id, selection_source: selection._source, selection_id: String(selection.id), stage: M.POST_HIRE_STAGES[0], status: 'Ativo', owner_username: D.profile.username},
+      fields: [
+        {name:'stage', label:'Etapa pós-contratação', type:'select', options:M.POST_HIRE_STAGES, required:true, placeholder:null},
+        {name:'status', label:'Situação do acompanhamento', type:'select', options:['Ativo','Concluído','Cancelado'], required:true, placeholder:null},
+        {name:'owner_username', label:'Responsável'},
+        {name:'next_action',label:'Próxima ação',wide:true}, {name:'next_action_at',label:'Prazo da próxima ação',type:'datetime-local'},
+        {name:'process_completed_at',label:'Processo finalizado em',type:'date'},
+        {name:'support_started_at',label:'Início do acompanhamento de 12 meses',type:'date'},
+        {name:'support_end_date',label:'Fim do acompanhamento de 12 meses',type:'date'},
+        {name:'notes',label:'Observações e resultado',type:'textarea',wide:true}
+      ], prepare(v,c) {
+        if (v.support_started_at && !v.support_end_date) { const d = new Date(`${v.support_started_at}T12:00:00Z`); d.setUTCFullYear(d.getUTCFullYear()+1); v.support_end_date = d.toISOString().slice(0,10); if(row) c.support_end_date=v.support_end_date; }
+        if(v.support_started_at && v.support_end_date && v.support_end_date < v.support_started_at) throw new Error('O fim do acompanhamento deve ser posterior ao início.');
+        if(!row) Object.assign(v,{talent_id:selection.talent_id,employer_id:selection.employer_id,selection_source:selection._source,selection_id:String(selection.id)});
+        if(!row || 'status' in c) (row ? c : v).completed_at = v.status === 'Concluído' ? new Date().toISOString() : null;
+      }, after });
   }
   const rawLabel = (key) => { const words = key.replaceAll('_', ' ').split(' '); return words.map((w, i) => i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w).join(' '); };
   function storedFields(row, excluded = []) {
@@ -221,5 +246,5 @@
   }
   window.T4Records = Object.freeze({ LEVELS, PRIORITIES, STAGES, fields, choices, talentName, employerName, editFollowup, editActivity,
     finishActivity, activityTable, editSelection, selectionTable, selectionAnalytics, selectionDrawer, selectionBoard, storedFields,
-    employerClassificationBadges, employerClassificationHtml, employerClassificationMatches, classificationKeys });
+    talentStageHtml, cvLink, editPostHire, employerClassificationBadges, employerClassificationHtml, employerClassificationMatches, classificationKeys });
 })();

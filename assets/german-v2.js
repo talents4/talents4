@@ -10,8 +10,10 @@
     { id: 'history', label: 'Histórico de evolução', subtitle: 'Presenças, avaliações, evolução, contatos e alertas.', icon: 'history', primary: false }
   ];
   const app = U.mount({ module: 'german', moduleLabel: 'Alemão', views: VIEWS, defaultView: 'classes' });
-  const state = { talents: [], contacts: [], classes: [], enrollments: [], updates: [], teacherLink: false, classId: '', status: '', level: '', risk: '', query: '', display: 'cards', classScope: 'active', studentScope: 'current', loaded: false };
+  const state = { postHires: [], selections: {rows:[]}, talents: [], contacts: [], classes: [], enrollments: [], updates: [], teacherLink: false, classId: '', status: '', level: '', risk: '', query: '', display: 'cards', classScope: 'active', studentScope: 'current', loaded: false };
   const sources = {
+    postHires: {label:'Pós-contratação',load:()=>D.optionalAll(D.TABLES.postHires,'*',q=>q.is('deleted_at',null))},
+    selections: {label:'Etapas das seleções',load:()=>D.loadMatches()},
     talents: { label: 'Talentos', load: () => D.loadCandidates({ activeOnly: false }) },
     contacts: { label: 'Professores / contatos', load: () => D.loadContacts({ includeArchived: true }) },
     classes: { label: 'Turmas', load: () => D.all(D.TABLES.classes) },
@@ -81,6 +83,8 @@
   function enrollmentTable(list, id = 'students') {
     return W.table({ id, rows: list, columns: [
       { key: 'candidate_id', label: 'Talento', required: true, value: (r) => name(r.candidate_id), render: (r) => W.person(name(r.candidate_id), cls(r.class_id)?.name || 'Turma não encontrada', '', 'enrollment-detail', r.id) },
+      { key: 'stage', label:'Acompanhamento',required:true,render:r=>R.talentStageHtml(state,W.find(state.talents,r.candidate_id)) },
+      { key: 'cv',label:'CV',sort:false,render:r=>R.cvLink(W.find(state.talents,r.candidate_id)) },
       { key: 'current_level', label: 'Nível / meta', render: (r) => W.stack(r.current_level || 'Não avaliado', `Meta: ${r.target_level || cls(r.class_id)?.level_target || '—'}`) },
       { key: 'attendance_percent', label: 'Presença', render: (r) => M.finite(r.attendance_percent) ? U.badge(`${r.attendance_percent}%`, Number(r.attendance_percent) < 75 ? 'warning' : 'success') : '<span class="t4-muted">Sem registro</span>' },
       { key: 'progress_percent', label: 'Progresso', render: (r) => `${e(r.progress_percent ?? 0)}%` },
@@ -113,7 +117,7 @@
     if (!row) return;
     const talent = W.find(state.talents, row.candidate_id), course = cls(row.class_id);
     U.openDrawer({ title: name(row.candidate_id), subtitle: `${course?.name || 'Turma não encontrada'} · ${row.status}`, actions: `${D.canEdit() ? W.button('Editar matrícula', 'edit-enrollment', row.id, { className: 'sm', icon: 'edit' }) + W.button('Registrar evolução / presença', 'new-update', row.id, { className: 'primary sm', icon: 'plus' }) : ''}${W.link('Ficha do talento', `./index.html?talent=${encodeURIComponent(row.candidate_id)}`, 'user')}`,
-      body: `${M.riskReasons(row).map((reason) => W.note(reason, 'warning')).join('')}<div class="t4-detail-grid">${U.field('Nível no curso', row.current_level)}${U.field('Nível informado no perfil', talent?.nivel_alemao)}${U.field('Nível-alvo', row.target_level)}${U.field('Presença', M.finite(row.attendance_percent) ? `${row.attendance_percent}%` : 'Sem registro')}${U.field('Progresso', `${row.progress_percent ?? 0}%`)}${U.field('Desempenho', row.performance)}${U.field('Risco informado', row.risk_level)}${U.field('Prova', row.exam_status)}${U.field('Última nota', row.last_assessment_score)}${U.field('Responsável', row.owner_name)}${U.field('Matrícula', U.formatDate(row.enrolled_at))}${U.field('Conclusão', U.formatDate(row.completed_at))}</div>${W.section('Próxima ação', `<p>${e(row.next_action || 'Não definida')}</p><small>${e(U.formatDate(row.next_action_due))}</small>`)}<p class="t4-preserve">${e(row.notes || '')}</p>${W.section('Histórico completo', historyTable(state.updates.filter((r) => M.same(r.enrollment_id, row.id)), 'student-history'))}${R.storedFields(row, ['id', 'class_id', 'candidate_id', 'current_level', 'target_level', 'attendance_percent', 'progress_percent', 'performance', 'risk_level', 'exam_status', 'next_action', 'next_action_due', 'owner_name', 'notes'])}` });
+      body: `<div class="t4-chip-row">${R.talentStageHtml(state,talent)}${R.cvLink(talent,'CV')}</div>${M.riskReasons(row).map((reason) => W.note(reason, 'warning')).join('')}<div class="t4-detail-grid">${U.field('Nível no curso', row.current_level)}${U.field('Nível informado no perfil', talent?.nivel_alemao)}${U.field('Nível-alvo', row.target_level)}${U.field('Presença', M.finite(row.attendance_percent) ? `${row.attendance_percent}%` : 'Sem registro')}${U.field('Progresso', `${row.progress_percent ?? 0}%`)}${U.field('Desempenho', row.performance)}${U.field('Risco informado', row.risk_level)}${U.field('Prova', row.exam_status)}${U.field('Última nota', row.last_assessment_score)}${U.field('Responsável', row.owner_name)}${U.field('Matrícula', U.formatDate(row.enrolled_at))}${U.field('Conclusão', U.formatDate(row.completed_at))}</div>${W.section('Próxima ação', `<p>${e(row.next_action || 'Não definida')}</p><small>${e(U.formatDate(row.next_action_due))}</small>`)}<p class="t4-preserve">${e(row.notes || '')}</p>${W.section('Histórico completo', historyTable(state.updates.filter((r) => M.same(r.enrollment_id, row.id)), 'student-history'))}${R.storedFields(row, ['id', 'class_id', 'candidate_id', 'current_level', 'target_level', 'attendance_percent', 'progress_percent', 'performance', 'risk_level', 'exam_status', 'next_action', 'next_action_due', 'owner_name', 'notes'])}` });
   }
   function editClass(row) {
     if (!D.canEdit()) return;

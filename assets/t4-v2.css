@@ -475,7 +475,7 @@ svg { display: block; width: 100%; height: 100%; }
   .t4-nav-section:first-child { flex: none; overflow: visible; }
   .t4-sidebar-footer { flex-shrink: 0; }
 }
-@page { size: A4; margin: 16mm 15mm; }
+@page t4-dossier { size: A4 portrait; margin: 15mm; }
 @media print {
   html, body { min-width: 0; background: #fff; color: #1b2a3e; overflow: visible !important; }
   body > * { display: none !important; }
@@ -483,9 +483,23 @@ svg { display: block; width: 100%; height: 100%; }
   .t4-print-root .t4-modal { display: block; max-height: none; width: auto; border: 0; box-shadow: none; overflow: visible; border-radius: 0; }
   .t4-print-root .t4-modal-head, .t4-print-root .t4-modal-foot, .t4-print-root .t4-pdf-toolbar, .t4-print-root .t4-alert { display: none !important; }
   .t4-print-root .t4-modal-body { display: block; padding: 0; background: #fff; overflow: visible; }
-  .t4-print-sheet { width: 100%; max-width: none; min-height: 0; margin: 0; padding: 0; box-shadow: none; }
+  .t4-print-sheet { page: t4-dossier; box-sizing: border-box; width: 100%; max-width: none; min-height: 0; margin: 0; padding: 4mm 3mm; box-shadow: none; }
   .t4-print-field[data-selected="false"], [data-print-empty="true"], .t4-print-field input { display: none !important; }
   .t4-print-field { opacity: 1; }
   .t4-print-header, .t4-print-intro, .t4-print-field, .t4-print-footer { break-inside: avoid; }
   .t4-print-section h2 { break-after: avoid; }
+  .t4-print-field.is-long { break-inside: auto; }
+  .t4-print-field > label { break-after: avoid; }
+  .t4-pdf-editor, .t4-pdf-translation, .t4-pdf-print-block { display: none !important; }
+  .t4-print-root[data-pdf-blocked="true"] .t4-print-sheet { display: none !important; }
+  .t4-print-root[data-pdf-blocked="true"] .t4-pdf-print-block { display: block !important; margin: 15mm; font-size: 12pt; }
 }
+.t4-pdf-print-block { display: none; }
+.t4-pdf-translation { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px; margin-bottom: 16px; border: 1px solid #cbd8e4; border-radius: 10px; background: #fff; font-size: 14px; }
+.t4-pdf-translation p { flex-basis: 100%; margin: 0; }
+.t4-pdf-translation select { margin-left: 8px; padding: 7px; }
+.t4-pdf-editor { margin-top: 8px; padding: 12px; border: 1px solid #cbd8e4; border-radius: 8px; background: #f5f8fb; font-size: 14px; }
+.t4-pdf-editor summary { cursor: pointer; font-weight: 600; }
+.t4-pdf-editor p { white-space: pre-wrap; }
+.t4-pdf-editor textarea { box-sizing: border-box; display: block; width: 100%; margin: 6px 0 12px; padding: 10px; font: inherit; }
+.t4-talent-stages { margin: 8px 0; }

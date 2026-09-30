@@ -10,8 +10,10 @@
     { id: 'categories', label: 'Categorias', subtitle: 'Um contato pode exercer mais de um papel.', icon: 'list', primary: false },
     { id: 'duplicates', label: 'Revisar duplicidades', subtitle: 'Sinais para conferência humana. Nenhuma fusão automática.', icon: 'merge', primary: false }
   ] });
-  const state = { talents: [], employers: [], contacts: [], categories: [], categoryLinks: [], relationships: [], interactions: [], followups: [], unified: [], query: '', category: '', status: '', owner: '', quick: 'active', followupScope: 'open', loaded: false };
+  const state = { postHires: [], selections: {rows:[]}, talents: [], employers: [], contacts: [], categories: [], categoryLinks: [], relationships: [], interactions: [], followups: [], unified: [], query: '', category: '', status: '', owner: '', quick: 'active', followupScope: 'open', loaded: false };
   const sources = {
+    postHires: {label:'Pós-contratação',load:()=>D.optionalAll(D.TABLES.postHires,'*',q=>q.is('deleted_at',null))},
+    selections: {label:'Etapas das seleções',load:()=>D.loadMatches()},
     talents: { label: 'Talentos', load: () => D.loadCandidates({ activeOnly: false }) },
     employers: { label: 'Empregadores', load: () => D.loadEmployers({ activeOnly: false }) },
     contacts: { label: 'Agenda profissional', load: () => D.loadContacts({ includeArchived: true }) },
@@ -66,7 +68,7 @@
       { key: 'roles', label: 'Categorias', value: (r) => r.roles.join(' '), render: (r) => `<div class="t4-chip-row">${(r.roles.length ? r.roles : ['Sem categoria']).map((v) => U.badge(v, v === 'Talento' ? 'info' : v === 'Empregador' ? 'success' : 'purple')).join('')}</div>` },
       { key: 'organization', label: 'Organização / função', render: (r) => W.stack(r.organization || r.jobTitle, r.organization ? r.jobTitle : '') },
       { key: 'email', label: 'Canais', render: (r) => W.stack(r.email || r.phone, r.email ? r.phone : '') },
-      { key: 'stage', label: 'Relacionamento', render: (r) => W.status(r.stage) }, { key: 'owner', label: 'Responsável' },
+      { key: 'stage', label: 'Acompanhamento', required:true, render: (r) => r.source === 'talent' ? R.talentStageHtml(state,W.find(state.talents,r.sourceId)) : W.status(r.stage) }, { key: 'owner', label: 'Responsável' },
       { key: 'next', label: 'Próximo passo', value: (r) => nextFollowup(r)?.due_at || '', render: (r) => { const f = nextFollowup(r); return f ? W.stack(f.title, U.formatDate(f.due_at, true)) : '<span class="t4-muted">Não definido</span>'; } },
       { key: 'actions', label: '', ariaLabel: 'Ações', sort: false, render: (r) => W.button('Abrir', 'contact-detail', r.key, { className: 'sm ghost', icon: 'chevron' }) }
     ] });
@@ -102,7 +104,7 @@
     const interactions = state.interactions.filter((r) => relatedTo(row, r));
     const categories = state.categoryLinks.filter((r) => row.contactIds.some((id) => M.same(r.contact_id, id)));
     U.openDrawer({ title: row.displayName, subtitle: `${row.entityType} · ${row.roles.join(', ') || 'Sem categoria'}`, actions: `${D.canEdit() ? W.button('Editar contato', 'edit-contact', row.key, { className: 'sm', icon: 'edit' }) + W.button('Nova interação', 'new-interaction', row.key, { className: 'sm', icon: 'note' }) + W.button('Agendar próximo passo', 'new-followup', row.key, { className: 'primary sm', icon: 'plus' }) : ''}${row.source === 'talent' ? W.link('Ficha do talento', `./index.html?talent=${encodeURIComponent(row.sourceId)}`, 'user') : row.source === 'employer' ? W.link('Dossiê do empregador', `./organizacional.html?employer=${encodeURIComponent(row.sourceId)}`, 'building') : ''}`,
-      body: `${row.unresolved ? W.note('O registro de origem não está entre os dados acessíveis. O contato e seu histórico foram preservados; confirme o vínculo antes de editar a identificação.', 'warning') : ''}
+      body: `${row.source === 'talent' ? `<div class="t4-chip-row">${R.talentStageHtml(state,W.find(state.talents,row.sourceId))}${R.cvLink(W.find(state.talents,row.sourceId),'CV')}</div>` : ''}${row.unresolved ? W.note('O registro de origem não está entre os dados acessíveis. O contato e seu histórico foram preservados; confirme o vínculo antes de editar a identificação.', 'warning') : ''}
         <div class="t4-detail-grid">${U.field('E-mail', row.email)}${U.field('E-mail secundário', contact.secondary_email)}${U.field('Telefone', row.phone)}${U.field('WhatsApp', contact.whatsapp)}${U.field('Função / área', row.jobTitle)}${U.field('Organização', row.organization)}${U.field('Cidade', row.city)}${U.field('País', contact.country)}${U.field('Endereço', contact.address_line)}${U.field('Código postal', contact.postal_code)}${U.field('Responsável', row.owner)}${U.field('Relacionamento', row.stage)}${U.field('Canal preferido', contact.preferred_channel)}${U.field('Idioma', contact.language)}</div>
         <div class="t4-resource-links">${W.external('Site', contact.website || (row.source === 'employer' ? row.raw.site : ''))}${W.external('LinkedIn', contact.linkedin_url)}</div>
         ${W.section('Papéis e categorias', `<div class="t4-chip-row">${categories.map((c) => `<span class="t4-category-tag">${e(U.term(W.find(state.categories, c.category_id)?.name || 'Categoria'))}${D.canEdit() ? `<button type="button" aria-label="Remover categoria" data-action="remove-category-link" data-id="${a(`${c.contact_id}|${c.category_id}`)}">×</button>` : ''}</span>`).join('') || '<span class="t4-muted">Sem categorias adicionais.</span>'}</div>`, D.canEdit() ? W.button('Adicionar', 'add-category', row.key, { className: 'sm', icon: 'plus' }) : '')}

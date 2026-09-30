@@ -15,10 +15,11 @@
     { id: 'history', label: 'Acervo anterior', subtitle: 'Consulta protegida das informações anteriores à V2.', icon: 'archive', primary: false }
   ];
   const app = U.mount({ module: 'organization', moduleLabel: 'Organizacional', views: VIEWS, defaultView: 'employers' });
-  const state = { talents: [], employers: [], openings: [], selections: { rows: [], modern: false }, activities: [], plans: [], meetings: [], summaries: [], replacements: [], tasks: [], metrics: [], taskResponsibles: [], users: [], query: '', employer: '', month: '', status: '', employerScope: 'active', employerClassification: 'partner', employerDisplay: 'cards', planningFocus: 'all', planningMonth: M.today().slice(0, 7), operationsFocus: 'all', operationsMonth: M.today().slice(0, 7), operationsDisplay: 'activities', meetingsMonth: M.today().slice(0, 7), selectionDisplay: 'list', selectionScope: 'active', selectionShowClosed: false, opportunityScope: 'open', calendar: M.today().slice(0, 7), loaded: false, archive: null };
+  const state = { postHires: [], talents: [], employers: [], openings: [], selections: { rows: [], modern: false }, activities: [], plans: [], meetings: [], summaries: [], replacements: [], tasks: [], metrics: [], taskResponsibles: [], users: [], query: '', employer: '', month: '', status: '', employerScope: 'active', employerClassification: 'partner', employerDisplay: 'cards', planningFocus: 'all', planningMonth: M.today().slice(0, 7), operationsFocus: 'all', operationsMonth: M.today().slice(0, 7), operationsDisplay: 'activities', meetingsMonth: M.today().slice(0, 7), selectionDisplay: 'list', selectionScope: 'active', selectionShowClosed: false, opportunityScope: 'open', calendar: M.today().slice(0, 7), loaded: false, archive: null };
   const operationalKeys = ['plans', 'meetings', 'summaries', 'replacements', 'tasks', 'metrics'];
   const labels = { plans: 'Planejamento mensal', meetings: 'Reuniões', summaries: 'Resumos manuais', replacements: 'Reposições', tasks: 'Tarefas operacionais', metrics: 'Métricas' };
   const sources = {
+    postHires: {label:"Pós-contratação",load:()=>D.optionalAll(D.TABLES.postHires,"*",q=>q.is("deleted_at",null))},
     talents: { label: 'Talentos', load: () => D.loadCandidates({ activeOnly: false }) },
     employers: { label: 'Empregadores', load: () => D.loadEmployers({ activeOnly: false }) },
     openings: { label: 'Vagas', load: () => D.loadOpenings() },
@@ -49,7 +50,7 @@
     return rowMonths.some((month) => wanted.some((item) => M.same(item, month)));
   };
   const filtered = (rows, dateField = '') => rows.filter((r) => scoped(r) && matchesPeriod(r, state.month, dateField) && (values(state.status).length ? matches(r.status, state.status) : !closedStatus(r.status)) && matchQuery(r));
-  const actions = (row, kind) => D.canEdit() ? W.button('Editar', `edit-${kind}`, row.id, { className: 'sm ghost', icon: 'edit' }) : '';
+  const actions = (row, kind) => (kind === 'task' ? canManageTask(row) : D.canEdit()) ? W.button('Editar', `edit-${kind}`, row.id, { className: 'sm ghost', icon: 'edit' }) : '';
   const periodKey = (value) => {
     const match = String(value ?? '').match(/^(\d{4})-(\d{1,2})(?:-|T|$)/);
     if (!match) return '';
@@ -79,7 +80,7 @@
   // navegação em cada tela.
   const workViews = () => '';
   const available = (key) => state.sources[key]?.available === true;
-  const can = (key) => D.canEdit() && available(key) && (key !== 'selections' || state.selections.modern);
+  const can = (key) => (D.canEdit() || key === 'tasks' && D.profile?.role === 'viewer') && available(key) && (key !== 'selections' || state.selections.modern);
   const currentUsername = () => String(D.profile?.username || '').trim();
   const userRecord = (username) => state.users.find((row) => M.norm(row.username) === M.norm(username));
   const userLabel = (username) => userRecord(username)?.nome || username || 'Usuário não informado';
@@ -102,6 +103,7 @@
     if (state.sources?.taskResponsibles?.available !== true) return true;
     return taskOwnerMatches(row) || taskResponsiblesFor(row).some((item) => taskOwnerMatches({ owner_user_key: item.username }));
   };
+  const canManageTask = row => D.canEdit() || D.profile?.role === 'viewer' && (!row || taskOwnerMatches(row) || taskResponsiblesFor(row).some(r => M.norm(r.username) === M.norm(currentUsername())));
   const responsibleUsernames = (row) => [...new Set([row?.owner_user_key || row?.assigned_user_key, ...taskResponsiblesFor(row).map((item) => item.username)].filter(Boolean))];
   const responsibleLabels = (row) => responsibleUsernames(row).map(userLabel).join(', ');
   const taskResponsibleOptions = (primary) => activeUsers().filter((item) => M.norm(item.username) !== M.norm(primary)).map((item) => ({ value: item.username, label: userLabel(item.username) }));
@@ -318,11 +320,11 @@
     const taskCount = (bucket) => ({ overdue, today: todayCount, high, unassigned }[bucket] ?? 0);
     const display = ['activities', 'all'].includes(state.operationsDisplay) ? state.operationsDisplay : 'activities';
     const focusBar = `<div class="org-focus-bar org-operations-focus-bar"><div class="org-focus-group"><span class="org-focus-label">Mostrar</span>${W.chips([{ id: 'activities', label: 'Atividades', count: open, icon: 'activity' }, { id: 'all', label: 'Todos', count: allTasks.length, icon: 'list' }], display, 'operations-display')}</div><div class="org-focus-group"><span class="org-focus-label">Filtrar</span>${W.chips([{ id: 'all', label: 'Todas', count: allTasks.length, icon: 'list' }, { id: 'overdue', label: 'Vencidas', count: taskCount('overdue'), icon: 'warning' }, { id: 'today', label: 'Para hoje', count: taskCount('today'), icon: 'calendar' }, { id: 'high', label: 'Alta prioridade', count: taskCount('high'), icon: 'activity' }, { id: 'unassigned', label: 'Sem responsável', count: taskCount('unassigned'), icon: 'people' }], focus, 'operations-focus')}</div></div>`;
-    const taskCard = (r, index) => `<article class="org-ready-card ${index === 0 ? 'is-next' : ''} ${isOverdue(r) ? 'is-overdue' : ''} ${priorityClass(r)}" data-ready-task="${a(r.id)}"><div class="org-ready-card-head"><span class="org-ready-card-index">${String(index + 1).padStart(2, '0')}</span>${U.badge(r.priority || 'Normal', isHigh(r) ? 'danger' : M.norm(r.priority) === 'media' ? 'warning' : '')}<span class="org-ready-card-deadline ${deadlineClass(r)}">${U.icon('calendar')}${e(deadlineLabel(r))}</span></div><h3><button type="button" class="t4-row-link" data-action="edit-task" data-id="${a(r.id)}">${e(r.title || 'Tarefa sem título')}</button></h3><p class="org-ready-card-context">${e([employerOf(r), responsibleLabels(r) || 'sem responsável'].join(' · '))}</p><p class="org-ready-card-description">${e(r.description || r.notes || 'Sem descrição registrada.')}</p><footer class="org-ready-card-footer"><span>${W.status(r.status || 'Sem status')}</span><div>${D.canEdit() && M.isOpen(r.status) ? W.button('Concluir', 'finish-task', r.id, { className: 'sm', icon: 'check' }) : ''}${actions(r, 'task')}</div></footer></article>`;
+    const taskCard = (r, index) => `<article class="org-ready-card ${index === 0 ? 'is-next' : ''} ${isOverdue(r) ? 'is-overdue' : ''} ${priorityClass(r)}" data-ready-task="${a(r.id)}"><div class="org-ready-card-head"><span class="org-ready-card-index">${String(index + 1).padStart(2, '0')}</span>${U.badge(r.priority || 'Normal', isHigh(r) ? 'danger' : M.norm(r.priority) === 'media' ? 'warning' : '')}<span class="org-ready-card-deadline ${deadlineClass(r)}">${U.icon('calendar')}${e(deadlineLabel(r))}</span></div><h3><button type="button" class="t4-row-link" data-action="edit-task" data-id="${a(r.id)}">${e(r.title || 'Tarefa sem título')}</button></h3><p class="org-ready-card-context">${e([employerOf(r), responsibleLabels(r) || 'sem responsável'].join(' · '))}</p><p class="org-ready-card-description">${e(r.description || r.notes || 'Sem descrição registrada.')}</p><footer class="org-ready-card-footer"><span>${W.status(r.status || 'Sem status')}</span><div>${canManageTask(r) && M.isOpen(r.status) ? W.button('Concluir', 'finish-task', r.id, { className: 'sm', icon: 'check' }) : ''}${actions(r, 'task')}</div></footer></article>`;
     const readyCards = readyTasks.map(taskCard).join('');
     const openCards = allOpenTasks.map(taskCard).join('');
     const readyBody = readyCards || U.emptyState('Nenhuma tarefa em aberto', focus === 'all' ? 'O histórico completo fica abaixo.' : 'Remova o recorte para conferir as demais tarefas abertas.');
-    const taskActions = (r) => `<div class="t4-chip-row">${D.canEdit() && M.isOpen(r.status) ? W.button('Concluir', 'finish-task', r.id, { className: 'sm', icon: 'check' }) : ''}${actions(r, 'task')}</div>`;
+    const taskActions = (r) => `<div class="t4-chip-row">${canManageTask(r) && M.isOpen(r.status) ? W.button('Concluir', 'finish-task', r.id, { className: 'sm', icon: 'check' }) : ''}${actions(r, 'task')}</div>`;
     const taskTable = W.table({ id: 'tasks', rows: tasks, columns: [
       { key: 'title', label: 'Tarefa / entrega', required: true, render: (r) => `<button class="t4-row-link" data-action="edit-task" data-id="${a(r.id)}">${e(r.title || 'Tarefa sem título')}</button><span class="t4-cell-secondary t4-clamp-3">${e(r.description || r.notes || 'Sem descrição ou resultado registrado.')}</span>` },
       { key: 'due_date', label: 'Prazo', render: (r) => `${e(dueOf(r) ? U.formatDate(dueOf(r)) : 'Sem prazo')}${M.overdue(dueOf(r), r.status) ? U.badge('Vencida', 'danger') : dueOf(r) === today && M.isOpen(r.status) ? U.badge('Hoje', 'warning') : ''}` }, { key: 'priority', label: 'Prioridade', render: (r) => U.badge(r.priority || 'Normal', /alta|crit/i.test(M.norm(r.priority)) ? 'danger' : '') }, { key: 'status', label: 'Situação', render: (r) => W.status(r.status) }, { key: 'owner_user_key', label: 'Responsáveis', render: (r) => e(responsibleLabels(r) || 'Sem responsável') }, { key: 'context_type', label: 'Empregador / escopo', render: (r) => W.stack(employerOf(r), r.team_scope) }, { key: 'edit', label: '', ariaLabel: 'Ações', sort: false, render: taskActions }
@@ -476,7 +478,7 @@
     const active = rows.filter((r) => !closed && M.isOpen(r.status)).length, overdue = rows.filter((r) => M.overdue(r.next_action_at, r.status)).length;
     const metrics = `<div class="mx-metric-strip"><div><span>Relações</span><strong>${rows.length}</strong></div><div><span>Empregadores</span><strong>${groups.size}</strong></div><div><span>Próximas ações</span><strong>${active}</strong></div><div class="${overdue ? 'risk' : ''}"><span>Vencidas</span><strong>${overdue}</strong></div></div>`;
     const blocks = [...groups.entries()].map(([key, items]) => { const emp = W.find(state.employers, key) || { id:key, nome:employerOf(items[0]) }, color = window.T4Modern?.color(emp) || '#7890a4';
-      return `<section class="mx-register-group" style="--employer-color:${a(color)}"><header><div>${window.T4Modern?.employer ? window.T4Modern.employer(emp) : `<strong>${e(emp.nome)}</strong>`}<span>${items.length} relação(ões) · ${items.filter((r) => M.selectionBucket(r) === 'hired').length} contratação(ões)</span></div><button type="button" class="t4-btn ghost sm" data-action="go-employer" data-id="${a(key)}">Abrir empregador</button></header><div class="mx-register-rows">${items.map((r) => { const talent = W.find(state.talents, r.talent_id), opening = W.find(state.openings, r.opening_id); return `<article class="mx-register-row"><div class="mx-register-person"><span class="t4-avatar sm">${e(U.initials(talent?.nome_completo || R.talentName(state,r.talent_id)))}</span><div><button class="t4-row-link" data-action="selection-detail" data-id="${a(r.key)}">${e(R.talentName(state,r.talent_id))}</button><span>${e(talent?.profissao_principal || talent?.area_profissional || 'Área não informada')}</span></div></div><div><strong>${e(opening?.title || 'Vínculo geral anterior')}</strong><span>${e([opening?.location, talent?.nivel_alemao ? `Alemão ${talent.nivel_alemao}` : ''].filter(Boolean).join(' · ') || 'Detalhes da vaga não informados')}</span></div><div>${W.status(r.stage)}<span class="mx-register-meta">${e(r.viability || 'Viabilidade não avaliada')}</span></div><div class="mx-next"><strong>${e(r.next_action || 'Definir próxima ação')}</strong><span>${e([r.next_action_at ? U.formatDate(r.next_action_at) : 'Sem prazo', r.owner_username || 'Sem responsável'].join(' · '))}</span></div><div class="mx-register-actions">${D.canEdit() ? W.button('Editar','edit-selection',r.key,{className:'ghost sm',icon:'edit'}) : ''}${W.button('Detalhes','selection-detail',r.key,{className:'sm'})}</div></article>`; }).join('')}</div></section>`;
+      return `<section class="mx-register-group" style="--employer-color:${a(color)}"><header><div>${window.T4Modern?.employer ? window.T4Modern.employer(emp) : `<strong>${e(emp.nome)}</strong>`}<span>${items.length} relação(ões) · ${items.filter((r) => M.selectionBucket(r) === 'hired').length} contratação(ões)</span></div><button type="button" class="t4-btn ghost sm" data-action="go-employer" data-id="${a(key)}">Abrir empregador</button></header><div class="mx-register-rows">${items.map((r) => { const talent = W.find(state.talents, r.talent_id), opening = W.find(state.openings, r.opening_id); return `<article class="mx-register-row"><div class="mx-register-person"><span class="t4-avatar sm">${e(U.initials(talent?.nome_completo || R.talentName(state,r.talent_id)))}</span><div><button class="t4-row-link" data-action="selection-detail" data-id="${a(r.key)}">${e(R.talentName(state,r.talent_id))}</button><span>${e(talent?.profissao_principal || talent?.area_profissional || 'Área não informada')}</span></div></div><div><strong>${e(opening?.title || 'Vínculo geral anterior')}</strong><span>${e([opening?.location, talent?.nivel_alemao ? `Alemão ${talent.nivel_alemao}` : ''].filter(Boolean).join(' · ') || 'Detalhes da vaga não informados')}</span></div><div>${W.status(r.stage)}<span class="mx-register-meta">${e(r.viability || 'Viabilidade não avaliada')}</span></div><div class="mx-next"><strong>${e(r.next_action || 'Definir próxima ação')}</strong><span>${e([r.next_action_at ? U.formatDate(r.next_action_at) : 'Sem prazo', r.owner_username || 'Sem responsável'].join(' · '))}</span></div><div class="mx-register-actions">${D.canEdit() ? W.button('Editar','edit-selection',r.key,{className:'ghost sm',icon:'edit'}) : ''}${R.cvLink(talent,'CV')}${W.button('Detalhes','selection-detail',r.key,{className:'sm'})}</div></article>`; }).join('')}</div></section>`;
     }).join('');
     return metrics + `<div class="mx-register" aria-label="Registro de seleções">${blocks}</div>`;
   }
@@ -626,7 +628,8 @@
     return [...current.filter((item) => !removed.includes(item)), ...addedRows];
   }
   function editTask(row, context = {}) {
-    if (!D.canEdit()) return readonlyDetail(row, 'Tarefa operacional');
+    if (!canManageTask(row)) return row ? readonlyDetail(row, 'Tarefa operacional') : undefined;
+    const personal = !D.canEdit();
     const users = activeUsers();
     const contextOwner = users.find((item) => [item.username, item.nome].some((value) => M.norm(value) === M.norm(context.owner_user_key)))?.username || context.owner_user_key;
     const primary = row?.owner_user_key || row?.assigned_user_key || contextOwner || currentUsername() || D.profile.nome;
@@ -634,18 +637,19 @@
     let selectedAdditional = initialAdditional;
     let requestedPrimary = primary;
     let stagedRows = row ? taskResponsiblesFor(row) : [];
-    const taskRow = row ? { ...row, responsible_usernames: initialAdditional } : { ...context, employer_id: context.employer_id || firstValue(state.employer), month_ref: state.operationsMonth || M.today().slice(0, 7), status: 'A fazer', priority: 'Média', team_scope: 'private', owner_user_key: primary, assigned_user_key: primary, responsible_usernames: [] };
-    const ownerField = { name: 'owner_user_key', label: 'Responsável principal', type: 'select', options: users.map((item) => ({ value: item.username, label: userLabel(item.username) })), required: true, searchable: true };
-    const responsibleField = { name: 'responsible_usernames', label: 'Outros responsáveis', type: 'multi-select', options: taskResponsibleOptions(primary), wide: true, help: 'A tarefa fica visível para o responsável principal e para todos os usuários marcados aqui.' };
+    const taskRow = row ? { ...row, responsible_usernames: initialAdditional } : { ...context, employer_id: context.employer_id || firstValue(state.employer), month_ref: state.operationsMonth || M.today().slice(0, 7), status: 'A fazer', priority: 'Média', team_scope: 'personal', owner_user_key: primary, assigned_user_key: primary, responsible_usernames: [] };
+    const ownerField = { name: 'owner_user_key', label: 'Responsável principal', type: 'select', options: users.map((item) => ({ value: item.username, label: userLabel(item.username) })), required: true, searchable: true, readonly: personal };
+    const responsibleField = { readonly: personal, name: 'responsible_usernames', label: 'Outros responsáveis', type: 'multi-select', options: taskResponsibleOptions(primary), wide: true, help: 'A tarefa fica visível para o responsável principal e para todos os usuários marcados aqui.' };
     return W.recordForm({ title: row ? 'Editar tarefa' : 'Nova tarefa operacional', subtitle: 'P.O. é a fila de tarefas. Cada tarefa é privada por padrão e pode ser compartilhada com outros responsáveis.', table: D.TABLES.tasks, row: taskRow, fields: [
-      { name: 'title', label: 'Tarefa', required: true, wide: true }, { name: 'description', label: 'Descrição', type: 'textarea', wide: true }, ...employerFields(), { name: 'month_ref', label: 'Mês' , type: 'month' }, ownerField, responsibleField, { name: 'team_scope', label: 'Escopo da equipe', default: 'private' }, { name: 'priority', label: 'Prioridade', type: 'select', options: ['Baixa', 'Média', 'Alta', 'Crítica'], required: true, placeholder: null }, { name: 'status', label: 'Situação', type: 'select', options: ['A fazer', 'Em andamento', 'Bloqueado', 'Pronto', 'Cancelado'], required: true, placeholder: null }, { name: 'start_date', label: 'Início', type: 'date' }, { name: 'due_date', label: 'Prazo', type: 'date' }, { name: 'notes', label: 'Observações / resultado', type: 'textarea', wide: true }
+      { name: 'title', label: 'Tarefa', required: true, wide: true }, { name: 'description', label: 'Descrição', type: 'textarea', wide: true }, ...employerFields().map(f => ({...f,readonly:personal})), { name: 'month_ref', label: 'Mês' , type: 'month' }, ownerField, responsibleField, { name: 'team_scope', label: 'Escopo da equipe', type:'select',options:[{value:'personal',label:'Privada'},{value:'team',label:'Equipe'}], default: 'personal', readonly: personal }, { name: 'priority', label: 'Prioridade', type: 'select', options: ['Baixa', 'Média', 'Alta'], required: true, placeholder: null }, { name: 'status', label: 'Situação', type: 'select', options: ['A fazer', 'Em andamento', 'Bloqueado', 'Pronto', 'Cancelado'], required: true, placeholder: null }, { name: 'start_date', label: 'Início', type: 'date' }, { name: 'due_date', label: 'Prazo', type: 'date' }, { name: 'notes', label: 'Observações / resultado', type: 'textarea', wide: true }
     ], async prepare(v, c) {
       if (v.start_date && v.due_date && v.due_date < v.start_date) throw new Error('O prazo não pode ser anterior ao início.');
-      selectedAdditional = Array.isArray(v.responsible_usernames) ? v.responsible_usernames : [];
+      selectedAdditional = personal ? initialAdditional : Array.isArray(v.responsible_usernames) ? v.responsible_usernames : [];
+      if(personal && !row) Object.assign(v,{owner_user_key:currentUsername(),assigned_user_key:currentUsername(),team_scope:'personal',employer_id:null});
       if (selectedAdditional.length && !available('taskResponsibles')) throw new Error('A tabela de responsáveis das tarefas ainda não está disponível. Aplique a migração 52 no Supabase antes de compartilhar uma tarefa.');
       delete v.responsible_usernames;
       delete c.responsible_usernames;
-      requestedPrimary = v.owner_user_key || currentUsername();
+      requestedPrimary = personal && row ? primary : v.owner_user_key || currentUsername();
       if (!row) {
         // O primeiro INSERT precisa ser visível para quem abriu a tarefa para
         // que o segundo passo possa gravar os responsáveis. Se a tarefa foi
@@ -655,7 +659,7 @@
         if (M.norm(requestedPrimary) !== M.norm(creator)) Object.assign(v, { owner_user_key: creator, assigned_user_key: creator });
         else v.assigned_user_key = v.owner_user_key;
         Object.assign(v, { context_type: context.meeting_id ? 'meeting' : v.employer_id ? 'employer' : 'internal', completed_at: v.status === 'Pronto' ? new Date().toISOString() : null, sort_index: 0, is_recurring: false, deleted_at: null, meeting_id: context.meeting_id || null });
-      } else if (taskOwnerMatches(row) && M.norm(requestedPrimary) !== M.norm(currentUsername()) && !stagedRows.some((item) => M.norm(item.username) === M.norm(currentUsername()))) {
+      } else if (!personal && taskOwnerMatches(row) && M.norm(requestedPrimary) !== M.norm(currentUsername()) && !stagedRows.some((item) => M.norm(item.username) === M.norm(currentUsername()))) {
         if (!available('taskResponsibles')) throw new Error('A tabela de responsáveis das tarefas ainda não está disponível. Aplique a migração 52 no Supabase antes de transferir uma tarefa.');
         const id = D.uuid();
         const result = await D.upsert(D.TABLES.taskResponsibles, { id, task_id: String(row.id), username: currentUsername(), deleted_at: null }, { onConflict: 'task_id,username' });
@@ -666,6 +670,7 @@
       if ('owner_user_key' in c) c.assigned_user_key = v.owner_user_key;
       if ('status' in c && (!row || Object.prototype.hasOwnProperty.call(row, 'completed_at'))) c.completed_at = v.status === 'Pronto' ? new Date().toISOString() : null;
     }, after: async (saved) => {
+      if (personal) { await load(); return; }
       const taskId = saved?.id || row?.id || taskRow.id;
       const creator = currentUsername();
       if (!row && M.norm(requestedPrimary) !== M.norm(creator)) {
@@ -680,7 +685,7 @@
     } });
   }
   async function finishTask(row) {
-    if (!row || !D.canEdit() || !M.isOpen(row.status)) return;
+    if (!row || !canManageTask(row) || !M.isOpen(row.status)) return;
     const payload = { status: 'Pronto' };
     if (Object.prototype.hasOwnProperty.call(row, 'completed_at')) payload.completed_at = new Date().toISOString();
     await D.update(D.TABLES.tasks, row.id, payload, row.updated_at ? { expectedUpdatedAt: row.updated_at } : {});

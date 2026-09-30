@@ -37,6 +37,7 @@
     poMembers: 'operational_plan_members',
     taskResponsibles: 'operational_task_responsibles',
     notifications: 'crm_notifications',
+    postHires: 'candidate_post_hire_followups',
     chatConversations: 'crm_chat_conversations',
     chatParticipants: 'crm_chat_participants',
     chatMessages: 'crm_chat_messages',
@@ -53,7 +54,7 @@
       'pendencia_documental_critica', 'elegivel_para_employer', 'pronto_para_employer',
       'readiness_internacional', 'risco_desistencia', 'disponibilidade_mudanca', 'status_employer',
       'retorno_employer', 'data_envio_employer', 'motivo_inativacao', 'data_inativacao', 'reativavel',
-      'tipo_de_candidato', 'tipo_vaga_preferido', 'cv_drive_web_link', 'cv_drive_file_name', 'crm_scope'
+      'tipo_de_candidato', 'tipo_vaga_preferido', 'cv_drive_web_link', 'cv_drive_file_name', 'crm_scope', 'lingua_estrangeira', 'nivel_lingua_estrangeira', 'filho', 'idade_filho', 'estado_civil', 'tem_filhos', 'quantidade_filhos'
     ].join(','),
     employers: [
       'id', 'nome', 'nome_normalizado', 'ativo', 'tipo', 'status', 'area_atuacao', 'subsetor', 'cidade', 'pais',
@@ -265,6 +266,27 @@
   }
 
   function canEdit() { return ['admin', 'recrutador'].includes(profile?.role); }
+  async function assertMutation(table, payload, id = null) {
+    if (canEdit()) return;
+    if (table === TABLES.notifications && id && Object.keys(payload).every(key => key === 'read_at')) {
+      const own = await one(table,id,'id,recipient_username');
+      if (String(own.recipient_username).toLowerCase() === String(profile?.username).toLowerCase()) return;
+    }
+    if (profile?.role !== 'viewer' || table !== TABLES.tasks || !profile.username) return assertEdit();
+    const me = String(profile.username).trim().toLowerCase();
+    if (!id) {
+      if (String(payload.owner_user_key || '').trim().toLowerCase() !== me || String(payload.assigned_user_key || '').trim().toLowerCase() !== me
+        || payload.team_scope !== 'personal' || payload.employer_id || payload.meeting_id || payload.plan_id) throw new Error('Crie uma tarefa privada sob sua própria responsabilidade.');
+      return;
+    }
+    const allowed = new Set(['title','description','notes','month_ref','start_date','due_date','priority','status','completed_at']);
+    if (Object.keys(payload).some(key => !allowed.has(key))) throw new Error('Seu perfil não pode mudar responsáveis, vínculos ou escopo de uma tarefa.');
+    const row = await one(table, id);
+    const keys = [row.owner_user_key,row.assigned_user_key].map(key => String(key || '').trim().toLowerCase());
+    if (keys.some(key => [me, String(profile.nome || '').trim().toLowerCase()].includes(key))) return;
+    const assigned = await select(TABLES.taskResponsibles, 'task_id,username', q => q.eq('task_id', String(id)).eq('username', profile.username).is('deleted_at', null).limit(1));
+    if (!assigned.length) throw new Error('Você não é responsável por esta tarefa.');
+  }
   function canAdmin() { return profile?.role === 'admin'; }
 
   async function select(table, columns = '*', configure = null, options = {}) {
@@ -290,7 +312,7 @@
       }, options);
       rows.push(...page);
       if (rows.length > max) throw new Error(`Há mais de ${max} registros em ${table}. A carga foi interrompida para não apresentar totais incompletos.`);
-      if (!page.length || page.length < size) return rows;
+      if (!page.length) return rows;
       offset += page.length;
     }
     throw new Error(`Não foi possível concluir a paginação de ${table}.`);
@@ -327,7 +349,7 @@
 
   async function insert(table, payload, options = {}) {
     assertReady();
-    assertEdit();
+    await assertMutation(table, payload);
     let query = client.from(table).insert(payload);
     if (options.select !== false) query = query.select(options.columns || '*');
     if (options.single !== false && options.select !== false) query = query.single();
@@ -338,7 +360,7 @@
 
   async function update(table, id, payload, options = {}) {
     assertReady();
-    assertEdit();
+    await assertMutation(table, payload, id);
     if (options.expectedUpdatedAt && options.select === false) throw new Error('A verificação de concorrência exige retornar o registro atualizado.');
     let query = client.from(table).update(payload).eq(options.idColumn || 'id', id);
     if (options.expectedUpdatedAt) query = query.eq(options.expectedColumn || 'updated_at', options.expectedUpdatedAt);

@@ -214,7 +214,8 @@ body[data-t4-module="talents"] .t4-page { padding-top:1.25rem; }
   .tw-presentation-grid { grid-template-columns:minmax(11rem,1.1fr) repeat(var(--tw-presentation-count),minmax(10rem,14rem)); }
 }
 @media print {
-  @page { size:A4 landscape; margin:10mm; }
+  @page t4-matrix { size:A4 landscape; margin:10mm; }
+  .tw-presentation-sheet { page:t4-matrix; }
   body[data-t4-module="talents"] .tw-filter-surface,
   body[data-t4-module="talents"] .tw-presentation-menu,
   body[data-t4-module="talents"] .tw-presentation-picker,
