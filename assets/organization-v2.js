@@ -382,7 +382,14 @@
     });
     const count = (id) => state.openings.filter((r) => id === 'open' ? !isClosed(r) : id === 'closed' ? isClosed(r) : true).length;
     const scopeBar = W.chips([{ id: 'open', label: 'Abertas', count: count('open'), icon: 'briefcase' }, { id: 'all', label: 'Todas', count: count('all'), icon: 'list' }, { id: 'closed', label: 'Encerradas', count: count('closed'), icon: 'archive' }], scope, 'opportunity-scope');
-    return workViews('opportunities') + `<div class="v25-page-intro"><div><span class="mx-eyebrow">MERCADO DE OPORTUNIDADES</span><h2>Oportunidades separadas das seleções.</h2><p>Uma vaga pode receber vários Talentos; a etapa de cada vínculo fica em Seleções.</p></div><span class="v25-result-count">${rows.length} vaga${rows.length === 1 ? '' : 's'}</span></div>` + scopeBar + toolbar(state.openings, { noMonth: true }) + opportunityRegister(rows, scope);
+    const partners = rows.filter(r => R.employerClassificationMatches(W.find(state.employers, r.employer_id), 'partner'));
+    const prospects = rows.filter(r => !R.employerClassificationMatches(W.find(state.employers, r.employer_id), 'partner'));
+    const partnership = state.opportunityPartnership || 'all';
+    const relationshipBar = W.chips([{ id: 'all', label: 'Parceiras e prospecções', count: rows.length }, { id: 'partner', label: 'Parceiras Talents 4 · prioridade', count: partners.length, icon: 'check' }, { id: 'prospect', label: 'Prospecções', count: prospects.length, icon: 'building' }], partnership, 'opportunity-partnership');
+    const group = (type, title, description, items) => `<div class="t4-opportunity-tier ${type === 'partner' ? 'is-priority' : ''}" data-opportunity-group="${type}">${W.section(title, `<p class="t4-muted">${e(description)}</p>` + opportunityRegister(items, scope, `org-opportunities-${type}`), U.badge(`${items.length} vaga${items.length === 1 ? '' : 's'}`, type === 'partner' ? 'success' : 'info'))}</div>`;
+    return workViews('opportunities') + `<div class="v25-page-intro"><div><span class="mx-eyebrow">OPORTUNIDADES</span><h2>Vagas de parceiros e prospecções.</h2><p>Priorize candidatos compatíveis com as parceiras Talents 4. Nas demais empresas, avance a prospecção e confirme a demanda.</p></div><span class="v25-result-count">${rows.length} vaga${rows.length === 1 ? '' : 's'}</span></div>` + relationshipBar + scopeBar + toolbar(state.openings, { noMonth: true })
+      + (partnership !== 'prospect' ? group('partner', 'Parceiras Talents 4 · prioridade', 'Vagas de empresas com parceria confirmada. Prioridade para encontrar e apresentar candidatos compatíveis.', partners) : '')
+      + (partnership !== 'partner' ? group('prospect', 'Prospecções · sem parceria confirmada', 'Oportunidades externas: prospectar a empresa e confirmar o interesse antes de tratar como demanda de uma parceira.', prospects) : '');
   }
   const GENERAL_LINK_STAGE_ORDER = Object.freeze(['Aguardando retorno', 'Aguardando envio', 'Aguardando resposta', 'Reunião marcada', 'Em processo', 'Gostou', 'Não gostou', 'Contratado', 'Removido', 'Excluído', 'Sem etapa']);
   const GENERAL_LINK_STAGE_RANK = new Map(GENERAL_LINK_STAGE_ORDER.map((stage, index) => [M.norm(stage), index]));
@@ -501,11 +508,12 @@
       .map(([stage, count]) => ({ label: stage, tone: SELECTION_BUCKET_TONE[bucketOf(stage)] || '', count }));
     return W.funnelChart('Distribuição por etapa do vínculo geral', 'LEITURA RÁPIDA', `${rows.length} vínculo${rows.length === 1 ? '' : 's'} gerais`, buckets);
   }
-  function opportunityRegister(rows, scope = 'open') {
+  function opportunityRegister(rows, scope = 'open', tableId = 'org-opportunities') {
     if (!rows.length) return `<div class="mx-empty"><strong>Nenhuma oportunidade encontrada.</strong><span>Cadastre vagas no Organizacional ou limpe os filtros.</span></div>`;
-    return W.table({ id: 'org-opportunities', rows, columns: [
+    return W.table({ id: tableId, rows, columns: [
       { key: 'title', label: 'Oportunidade', required: true, render: (r) => `<button class="t4-row-link" data-action="opening-detail" data-id="${a(r.id)}">${e(r.title || 'Oportunidade sem nome')}</button><span class="t4-cell-secondary">${e(r.area || 'Área não informada')}</span>` },
       { key: 'employer_id', label: 'Empregador', value: employerOf, render: (r) => { const emp = W.find(state.employers, r.employer_id) || { id: r.employer_id, nome: employerOf(r) }; const color = window.T4Modern?.color(emp) || '#7890a4'; return `<div class="v25-employer-cell" style="--employer-color:${a(color)}"><i></i>${W.person(emp.nome, '', '', 'employer-detail', r.employer_id)}</div>`; } },
+      { key: 'relationship', label: 'Relação com Talents 4', render: r => R.employerClassificationHtml(W.find(state.employers, r.employer_id)) },
       { key: 'quantity', label: 'Posições', render: (r) => W.stack(r.quantity || 0, 'posição(ões)') },
       { key: 'location', label: 'Local' }, { key: 'language_requirement', label: 'Idioma' },
       { key: 'status', label: 'Situação', render: (r) => W.status(r.status) },
@@ -741,6 +749,7 @@
     if (name === 'employer-scope') { state.employerScope = ['active', 'all', 'archived'].includes(id) ? id : 'active'; state.employer = []; state.status = []; render(); return; }
     if (name === 'employer-classification') { state.employerClassification = ['all', 'partner', 'nectanet', 'general', 'pending'].includes(id) ? id : 'all'; render(); return; }
     if (name === 'opportunity-scope') { state.opportunityScope = ['open', 'all', 'closed'].includes(id) ? id : 'open'; state.status = []; render(); return; }
+    if (name === 'opportunity-partnership') { state.opportunityPartnership = ['all', 'partner', 'prospect'].includes(id) ? id : 'all'; render(); return; }
     if (name === 'selection-display') { state.selectionDisplay = id === 'cards' ? 'cards' : 'list'; render(); return; }
     if (name === 'selection-scope') { state.selectionScope = ['active', 'all', 'closed'].includes(id) ? id : 'active'; state.status = []; render(); return; }
     if (name === 'selection-archive') { state.selectionShowClosed = !state.selectionShowClosed; render(); return; }
@@ -758,8 +767,8 @@
     if (name === 'edit-opening') return editOpening(W.find(state.openings, id));
     if (name === 'new-opening-for') return editOpening(null, id);
     if (name === 'selection-for-opening') return R.editSelection(state, null, { opening_id: id }, load);
-    if (name === 'selection-detail') return R.selectionDrawer(state, state.selections.rows.find((r) => r.key === id));
-    if (name === 'edit-selection') return R.editSelection(state, state.selections.rows.find((r) => r.key === id), {}, load);
+    if (name === 'selection-detail') return R.selectionDrawer(state, W.selectionByKey(state.selections.rows, id));
+    if (name === 'edit-selection') return R.editSelection(state, W.selectionByKey(state.selections.rows, id), {}, load);
     if (name === 'edit-plan') return editPlan(W.find(state.plans, id));
     if (name === 'new-plan') return editPlan();
     if (name === 'meeting-detail') return meetingDetail(W.find(state.meetings, id));
@@ -783,6 +792,15 @@
   app.onRoute(() => { state.status = []; render(); });
   W.start(app, async () => {
     await load();
+    if (await W.openLinkedRecord(app, {
+      operational_task: { rows: state.tasks, visible: taskVisible, open: row => { state.operationsMonth = periodKey(row.month_ref || row.due_date) || state.operationsMonth; render(); return editTask(row); } },
+      organizational_plan: { rows: state.plans, open: row => { state.planningMonth = periodKey(row.month_ref || row.end_date) || state.planningMonth; render(); return editPlan(row); } },
+      organizational_meeting: { rows: state.meetings, open: meetingDetail },
+      organizational_summary: { rows: state.summaries, open: editSummary },
+      crm_activity: { rows: state.activities, open: row => R.editActivity(state, row, {}, load) },
+      employer: { rows: state.employers, open: employerDetail },
+      opening: { rows: state.openings, open: openingDetail }
+    })) return;
     const id = new URLSearchParams(location.search).get('employer');
     if (id && !state.openedInitial) { state.openedInitial = true; employerDetail(W.find(state.employers, id)); }
   }, [...Object.keys(sources).flatMap((key) => key === 'selections' ? [D.TABLES.matches, D.TABLES.legacyMatches, D.TABLES.legacyLinks] : [D.TABLES[key] || (key === 'talents' ? D.TABLES.candidates : '')]), D.TABLES.contacts, D.TABLES.taskResponsibles]);

@@ -276,6 +276,10 @@
   app.onRoute(() => { state.status = ''; if (['all', 'people', 'organizations'].includes(app.view)) state.quick = 'active'; render(); });
   W.start(app, async () => {
     await load();
+    if (await W.openLinkedRecord(app, {
+      contact_followup: { rows: state.followups, open: row => D.canEdit() ? R.editFollowup(row, row.contact_id, load) : U.openDrawer({ title: row.title || 'Próximo passo', body: R.storedFields(row) }) },
+      contact: { find: byContact, open: contactDetail }
+    })) return;
     const p = new URLSearchParams(location.search);
     if (!state.openedInitial && (p.has('contact') || p.has('talent') || p.has('employer'))) {
       state.openedInitial = true;

@@ -24,7 +24,11 @@
     const unread = state.notifications.filter((row) => !row.read_at && !row.resolved_at);
     if (!state.notificationsAvailable) return '<div class="t4-collab-empty"><strong>Notificações ainda não configuradas</strong><span>Peça ao administrador do sistema para ativar este recurso.</span></div>';
     if (!state.notifications.length) return '<div class="t4-collab-empty"><strong>Nenhuma notificação</strong><span>Novas agendas, reuniões, resumos e compartilhamentos aparecerão aqui.</span></div>';
-    return `<div class="t4-notification-summary"><strong>${unread.length}</strong><span>não lida${unread.length === 1 ? '' : 's'} · últimas 30 notificações preservadas</span></div><div class="t4-notification-list">${state.notifications.map((row) => `<article class="t4-notification-item ${row.read_at || row.resolved_at ? '' : 'is-unread'}"><div><span class="t4-notification-type">${e(row.resolved_at ? 'Resolvida · ' + (row.type || 'CRM') : row.type || 'CRM')}</span><h3>${e(row.title || 'Atualização no CRM')}</h3><p>${e(row.body || '')}</p><small>${e(U.formatDate(row.created_at, true))}</small></div>${row.read_at || row.resolved_at ? '' : `<button type="button" class="t4-btn ghost sm" data-collab-action="notification-read" data-collab-id="${a(row.id)}">Marcar como lida</button>`}</article>`).join('')}</div>`;
+    return `<div class="t4-notification-summary"><strong>${unread.length}</strong><span>não lida${unread.length === 1 ? '' : 's'} · últimas 30 notificações preservadas</span></div><div class="t4-notification-list">${state.notifications.map((row) => {
+      const href = window.T4Work.notificationUrl(row);
+      const content = `<span class="t4-notification-type">${e(row.resolved_at ? 'Resolvida · ' + (row.type || 'CRM') : row.type || 'CRM')}</span><h3>${e(row.title || 'Atualização no CRM')}</h3><p>${e(row.body || '')}</p><small>${e(U.formatDate(row.created_at, true))}</small>`;
+      return `<article class="t4-notification-item ${row.read_at || row.resolved_at ? '' : 'is-unread'}">${href ? `<a class="t4-notification-open" href="${a(href)}" data-collab-action="notification-open" data-collab-id="${a(row.id)}">${content}<span class="t4-notification-destination">Abrir registro ${U.icon('arrow')}</span></a>` : `<div>${content}</div>`}${row.read_at || row.resolved_at ? '' : `<button type="button" class="t4-btn ghost sm" data-collab-action="notification-read" data-collab-id="${a(row.id)}">Marcar como lida</button>`}</article>`;
+    }).join('')}</div>`;
   }
 
   function paintNotificationButton() {
@@ -304,6 +308,16 @@
     try {
       if (action === 'notifications') return openNotifications();
       if (action === 'notification-read') return markNotificationRead(id);
+      if (action === 'notification-open') {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button > 0) return;
+        const row = state.notifications.find(item => String(item.id) === String(id));
+        const href = row && window.T4Work.notificationUrl(row);
+        if (!href) return;
+        event.preventDefault();
+        if (!row.read_at && !row.resolved_at) await markNotificationRead(id);
+        location.href = href;
+        return;
+      }
       if (action === 'close-reminder') return closeReminder();
       if (action === 'open-po') { location.href = './organizacional.html?view=operations'; return; }
       if (action === 'chat') return toggleChat();

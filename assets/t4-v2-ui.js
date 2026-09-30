@@ -409,6 +409,74 @@
       }
     });
   }
+  const RECORD_DESTINATIONS = new Map([
+    ['operational_task', ['organizacional.html', 'operations']],
+    ['organizational_plan', ['organizacional.html', 'planning']],
+    ['organizational_meeting', ['organizacional.html', 'meetings']],
+    ['organizational_summary', ['organizacional.html', 'summary']],
+    ['crm_activity', ['organizacional.html', 'calendar']],
+    ['contact_followup', ['contatos.html', 'followups']],
+    ['contact', ['contatos.html', 'all']],
+    ['german_enrollment', ['alemao.html', 'students']],
+    ['german_class', ['alemao.html', 'classes']],
+    ['selection', ['index.html', 'processes']],
+    ['post_hire', ['index.html', 'post-hire']],
+    ['talent', ['index.html', 'talents']],
+    ['employer', ['organizacional.html', 'employers']],
+    ['opening', ['organizacional.html', 'opportunities']]
+  ]);
+  const DEADLINE_ENTITIES = new Map([
+    ['operational_tasks', 'operational_task'], ['organizational_plan_entries', 'organizational_plan'],
+    ['organizational_meetings', 'organizational_meeting'], ['crm_activities', 'crm_activity'],
+    ['contact_followups', 'contact_followup'], ['german_course_enrollments', 'german_enrollment'],
+    ['german_course_classes', 'german_class'], ['talent_opportunity_matches', 'selection'],
+    ['candidate_employer_matches', 'selection'], ['candidate_employer_links', 'selection'],
+    ['candidate_post_hire_followups', 'post_hire'], ['candidatos', 'talent']
+  ]);
+  function notificationUrl(row) {
+    const source = String(row.deadline_source || '').split('.')[0];
+    const type = DEADLINE_ENTITIES.get(source) || String(row.entity_type || '');
+    const destination = RECORD_DESTINATIONS.get(type);
+    const id = String(row.deadline_row_id || row.entity_id || '').trim();
+    if (!destination || !id) return '';
+    const params = new URLSearchParams({ view: destination[1], record: type, recordId: id });
+    if (type === 'selection' && DEADLINE_ENTITIES.get(source) === 'selection') params.set('recordSource', source);
+    if (source === 'candidatos' && /^(passaporte|registro)_validade$/.test(String(row.deadline_source).split('.')[1])) params.set('recordSection', 'documents');
+    if (row.deadline_source === 'candidatos.previsao_termino_alemao') params.set('recordSection', 'course');
+    return `./${destination[0]}?${params}`;
+  }
+  async function openLinkedRecord(app, handlers) {
+    const params = new URLSearchParams(location.search), type = params.get('record');
+    if (!type) return false;
+    if (app.linkedRecordOpened) return true;
+    app.linkedRecordOpened = true;
+    const destination = RECORD_DESTINATIONS.get(type);
+    const handler = Object.prototype.hasOwnProperty.call(handlers, type) ? handlers[type] : null;
+    const id = params.get('recordId');
+    const row = id && handler && (handler.find ? handler.find(id, params.get('recordSource') || '') : find(handler.rows, id));
+    if (!destination || !row || row.deleted_at || handler.visible && !handler.visible(row)) {
+      U.toast('Este registro não está disponível para seu perfil ou foi removido.', 'warning', 6500);
+      return true;
+    }
+    app.route(destination[1]);
+    await handler.open(row, params);
+    return true;
+  }
+  function linkedSelection(rows, id, source) {
+    const originals = new Map();
+    for (const row of rows) for (const entry of row.sources || [{ table: row._source, row }]) {
+      if (M.same(entry.row.id, id) && (!source || entry.table === source)) originals.set(`${entry.table}:${entry.row.id}`, entry);
+    }
+    if (originals.size !== 1) return null;
+    const entry = [...originals.values()][0];
+    return M.canonicalMatch(entry.row, entry.table);
+  }
+  function selectionByKey(rows, key) {
+    const primary = rows.find(row => row.key === key);
+    if (primary) return primary;
+    const separator = String(key).indexOf(':');
+    return separator > 0 ? linkedSelection(rows, key.slice(separator + 1), key.slice(0, separator)) : null;
+  }
   function start(app, load, tables) {
     let unsubscribe;
     D.init(app).then(async () => {
@@ -500,5 +568,5 @@
   // A versão antiga chamava o mesmo componente de distributionChart.
   const distributionChart = funnelChart;
   window.T4Work = Object.freeze({ button, link, external, optionsHtml, searchableSelect, bindSearchableSelects, filter, multiFilter, periodFilter, chips, note, section, person, stack, stackHtml, status, unique, find,
-    formatError, table, form, inputField, recordForm, saveRecord, sourceAlerts, loader, bind, start, activeFiltersBar, distributionChart, funnelChart });
+    formatError, table, form, inputField, recordForm, saveRecord, sourceAlerts, loader, bind, start, activeFiltersBar, distributionChart, funnelChart, notificationUrl, openLinkedRecord, linkedSelection, selectionByKey });
 })();
