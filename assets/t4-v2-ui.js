@@ -89,12 +89,15 @@
     || (error?.name === 'TypeError' && /fetch|network/i.test(error?.message || ''))
     || /timeout|excedeu/i.test(error?.message || '');
   function formatError(error) {
+    if (['PGRST204','42703'].includes(error?.code)) return t('Um campo não é reconhecido pelo cadastro atual. Atualize a página; se continuar, o administrador precisa conferir a atualização do banco.');
+    if (['22P02','22007','22008'].includes(error?.code)) return t('Há um valor ou uma data em formato inválido. Confira os campos alterados antes de salvar.');
+    if (error?.code === '23514') return t('Um campo não atende à regra de validação do cadastro. Confira as opções e quantidades informadas.');
     if (error?.code === 'PGRST116') return t('O registro mudou, foi removido ou você não tem permissão. Atualize a ficha antes de salvar novamente.');
     if (error?.code === '23505') return t('Já existe um registro com essa identificação. Confira os dados; nenhuma duplicidade foi criada.');
     if (error?.code === '23503') return t('O vínculo informado não existe mais. Atualize os dados e selecione um registro válido.');
     if (error?.code === '42501') return t('Seu perfil não tem permissão para esta operação. Solicite revisão ao administrador.');
     if (isConnectivityError(error)) {
-      console.error('[Talents4]', error);
+      console.error('[Talents 4]', error);
       return t('Falha de conexão com o servidor. Verifique sua internet e tente novamente; nada foi salvo.');
     }
     // error.code sem estar na lista acima só acontece com o formato de erro
@@ -102,8 +105,8 @@
     // SQL técnico, então não deve ir para a tela; fica só no console do
     // navegador, que é o log técnico disponível nesta pilha sem backend.
     if (error?.code) {
-      console.error('[Talents4]', error);
-      return t('Não foi possível concluir esta ação no banco agora. Nenhuma alteração parcial foi salva; tente novamente em instantes.');
+      console.error('[Talents 4]', error);
+      return t('Não foi possível concluir esta ação no banco agora. A gravação não foi confirmada. Atualize e confira os dados antes de tentar novamente.');
     }
     return error?.message || String(error);
   }
@@ -116,7 +119,9 @@
   function tableBody(id) {
     const s = tableStates.get(id);
     const col = s.columns.find((c) => c.key === s.sort);
+    const groupOrder = s.groupBy ? new Map([...new Set(s.rows.map(s.groupBy))].map((value,index)=>[value,index])) : null;
     const rows = col ? [...s.rows].sort((x, y) => {
+      if(groupOrder) { const diff=groupOrder.get(s.groupBy(x))-groupOrder.get(s.groupBy(y)); if(diff) return diff; }
       const left = col.value?.(x) ?? x[col.key] ?? '', right = col.value?.(y) ?? y[col.key] ?? '';
       return s.direction * (typeof left === 'number' && typeof right === 'number' ? left - right : String(left).localeCompare(String(right), 'pt-BR', { numeric: true }));
     }) : s.rows;

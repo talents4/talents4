@@ -21,17 +21,17 @@
   }
 
   function notificationBody() {
-    const unread = state.notifications.filter((row) => !row.read_at);
+    const unread = state.notifications.filter((row) => !row.read_at && !row.resolved_at);
     if (!state.notificationsAvailable) return '<div class="t4-collab-empty"><strong>Notificações ainda não configuradas</strong><span>Peça ao administrador do sistema para ativar este recurso.</span></div>';
     if (!state.notifications.length) return '<div class="t4-collab-empty"><strong>Nenhuma notificação</strong><span>Novas agendas, reuniões, resumos e compartilhamentos aparecerão aqui.</span></div>';
-    return `<div class="t4-notification-summary"><strong>${unread.length}</strong><span>não lida${unread.length === 1 ? '' : 's'} · últimas 30 notificações preservadas</span></div><div class="t4-notification-list">${state.notifications.map((row) => `<article class="t4-notification-item ${row.read_at ? '' : 'is-unread'}"><div><span class="t4-notification-type">${e(row.type || 'CRM')}</span><h3>${e(row.title || 'Atualização no CRM')}</h3><p>${e(row.body || '')}</p><small>${e(U.formatDate(row.created_at, true))}</small></div>${row.read_at ? '' : `<button type="button" class="t4-btn ghost sm" data-collab-action="notification-read" data-collab-id="${a(row.id)}">Marcar como lida</button>`}</article>`).join('')}</div>`;
+    return `<div class="t4-notification-summary"><strong>${unread.length}</strong><span>não lida${unread.length === 1 ? '' : 's'} · últimas 30 notificações preservadas</span></div><div class="t4-notification-list">${state.notifications.map((row) => `<article class="t4-notification-item ${row.read_at || row.resolved_at ? '' : 'is-unread'}"><div><span class="t4-notification-type">${e(row.resolved_at ? 'Resolvida · ' + (row.type || 'CRM') : row.type || 'CRM')}</span><h3>${e(row.title || 'Atualização no CRM')}</h3><p>${e(row.body || '')}</p><small>${e(U.formatDate(row.created_at, true))}</small></div>${row.read_at || row.resolved_at ? '' : `<button type="button" class="t4-btn ghost sm" data-collab-action="notification-read" data-collab-id="${a(row.id)}">Marcar como lida</button>`}</article>`).join('')}</div>`;
   }
 
   function paintNotificationButton() {
     const button = document.querySelector('[data-collab-notifications]') || document.querySelector('[data-collab-action="notifications"]');
     const count = document.querySelector('[data-collab-count]');
     if (!button || !count) return;
-    const unread = state.notifications.filter((row) => !row.read_at).length;
+    const unread = state.notifications.filter((row) => !row.read_at && !row.resolved_at).length;
     count.textContent = unread > 99 ? '99+' : String(unread);
     count.hidden = unread === 0;
     button.setAttribute('aria-label', unread ? `Notificações · ${unread} não lidas` : 'Notificações');
@@ -45,9 +45,9 @@
       state.notificationsAvailable = true;
       state.notifications = result.data || [];
       paintNotificationButton();
-      if (!silent && previous.size) state.notifications.filter((row) => !previous.has(String(row.id)) && !row.read_at).slice(0, 2).forEach((row) => U.toast(`${row.title || 'Nova atualização'}${row.body ? ` · ${row.body}` : ''}`, 'info', 6000));
+      if (!silent && previous.size) state.notifications.filter((row) => !previous.has(String(row.id)) && !row.read_at && !row.resolved_at).slice(0, 2).forEach((row) => U.toast(`${row.title || 'Nova atualização'}${row.body ? ` · ${row.body}` : ''}`, 'info', 6000));
     } catch (error) {
-      console.warn('[Talents4] notificações indisponíveis:', formatError(error));
+      console.warn('[Talents 4] notificações indisponíveis:', formatError(error));
     }
   }
 
@@ -105,7 +105,7 @@
     try {
       const rows = await poOpenTasks();
       if (rows.length) showReminder(rows);
-    } catch (error) { console.warn('[Talents4] lembrete de P.O. indisponível:', formatError(error)); }
+    } catch (error) { console.warn('[Talents 4] lembrete de P.O. indisponível:', formatError(error)); }
   }
 
   async function loadUsers() {

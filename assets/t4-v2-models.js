@@ -181,6 +181,16 @@
     try { const u = new URL(value); return ['https:', 'http:'].includes(u.protocol) && !u.username && !u.password ? u.href : ''; }
     catch (_) { return ''; }
   }
+  const POST_HIRE_STAGES = Object.freeze(['Contrato e admissão', 'Documentação', 'Reconhecimento profissional', 'Visto e autorização', 'Preparação da mudança', 'Chegada e integração', 'Início no empregador', 'Processo finalizado', 'Acompanhamento de 12 meses']);
+  function postHireOpen(row) { return !row?.deleted_at && isOpen(row?.status || 'Ativo'); }
+  function talentStages(state, row = {}) {
+    const result = [{ label: row.status_pipeline || 'Sem etapa no perfil', tone: /contrat/i.test(row.status_pipeline || '') ? 'success' : 'info', source: 'Perfil' }];
+    const stages = new Map();
+    (state?.selections?.rows || []).filter(r => same(r.talent_id, row.id) && selectionBucket(r) !== 'closed').forEach(r => stages.set(r.stage, (stages.get(r.stage) || 0) + 1));
+    for (const [stage, count] of stages) result.push({ label: `${stage}${count > 1 ? ` (${count})` : ''}`, tone: selectionBucket({stage}) === 'hired' ? 'success' : 'purple', source: 'Seleção' });
+    (state?.postHires || []).filter(r => same(r.talent_id, row.id) && postHireOpen(r)).forEach(r => result.push({label: r.stage, tone: 'warning', source: 'Pós-contratação'}));
+    return result;
+  }
   function snapshotEntries(payload) {
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return {};
     const p = payload.state && typeof payload.state === 'object' ? payload.state : payload;
@@ -188,5 +198,5 @@
     return Object.fromEntries(allowed.filter((key) => p[key] != null).map((key) => [key, p[key]]));
   }
   window.T4Models = Object.freeze({ norm, same, active, negativeLifecycle, activeRecord, talentScope, isTalent, scopeLabel, present, finite, number, dateOnly, today, isOpen, overdue,
-    riskReasons, mergeMatches, canonicalMatch, selectionBucket, SELECTION_COLUMNS, buildContacts, duplicateGroups, safeUrl, snapshotEntries });
+    POST_HIRE_STAGES, postHireOpen, talentStages, riskReasons, mergeMatches, canonicalMatch, selectionBucket, SELECTION_COLUMNS, buildContacts, duplicateGroups, safeUrl, snapshotEntries });
 })();
