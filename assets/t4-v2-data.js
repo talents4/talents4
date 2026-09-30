@@ -140,9 +140,20 @@
     return ({ admin: 'Administrador', recrutador: 'Recrutador', viewer: 'Visualizador' })[role] || role || 'Visualizador';
   }
 
+  function recordReturn(value) {
+    if (!value) return '';
+    try {
+      const login = new URL(ROOT_LOGIN, location.href), target = new URL(value, login);
+      const modules = ['index.html', 'organizacional.html', 'contatos.html', 'alemao.html'].map(path => new URL(path, login).pathname);
+      if (target.origin !== login.origin || !modules.includes(target.pathname) || !target.searchParams.get('record') || !target.searchParams.get('recordId')) return '';
+      return target.pathname + target.search;
+    } catch (_) { return ''; }
+  }
   function redirectToLogin(reason = '') {
     if (window.T4_DEMO) { location.reload(); return; }
     const target = new URL(ROOT_LOGIN, location.href);
+    const returnTo = recordReturn(location.href);
+    if (returnTo) target.searchParams.set('next', returnTo);
     if (reason) target.searchParams.set('notice', reason);
     location.replace(target.href);
   }
@@ -179,7 +190,7 @@
         const email = typed.includes('@') ? typed : `${typed}@${LOGIN_EMAIL_DOMAIN}`;
         const { error } = await client.auth.signInWithPassword({ email, password: form.password.value });
         if (error) throw error;
-        location.href = `${ROOT_LOGIN}?view=overview`;
+        location.href = recordReturn(new URLSearchParams(location.search).get('next')) || recordReturn(location.href) || `${ROOT_LOGIN}?view=overview`;
       } catch (error) {
         errorBox.textContent = /invalid login credentials/i.test(error?.message || '')
           ? 'Usuário ou senha incorretos.'
@@ -233,7 +244,7 @@
     if (!window.T4_DEMO) {
       const isReload = performance.getEntriesByType('navigation')[0]?.type === 'reload';
       const onMeuDia = isLoginPage() && new URLSearchParams(location.search).get('view') === 'overview';
-      if (isReload && !onMeuDia) { location.replace(new URL(`${ROOT_LOGIN}?view=overview`, location.href).href); return new Promise(() => {}); }
+      if (isReload && !onMeuDia && !recordReturn(location.href)) { location.replace(new URL(`${ROOT_LOGIN}?view=overview`, location.href).href); return new Promise(() => {}); }
     }
 
     profile = await loadProfile(session);

@@ -16,6 +16,11 @@
 .t4-notification-item h3 { margin: .2rem 0; color: #123b5d; font-size: .95rem; }
 .t4-notification-item p { margin: 0; color: var(--v25-muted); white-space: pre-wrap; }
 .t4-notification-item small { display: block; margin-top: .4rem; color: var(--v25-muted); }
+.t4-notification-open { flex: 1; min-width: 0; color: inherit; text-decoration: none; border-radius: .35rem; }
+.t4-notification-open:hover h3 { text-decoration: underline; }
+.t4-notification-open:focus-visible { outline: 2px solid #137a64; outline-offset: 5px; }
+.t4-notification-destination { display: inline-flex; align-items: center; gap: .35rem; margin-top: .65rem; color: #137a64; font-size: .8rem; font-weight: 700; }
+.t4-notification-destination svg { width: 1rem; height: 1rem; }
 /* #1e8e76 original ficava em 4.05:1 sobre branco (abaixo de 4.5:1, WCAG
    AA) mesmo em negrito — o texto é pequeno demais (.65rem) para contar
    como "grande" na exceção de 3:1. Escurecido preservando o verde-azulado. */

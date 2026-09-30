@@ -184,6 +184,10 @@
   app.onRoute(render);
   W.start(app, async () => {
     await load();
+    if (await W.openLinkedRecord(app, {
+      german_enrollment: { rows: state.enrollments, open: enrollmentDetail },
+      german_class: { rows: state.classes, open: classDetail }
+    })) return;
     const params = new URLSearchParams(location.search), talent = params.get('talent'), enrollment = params.get('enrollment');
     if (!state.openedInitial && (talent || enrollment)) {
       state.openedInitial = true;
